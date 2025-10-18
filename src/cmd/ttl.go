@@ -13,7 +13,6 @@ import (
 var ttlFlags = struct {
 	date    bool
 	seconds bool
-	quiet   bool
 }{}
 
 var ttlCmd = &cobra.Command{
@@ -39,19 +38,13 @@ var ttlCmd = &cobra.Command{
 		})
 
 		if expiresAt == nil {
-			if !ttlFlags.quiet {
-				if value != nil {
-					common.Error("Key %q does not exipre", key)
-				} else {
-					common.Error("Key %q does not exist", key)
-				}
+			if value != nil {
+				common.Error("Key %q does not exipre", key)
+			} else {
+				common.Error("Key %q does not exist", key)
 			}
 
 			os.Exit(1)
-		}
-
-		if ttlFlags.quiet {
-			return
 		}
 
 		if ttlFlags.seconds {
@@ -74,6 +67,5 @@ func init() {
 
 	ttlCmd.Flags().BoolVarP(&ttlFlags.date, "date", "d", false, "Return expiration date")
 	ttlCmd.Flags().BoolVarP(&ttlFlags.seconds, "seconds", "s", false, "Return remaining time in seconds")
-	ttlCmd.Flags().BoolVarP(&ttlFlags.quiet, "quiet", "q", false, "Do not print any output")
-	ttlCmd.MarkFlagsMutuallyExclusive("date", "seconds", "quiet")
+	ttlCmd.MarkFlagsMutuallyExclusive("date", "seconds")
 }

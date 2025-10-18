@@ -9,7 +9,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// getCmd represents the get command
 var getCmd = &cobra.Command{
 	Use:   "get <key>",
 	Short: "Get stored value",
@@ -33,6 +32,7 @@ var getCmd = &cobra.Command{
 			common.Stdout.Println(*value)
 		} else {
 			common.Error("Key %q does not exist", key)
+
 			os.Exit(1)
 		}
 	},
