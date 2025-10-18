@@ -39,6 +39,8 @@ var deleteCmd = &cobra.Command{
 					}
 				}
 			})
+
+			return
 		}
 
 		common.RunTx(func(tx *sql.Tx) {

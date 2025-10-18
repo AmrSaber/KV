@@ -53,12 +53,12 @@ var ttlCmd = &cobra.Command{
 		}
 
 		if ttlFlags.date {
-			common.Stdout.Println(expiresAt.Format(time.DateTime))
+			common.Stdout.Println(expiresAt.Local().Format(time.DateTime))
 			return
 		}
 
 		ttl := expiresAt.Sub(time.Now()).Truncate(time.Second).String()
-		common.Stdout.Printf("%s (expires at %s)\n", ttl, expiresAt.Format(time.DateTime))
+		common.Stdout.Printf("%s (expires at %s)\n", ttl, expiresAt.Local().Format(time.DateTime))
 	},
 }
 

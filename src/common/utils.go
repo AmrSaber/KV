@@ -26,7 +26,7 @@ func FormatTimePtr(t *time.Time) *string {
 		return nil
 	}
 
-	formatted := t.Format(time.RFC3339)
+	formatted := t.UTC().Format(time.DateTime)
 	return &formatted
 }
 
