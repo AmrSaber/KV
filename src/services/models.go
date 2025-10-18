@@ -2,7 +2,7 @@ package services
 
 import "time"
 
-type ListItem struct {
+type KVItem struct {
 	Key       string     `json:"key" yaml:"key"`
 	Value     string     `json:"value,omitempty" yaml:"value,omitempty"`
 	ExpiresAt *time.Time `json:"expiresAt,omitempty" yaml:"expires-at,omitempty"`

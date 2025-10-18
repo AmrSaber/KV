@@ -5,20 +5,18 @@ import (
 	"os"
 
 	"github.com/AmrSaber/kv/src/common"
+	"github.com/AmrSaber/kv/src/services"
 	"github.com/spf13/cobra"
 )
 
-var rootFlags = struct {
-	quiet bool
-}{}
+var rootFlags = struct{ quiet bool }{}
 
-// rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "kv",
 	Short: "Your key-value personal store for the CLI",
-	Long:  `KV allows you to set and get values in your CLI, with features like history keeping and auto-completion`,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		common.Quiet(rootFlags.quiet)
+		services.CleanUpDB(nil)
 	},
 }
 
@@ -32,5 +30,10 @@ func Execute() {
 }
 
 func init() {
+	rootCmd.AddGroup(
+		&cobra.Group{Title: "Key-Value", ID: "kv"},
+		&cobra.Group{Title: "TTL", ID: "ttl"},
+	)
+
 	rootCmd.PersistentFlags().BoolVarP(&rootFlags.quiet, "quiet", "q", false, "Do not print any output")
 }

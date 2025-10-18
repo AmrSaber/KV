@@ -44,10 +44,6 @@ func MatchExistingKeysByPrefix(tx *sql.Tx, prefix string) []string {
 		return keys
 	}
 
-	if prefix == "" {
-		return getAllKeys(tx)
-	}
-
 	rows, err := tx.Query("SELECT key FROM store WHERE key LIKE ? || '%' AND is_latest = 1 AND value != ''", prefix)
 	common.FailOn(err)
 
@@ -63,25 +59,9 @@ func MatchExistingKeysByPrefix(tx *sql.Tx, prefix string) []string {
 	return keys
 }
 
-func getAllKeys(tx *sql.Tx) []string {
-	rows, err := tx.Query("SELECT key FROM store WHERE is_latest = 1")
-	common.FailOn(err)
-
-	var keys []string
-	for rows.Next() {
-		var key string
-		err = rows.Scan(&key)
-		common.FailOn(err)
-
-		keys = append(keys, key)
-	}
-
-	return keys
-}
-
-func ListItems(tx *sql.Tx, prefix string) []ListItem {
+func ListItems(tx *sql.Tx, prefix string) []KVItem {
 	if tx == nil {
-		var items []ListItem
+		var items []KVItem
 		common.RunTx(func(tx *sql.Tx) { items = ListItems(tx, prefix) })
 		return items
 	}
@@ -96,9 +76,9 @@ func ListItems(tx *sql.Tx, prefix string) []ListItem {
 
 	common.FailOn(err)
 
-	var items []ListItem
+	var items []KVItem
 	for rows.Next() {
-		var item ListItem
+		var item KVItem
 		var expiresAt sql.NullTime
 
 		err = rows.Scan(&item.Key, &item.Value, &expiresAt, &item.Timestamp)

@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"database/sql"
 	"encoding/json"
 	"os"
 	"sort"
@@ -25,6 +24,7 @@ var listCmd = &cobra.Command{
 	Use:     "list",
 	Aliases: []string{"ls"},
 	Short:   "List keys, optinally matching given prefix.",
+	GroupID: "kv",
 	Args:    cobra.MaximumNArgs(1),
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]cobra.Completion, cobra.ShellCompDirective) {
 		if len(args) != 0 {
@@ -39,11 +39,7 @@ var listCmd = &cobra.Command{
 			prefix = args[0]
 		}
 
-		var items []services.ListItem
-		common.RunTx(func(tx *sql.Tx) {
-			services.CleanUpDB(tx)
-			items = services.ListItems(tx, prefix)
-		})
+		items := services.ListItems(nil, prefix)
 
 		// Sort items by key
 		sort.Slice(items, func(i, j int) bool {
@@ -57,13 +53,14 @@ var listCmd = &cobra.Command{
 			}
 		}
 
-		if listFlags.output == "yaml" {
+		switch listFlags.output {
+		case "yaml":
 			output, _ := yaml.Marshal(items)
 			common.Stdout.Println(string(output))
-		} else if listFlags.output == "json" {
+		case "json":
 			output, _ := json.MarshalIndent(items, "", "  ")
 			common.Stdout.Println(string(output))
-		} else if listFlags.output == "table" {
+		case "table":
 			t := table.NewWriter()
 			t.SetOutputMirror(os.Stdout)
 
@@ -71,6 +68,7 @@ var listCmd = &cobra.Command{
 			if listFlags.noValues {
 				header = append(header[0:1], header[2:]...)
 			}
+
 			t.AppendHeader(header)
 
 			for _, item := range items {
@@ -95,7 +93,7 @@ var listCmd = &cobra.Command{
 
 			t.SetStyle(table.StyleLight)
 			t.Render()
-		} else {
+		default:
 			common.Error("Unsupported format %q", listFlags.output)
 			os.Exit(1)
 		}

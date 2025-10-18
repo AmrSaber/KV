@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"database/sql"
 	"os"
 	"time"
 
@@ -16,9 +15,10 @@ var ttlFlags = struct {
 }{}
 
 var ttlCmd = &cobra.Command{
-	Use:   "ttl <key>",
-	Short: "Returns how long before the key",
-	Args:  cobra.ExactArgs(1),
+	Use:     "ttl <key>",
+	Short:   "Get how long before the key expires",
+	GroupID: "ttl",
+	Args:    cobra.ExactArgs(1),
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]cobra.Completion, cobra.ShellCompDirective) {
 		if len(args) != 0 {
 			return nil, cobra.ShellCompDirectiveNoFileComp
@@ -32,10 +32,7 @@ var ttlCmd = &cobra.Command{
 		var value *string
 		var expiresAt *time.Time
 
-		common.RunTx(func(tx *sql.Tx) {
-			services.CleanUpDB(tx)
-			value, expiresAt = services.GetValue(tx, key)
-		})
+		value, expiresAt = services.GetValue(nil, key)
 
 		if expiresAt == nil {
 			if value != nil {
