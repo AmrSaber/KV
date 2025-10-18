@@ -35,7 +35,7 @@ var setCmd = &cobra.Command{
 	- Time (date is set to today): 12:34:56
 	Providing any time in the past expires the key immediately.
 	`,
-	Args: cobra.MatchAll(cobra.MinimumNArgs(1), cobra.MaximumNArgs(2)),
+	Args: cobra.RangeArgs(1, 2),
 	Run: func(cmd *cobra.Command, args []string) {
 		key := args[0]
 		value := ""
