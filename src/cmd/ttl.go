@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"database/sql"
 	"os"
 	"time"
 
@@ -29,7 +30,14 @@ var ttlCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		key := args[0]
 
-		value, expiresAt := services.GetValue(nil, key)
+		var value *string
+		var expiresAt *time.Time
+
+		common.RunTx(func(tx *sql.Tx) {
+			services.CleanUpDB(tx)
+			value, expiresAt = services.GetValue(tx, key)
+		})
+
 		if expiresAt == nil {
 			if value != nil && !ttlFlags.quiet {
 				common.Stderr.Printf("Key %q does not exipre\n", key)

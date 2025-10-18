@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"database/sql"
 	"os"
 
 	"github.com/AmrSaber/kv/src/common"
@@ -22,7 +23,12 @@ var getCmd = &cobra.Command{
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		key := args[0]
-		value, _ := services.GetValue(nil, key)
+		var value *string
+		common.RunTx(func(tx *sql.Tx) {
+			services.CleanUpDB(tx)
+			value, _ = services.GetValue(nil, key)
+		})
+
 		if value != nil && *value != "" {
 			common.Stdout.Println(*value)
 		} else {
