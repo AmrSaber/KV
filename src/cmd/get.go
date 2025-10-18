@@ -11,7 +11,7 @@ import (
 
 // getCmd represents the get command
 var getCmd = &cobra.Command{
-	Use:   "get",
+	Use:   "get <key>",
 	Short: "Get stored value",
 	Args:  cobra.ExactArgs(1),
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]cobra.Completion, cobra.ShellCompDirective) {
@@ -32,6 +32,7 @@ var getCmd = &cobra.Command{
 		if value != nil && *value != "" {
 			common.Stdout.Println(*value)
 		} else {
+			common.Error("Key %q does not exist", key)
 			os.Exit(1)
 		}
 	},

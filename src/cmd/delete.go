@@ -1,40 +1,64 @@
-/*
-Copyright © 2025 NAME HERE <EMAIL ADDRESS>
-
-*/
 package cmd
 
 import (
-	"fmt"
+	"database/sql"
+	"os"
 
+	"github.com/AmrSaber/kv/src/common"
+	"github.com/AmrSaber/kv/src/services"
 	"github.com/spf13/cobra"
 )
 
-// deleteCmd represents the delete command
-var deleteCmd = &cobra.Command{
-	Use:   "delete",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+var deleteFlags = struct {
+	prefix bool
+	prune  bool
+}{}
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+var deleteCmd = &cobra.Command{
+	Use:     "delete <key|prefix>",
+	Aliases: []string{"del"},
+	Short:   "Delete key or keys prefix",
+	Args:    cobra.ExactArgs(1),
+	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]cobra.Completion, cobra.ShellCompDirective) {
+		if len(args) != 0 {
+			return nil, cobra.ShellCompDirectiveNoFileComp
+		}
+
+		return completeKeyArg(cmd, args, toComplete)
+	},
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("delete called")
+		key := args[0]
+		if deleteFlags.prefix {
+			common.RunTx(func(tx *sql.Tx) {
+				keys := services.MatchExistingKeysByPrefix(tx, key)
+				for _, key := range keys {
+					services.SetValue(tx, key, "", nil)
+
+					if deleteFlags.prune {
+						services.PruneKey(tx, key)
+					}
+				}
+			})
+		}
+
+		common.RunTx(func(tx *sql.Tx) {
+			if value, _ := services.GetValue(tx, key); value == nil || *value == "" {
+				common.Error("Key %q does not exist", key)
+				os.Exit(1)
+			}
+
+			services.SetValue(tx, key, "", nil)
+
+			if deleteFlags.prune {
+				services.PruneKey(tx, key)
+			}
+		})
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(deleteCmd)
 
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// deleteCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// deleteCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	deleteCmd.Flags().BoolVar(&deleteFlags.prefix, "prefix", false, "Delete all keys matching given prefix")
+	deleteCmd.Flags().BoolVar(&deleteFlags.prune, "prune", false, "Also delete key(s) history")
 }

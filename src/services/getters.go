@@ -37,10 +37,10 @@ func GetValue(tx *sql.Tx, key string) (*string, *time.Time) {
 	return retValue, retExpiresAt
 }
 
-func GetKeysMatchingPrefix(tx *sql.Tx, prefix string) []string {
+func MatchExistingKeysByPrefix(tx *sql.Tx, prefix string) []string {
 	if tx == nil {
 		var keys []string
-		common.RunTx(func(tx *sql.Tx) { keys = GetKeysMatchingPrefix(tx, prefix) })
+		common.RunTx(func(tx *sql.Tx) { keys = MatchExistingKeysByPrefix(tx, prefix) })
 		return keys
 	}
 
@@ -48,7 +48,7 @@ func GetKeysMatchingPrefix(tx *sql.Tx, prefix string) []string {
 		return getAllKeys(tx)
 	}
 
-	rows, err := tx.Query("SELECT key FROM store WHERE key LIKE ? || '%' AND is_latest = 1", prefix)
+	rows, err := tx.Query("SELECT key FROM store WHERE key LIKE ? || '%' AND is_latest = 1 AND value != ''", prefix)
 	common.FailOn(err)
 
 	var keys []string

@@ -21,6 +21,6 @@ func Warn(msg string) {
 	Stderr.Println(yellow(msg))
 }
 
-func Error(msg string) {
-	Stderr.Println(red(msg))
+func Error(msg string, args ...any) {
+	Stderr.Printf(red(msg)+"\n", args...)
 }
