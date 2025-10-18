@@ -1,6 +1,6 @@
 package main
 
-import "kv/cmd"
+import "github.com/AmrSaber/kv/src/cmd"
 
 func main() {
 	cmd.Execute()
