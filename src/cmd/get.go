@@ -15,12 +15,10 @@ var getCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]cobra.Completion, cobra.ShellCompDirective) {
 		if len(args) != 0 {
-			toComplete = ""
+			return nil, cobra.ShellCompDirectiveNoFileComp
 		}
 
-		matchingKeys := services.GetKeysMatchingPrefix(nil, toComplete)
-
-		return []cobra.Completion(matchingKeys), cobra.ShellCompDirectiveNoFileComp
+		return completeKeyArg(cmd, args, toComplete)
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		key := args[0]

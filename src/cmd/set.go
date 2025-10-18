@@ -36,6 +36,13 @@ var setCmd = &cobra.Command{
 	Providing any time in the past expires the key immediately.
 	`,
 	Args: cobra.RangeArgs(1, 2),
+	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]cobra.Completion, cobra.ShellCompDirective) {
+		if len(args) != 0 {
+			return nil, cobra.ShellCompDirectiveNoFileComp
+		}
+
+		return completeKeyArg(cmd, args, toComplete)
+	},
 	Run: func(cmd *cobra.Command, args []string) {
 		key := args[0]
 		value := ""
