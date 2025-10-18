@@ -21,7 +21,7 @@ var migrations = []string{
 		expires_at DATETIME DEFAULT NULL
 	);
 	`,
-	`CREATE INDEX IF NOT EXISTS idx_store_latest_key ON store(key, is_latest);`,
+	`CREATE INDEX IF NOT EXISTS idx_store_latest_key_value ON store(key, is_latest, value);`,
 	`CREATE INDEX IF NOT EXISTS idx_store_latest_expire ON store(is_latest, expires_at);`,
 }
 

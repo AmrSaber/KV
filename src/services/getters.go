@@ -78,3 +78,38 @@ func getAllKeys(tx *sql.Tx) []string {
 
 	return keys
 }
+
+func ListItems(tx *sql.Tx, prefix string) []ListItem {
+	if tx == nil {
+		var items []ListItem
+		common.RunTx(func(tx *sql.Tx) { items = ListItems(tx, prefix) })
+		return items
+	}
+
+	rows, err := tx.Query(`
+		SELECT key, value, expires_at, timestamp
+		FROM store
+		WHERE key LIKE ? || '%' AND is_latest = 1 AND value != ''
+	`,
+		prefix,
+	)
+
+	common.FailOn(err)
+
+	var items []ListItem
+	for rows.Next() {
+		var item ListItem
+		var expiresAt sql.NullTime
+
+		err = rows.Scan(&item.Key, &item.Value, &expiresAt, &item.Timestamp)
+		common.FailOn(err)
+
+		if expiresAt.Valid {
+			item.ExpiresAt = &expiresAt.Time
+		}
+
+		items = append(items, item)
+	}
+
+	return items
+}

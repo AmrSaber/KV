@@ -1,0 +1,10 @@
+package services
+
+import "time"
+
+type ListItem struct {
+	Key       string     `json:"key" yaml:"key"`
+	Value     string     `json:"value,omitempty" yaml:"value,omitempty"`
+	ExpiresAt *time.Time `json:"expiresAt,omitempty" yaml:"expires-at,omitempty"`
+	Timestamp time.Time  `json:"timestamp" yaml:"timestamp"`
+}
