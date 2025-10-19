@@ -8,18 +8,11 @@ import (
 	"github.com/AmrSaber/kv/src/common"
 )
 
-func GetValue(tx *sql.Tx, key string) (*string, *time.Time) {
-	if tx == nil {
-		var value *string
-		var expiresAt *time.Time
-		common.RunTx(func(tx *sql.Tx) { value, expiresAt = GetValue(tx, key) })
-		return value, expiresAt
-	}
-
+func GetValue(key string) (*string, *time.Time) {
 	var value sql.NullString
 	var expiresAt sql.NullTime
 
-	err := tx.QueryRow("SELECT value, expires_at FROM store WHERE key = ? AND is_latest = 1", key).Scan(&value, &expiresAt)
+	err := common.GlobalTx.QueryRow("SELECT value, expires_at FROM store WHERE key = ? AND is_latest = 1", key).Scan(&value, &expiresAt)
 	if err != sql.ErrNoRows {
 		common.FailOn(err)
 	}
@@ -46,13 +39,7 @@ const (
 	MatchDeleted
 )
 
-func ListItems(tx *sql.Tx, prefix string, matchType MatchType) []KVItem {
-	if tx == nil {
-		var items []KVItem
-		common.RunTx(func(tx *sql.Tx) { items = ListItems(tx, prefix, matchType) })
-		return items
-	}
-
+func ListItems(prefix string, matchType MatchType) []KVItem {
 	query := `
 		SELECT key, value, expires_at, timestamp
 		FROM store
@@ -69,14 +56,14 @@ func ListItems(tx *sql.Tx, prefix string, matchType MatchType) []KVItem {
 		panic(fmt.Sprintf("Match type %q is not supported", matchType))
 	}
 
-	rows, err := tx.Query(query, prefix)
+	rows, err := common.GlobalTx.Query(query, prefix)
 	common.FailOn(err)
 
 	return parseKVItems(rows)
 }
 
-func ListKeys(tx *sql.Tx, prefix string, matchType MatchType) []string {
-	items := ListItems(tx, prefix, matchType)
+func ListKeys(prefix string, matchType MatchType) []string {
+	items := ListItems(prefix, matchType)
 
 	keys := make([]string, 0, len(items))
 	for _, item := range items {
@@ -86,14 +73,8 @@ func ListKeys(tx *sql.Tx, prefix string, matchType MatchType) []string {
 	return keys
 }
 
-func ListKeyHistory(tx *sql.Tx, key string) []KVItem {
-	if tx == nil {
-		var items []KVItem
-		common.RunTx(func(tx *sql.Tx) { items = ListKeyHistory(tx, key) })
-		return items
-	}
-
-	rows, err := tx.Query(`
+func ListKeyHistory(key string) []KVItem {
+	rows, err := common.GlobalTx.Query(`
 		SELECT key, value, expires_at, timestamp
 		FROM store
 		WHERE key = ?
@@ -105,15 +86,9 @@ func ListKeyHistory(tx *sql.Tx, key string) []KVItem {
 	return parseKVItems(rows)
 }
 
-func GetHistoryItem(tx *sql.Tx, key string, steps int) KVItem {
-	if tx == nil {
-		var item KVItem
-		common.RunTx(func(tx *sql.Tx) { item = GetHistoryItem(tx, key, steps) })
-		return item
-	}
-
+func GetHistoryItem(key string, steps int) KVItem {
 	var item KVItem
-	err := tx.QueryRow(`
+	err := common.GlobalTx.QueryRow(`
 		SELECT key, value, expires_at, timestamp
 		FROM store
 		WHERE key = ?

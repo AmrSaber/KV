@@ -32,7 +32,7 @@ var ttlCmd = &cobra.Command{
 		var value *string
 		var expiresAt *time.Time
 
-		value, expiresAt = services.GetValue(nil, key)
+		value, expiresAt = services.GetValue(key)
 
 		if expiresAt == nil {
 			if value != nil {

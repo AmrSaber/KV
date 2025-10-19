@@ -16,10 +16,14 @@ var rootCmd = &cobra.Command{
 	Short: "Your key-value personal store for the CLI",
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		common.Quiet(rootFlags.quiet)
-		services.CleanUpDB(nil)
+		common.StartGlobalTransaction()
+
+		services.CleanUpDB()
 	},
 	PersistentPostRun: func(cmd *cobra.Command, args []string) {
-		services.CleanUpDB(nil)
+		services.CleanUpDB()
+
+		common.GlobalTx.Commit()
 	},
 }
 
@@ -28,6 +32,10 @@ var rootCmd = &cobra.Command{
 func Execute() {
 	err := rootCmd.Execute()
 	if err != nil {
+		if common.GlobalTx != nil {
+			common.GlobalTx.Rollback()
+		}
+
 		common.Error("%v", err)
 		os.Exit(1)
 	}

@@ -36,7 +36,7 @@ var historyListCmd = &cobra.Command{
 
 	Run: func(cmd *cobra.Command, args []string) {
 		key := args[0]
-		kvItems := services.ListKeyHistory(nil, key)
+		kvItems := services.ListKeyHistory(key)
 
 		type IndexedItem struct {
 			Index           int `json:"index,omitempty" yaml:"index,omitempty"`

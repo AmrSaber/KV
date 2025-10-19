@@ -2,25 +2,18 @@
 package services
 
 import (
-	"database/sql"
-
 	"github.com/AmrSaber/kv/src/common"
 )
 
 // CleanUpDB clears expired values, deletes old history, and prunes old cleared values
-func CleanUpDB(tx *sql.Tx) {
-	if tx == nil {
-		common.RunTx(CleanUpDB)
-		return
-	}
-
-	clearExpiredValues(tx)
-	deleteOldHistory(tx)
-	pruneOldClearedValues(tx)
+func CleanUpDB() {
+	clearExpiredValues()
+	deleteOldHistory()
+	pruneOldClearedValues()
 }
 
-func clearExpiredValues(tx *sql.Tx) {
-	rows, err := tx.Query(`
+func clearExpiredValues() {
+	rows, err := common.GlobalTx.Query(`
 		SELECT key
 		FROM store
 		WHERE
@@ -36,14 +29,14 @@ func clearExpiredValues(tx *sql.Tx) {
 		err = rows.Scan(&key)
 		common.FailOn(err)
 
-		SetValue(tx, key, "", nil)
+		SetValue(key, "", nil)
 	}
 }
 
-func deleteOldHistory(tx *sql.Tx) {
+func deleteOldHistory() {
 	config := common.ReadConfig()
 
-	_, err := tx.Exec(`
+	_, err := common.GlobalTx.Exec(`
 		DELETE FROM store
 		WHERE id IN (
 			SELECT id
@@ -60,10 +53,10 @@ func deleteOldHistory(tx *sql.Tx) {
 	common.FailOn(err)
 }
 
-func pruneOldClearedValues(tx *sql.Tx) {
+func pruneOldClearedValues() {
 	config := common.ReadConfig()
 
-	rows, err := tx.Query(`
+	rows, err := common.GlobalTx.Query(`
 		SELECT key
 		FROM store
 		WHERE
@@ -80,6 +73,6 @@ func pruneOldClearedValues(tx *sql.Tx) {
 		err = rows.Scan(&key)
 		common.FailOn(err)
 
-		PruneKey(tx, key)
+		PruneKey(key)
 	}
 }

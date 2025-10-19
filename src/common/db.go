@@ -9,6 +9,8 @@ import (
 	_ "modernc.org/sqlite"
 )
 
+var GlobalTx *sql.Tx
+
 var migrations = []string{
 	`PRAGMA journal_mode=WAL`,
 	`
@@ -25,7 +27,11 @@ var migrations = []string{
 	`CREATE INDEX IF NOT EXISTS idx_store_latest_expire ON store(is_latest, expires_at);`,
 }
 
-func GetDB() *sql.DB {
+func StartGlobalTransaction() {
+	if GlobalTx != nil {
+		panic("Global transaction already started")
+	}
+
 	dbPath := getDBPath()
 	os.MkdirAll(path.Dir(dbPath), os.ModeDir|os.ModePerm)
 
@@ -37,18 +43,7 @@ func GetDB() *sql.DB {
 		FailOn(err)
 	}
 
-	return db
-}
-
-func RunTx(transactionFunc func(tx *sql.Tx)) {
-	db := GetDB()
-	tx, err := db.Begin()
-	FailOn(err)
-	defer tx.Rollback()
-
-	transactionFunc(tx)
-
-	err = tx.Commit()
+	GlobalTx, err = db.Begin()
 	FailOn(err)
 }
 

@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"database/sql"
 	"os"
 	"time"
 
@@ -40,20 +39,18 @@ var expireCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		key := args[0]
 
-		common.RunTx(func(tx *sql.Tx) {
-			value, _ := services.GetValue(tx, key)
-			if value == nil || *value == "" {
-				common.Error("Key %q does not exist", key)
-				os.Exit(1)
-			}
+		value, _ := services.GetValue(key)
+		if value == nil || *value == "" {
+			common.Error("Key %q does not exist", key)
+			os.Exit(1)
+		}
 
-			if expireFlags.never {
-				services.SetValue(tx, key, *value, nil)
-			} else {
-				expiresAt := time.Now().Add(expireFlags.after)
-				services.SetValue(tx, key, *value, &expiresAt)
-			}
-		})
+		if expireFlags.never {
+			services.SetValue(key, *value, nil)
+		} else {
+			expiresAt := time.Now().Add(expireFlags.after)
+			services.SetValue(key, *value, &expiresAt)
+		}
 	},
 }
 

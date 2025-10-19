@@ -50,7 +50,7 @@ var listCmd = &cobra.Command{
 			listFlags.noValues = true
 		}
 
-		items := services.ListItems(nil, prefix, matchType)
+		items := services.ListItems(prefix, matchType)
 
 		// Sort items by key
 		sort.Slice(items, func(i, j int) bool {

@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"database/sql"
 	"os"
 
 	"github.com/AmrSaber/kv/src/common"
@@ -30,32 +29,28 @@ var deleteCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		key := args[0]
 		if deleteFlags.prefix {
-			common.RunTx(func(tx *sql.Tx) {
-				keys := services.ListKeys(tx, key, services.MatchExisting)
-				for _, key := range keys {
-					services.SetValue(tx, key, "", nil)
+			keys := services.ListKeys(key, services.MatchExisting)
+			for _, key := range keys {
+				services.SetValue(key, "", nil)
 
-					if deleteFlags.prune {
-						services.PruneKey(tx, key)
-					}
+				if deleteFlags.prune {
+					services.PruneKey(key)
 				}
-			})
+			}
 
 			return
 		}
 
-		common.RunTx(func(tx *sql.Tx) {
-			if value, _ := services.GetValue(tx, key); value == nil || *value == "" {
-				common.Error("Key %q does not exist", key)
-				os.Exit(1)
-			}
+		if value, _ := services.GetValue(key); value == nil || *value == "" {
+			common.Error("Key %q does not exist", key)
+			os.Exit(1)
+		}
 
-			services.SetValue(tx, key, "", nil)
+		services.SetValue(key, "", nil)
 
-			if deleteFlags.prune {
-				services.PruneKey(tx, key)
-			}
-		})
+		if deleteFlags.prune {
+			services.PruneKey(key)
+		}
 	},
 }
 

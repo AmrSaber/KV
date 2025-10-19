@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"database/sql"
 	"os"
 
 	"github.com/AmrSaber/kv/src/common"
@@ -41,12 +40,10 @@ var historyRevertCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		common.RunTx(func(tx *sql.Tx) {
-			historyItem := services.GetHistoryItem(nil, key, historyRevertFlags.steps)
-			services.SetValue(tx, key, historyItem.Value, nil)
+		historyItem := services.GetHistoryItem(key, historyRevertFlags.steps)
+		services.SetValue(key, historyItem.Value, nil)
 
-			common.Stdout.Println(historyItem.Value)
-		})
+		common.Stdout.Println(historyItem.Value)
 	},
 }
 

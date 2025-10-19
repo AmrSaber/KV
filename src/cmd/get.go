@@ -22,7 +22,7 @@ var getCmd = &cobra.Command{
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		key := args[0]
-		value, _ := services.GetValue(nil, key)
+		value, _ := services.GetValue(key)
 
 		if value != nil && *value != "" {
 			common.Stdout.Println(*value)

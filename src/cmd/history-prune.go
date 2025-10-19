@@ -52,11 +52,11 @@ var historyPruneCmd = &cobra.Command{
 		}
 
 		if historyPruneFlags.all || historyPruneFlags.prefix {
-			services.ClearAllKeysHistory(nil, key)
+			services.ClearAllKeysHistory(key)
 			return
 		}
 
-		services.ClearKeyHistory(nil, key)
+		services.ClearKeyHistory(key)
 	},
 }
 

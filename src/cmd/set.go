@@ -59,7 +59,7 @@ var setCmd = &cobra.Command{
 			expiresAt = nil
 		}
 
-		services.SetValue(nil, key, value, expiresAt)
+		services.SetValue(key, value, expiresAt)
 	},
 }
 
