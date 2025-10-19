@@ -24,3 +24,22 @@ func ClearKeyHistory(tx *sql.Tx, key string) {
 
 	common.FailOn(err)
 }
+
+func ClearAllKeysHistory(tx *sql.Tx, prefix string) {
+	if tx == nil {
+		common.RunTx(func(tx *sql.Tx) {
+			ClearAllKeysHistory(tx, prefix)
+		})
+		return
+	}
+
+	_, err := tx.Exec(
+		`
+			DELETE FROM store
+			WHERE key LIKE ? || '%' AND (is_latest = 0 OR value = '')
+		`,
+		prefix,
+	)
+
+	common.FailOn(err)
+}
