@@ -97,12 +97,34 @@ func ListKeyHistory(tx *sql.Tx, key string) []KVItem {
 		SELECT key, value, expires_at, timestamp
 		FROM store
 		WHERE key = ?
-		ORDER BY timestamp ASC`,
+		ORDER BY id ASC`,
 		key,
 	)
 	common.FailOn(err)
 
 	return parseKVItems(rows)
+}
+
+func GetHistoryItem(tx *sql.Tx, key string, steps int) KVItem {
+	if tx == nil {
+		var item KVItem
+		common.RunTx(func(tx *sql.Tx) { item = GetHistoryItem(tx, key, steps) })
+		return item
+	}
+
+	var item KVItem
+	err := tx.QueryRow(`
+		SELECT key, value, expires_at, timestamp
+		FROM store
+		WHERE key = ?
+		ORDER BY id DESC
+		LIMIT ?, 1`,
+		key,
+		steps,
+	).Scan(&item.Key, &item.Value, &item.ExpiresAt, &item.Timestamp)
+	common.FailOn(err)
+
+	return item
 }
 
 func parseKVItems(rows *sql.Rows) []KVItem {

@@ -49,7 +49,7 @@ func deleteOldHistory(tx *sql.Tx) {
 			SELECT id
 			FROM (
 				SELECT id, 
-					ROW_NUMBER() OVER (PARTITION BY key ORDER BY timestamp DESC) as rn
+					ROW_NUMBER() OVER (PARTITION BY key ORDER BY id DESC) as rn
 				FROM store
 			)
 			WHERE rn > ?

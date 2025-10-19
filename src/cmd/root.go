@@ -18,6 +18,9 @@ var rootCmd = &cobra.Command{
 		common.Quiet(rootFlags.quiet)
 		services.CleanUpDB(nil)
 	},
+	PersistentPostRun: func(cmd *cobra.Command, args []string) {
+		services.CleanUpDB(nil)
+	},
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -25,6 +28,7 @@ var rootCmd = &cobra.Command{
 func Execute() {
 	err := rootCmd.Execute()
 	if err != nil {
+		common.Error("%v", err)
 		os.Exit(1)
 	}
 }
