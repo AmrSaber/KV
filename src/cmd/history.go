@@ -5,8 +5,9 @@ import (
 )
 
 var historyCmd = &cobra.Command{
-	Use:   "history [command]",
-	Short: "Histroy-related commands",
+	Use:     "history [command]",
+	Aliases: []string{"h"},
+	Short:   "Histroy-related commands",
 }
 
 func init() {

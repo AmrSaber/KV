@@ -72,22 +72,7 @@ func ListItems(tx *sql.Tx, prefix string, matchType MatchType) []KVItem {
 	rows, err := tx.Query(query, prefix)
 	common.FailOn(err)
 
-	var items []KVItem
-	for rows.Next() {
-		var item KVItem
-		var expiresAt sql.NullTime
-
-		err = rows.Scan(&item.Key, &item.Value, &expiresAt, &item.Timestamp)
-		common.FailOn(err)
-
-		if expiresAt.Valid {
-			item.ExpiresAt = &expiresAt.Time
-		}
-
-		items = append(items, item)
-	}
-
-	return items
+	return parseKVItems(rows)
 }
 
 func ListKeys(tx *sql.Tx, prefix string, matchType MatchType) []string {
@@ -99,4 +84,42 @@ func ListKeys(tx *sql.Tx, prefix string, matchType MatchType) []string {
 	}
 
 	return keys
+}
+
+func ListKeyHistory(tx *sql.Tx, key string) []KVItem {
+	if tx == nil {
+		var items []KVItem
+		common.RunTx(func(tx *sql.Tx) { items = ListKeyHistory(tx, key) })
+		return items
+	}
+
+	rows, err := tx.Query(`
+		SELECT key, value, expires_at, timestamp
+		FROM store
+		WHERE key = ?
+		ORDER BY timestamp ASC`,
+		key,
+	)
+	common.FailOn(err)
+
+	return parseKVItems(rows)
+}
+
+func parseKVItems(rows *sql.Rows) []KVItem {
+	var items []KVItem
+	for rows.Next() {
+		var item KVItem
+		var expiresAt sql.NullTime
+
+		err := rows.Scan(&item.Key, &item.Value, &expiresAt, &item.Timestamp)
+		common.FailOn(err)
+
+		if expiresAt.Valid {
+			item.ExpiresAt = &expiresAt.Time
+		}
+
+		items = append(items, item)
+	}
+
+	return items
 }
