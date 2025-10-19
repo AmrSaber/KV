@@ -21,7 +21,10 @@ func Fail(message string, args ...any) {
 		GlobalTx.Rollback()
 	}
 
-	Stderr.Printf(red(message)+"\n", args...)
+	if message != "" {
+		Stderr.Printf(red(message)+"\n", args...)
+	}
+
 	os.Exit(1)
 }
 

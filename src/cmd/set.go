@@ -30,6 +30,7 @@ var setCmd = &cobra.Command{
 	`,
 	GroupID: "kv",
 	Args:    cobra.RangeArgs(1, 2),
+
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]cobra.Completion, cobra.ShellCompDirective) {
 		if len(args) != 0 {
 			return nil, cobra.ShellCompDirectiveNoFileComp
@@ -37,6 +38,7 @@ var setCmd = &cobra.Command{
 
 		return completeKeyArg(toComplete, services.MatchExisting)
 	},
+
 	Run: func(cmd *cobra.Command, args []string) {
 		key := args[0]
 		value := ""
