@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"os"
-
 	"github.com/AmrSaber/kv/src/common"
 	"github.com/AmrSaber/kv/src/services"
 	"github.com/spf13/cobra"
@@ -27,8 +25,7 @@ var getCmd = &cobra.Command{
 		if value != nil && *value != "" {
 			common.Stdout.Println(*value)
 		} else {
-			common.Error("Key %q does not exist", key)
-			os.Exit(1)
+			common.Fail("Key %q does not exist", key)
 		}
 	},
 }

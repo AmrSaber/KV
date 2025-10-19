@@ -16,29 +16,26 @@ var rootCmd = &cobra.Command{
 	Short: "Your key-value personal store for the CLI",
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		common.Quiet(rootFlags.quiet)
-		common.StartGlobalTransaction()
-
-		services.CleanUpDB()
-	},
-	PersistentPostRun: func(cmd *cobra.Command, args []string) {
-		services.CleanUpDB()
-
-		common.GlobalTx.Commit()
 	},
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
+	common.StartGlobalTransaction()
+	services.CleanUpDB()
+
 	err := rootCmd.Execute()
 	if err != nil {
 		if common.GlobalTx != nil {
 			common.GlobalTx.Rollback()
 		}
 
-		common.Error("%v", err)
 		os.Exit(1)
 	}
+
+	services.CleanUpDB()
+	common.GlobalTx.Commit()
 }
 
 func init() {

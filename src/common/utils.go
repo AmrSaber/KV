@@ -1,12 +1,28 @@
 // Package common for all common functionality and utilities
 package common
 
-import "time"
+import (
+	"os"
+	"time"
+)
 
 func FailOn(err error) {
 	if err != nil {
+		if GlobalTx != nil {
+			GlobalTx.Rollback()
+		}
+
 		panic(err)
 	}
+}
+
+func Fail(message string, args ...any) {
+	if GlobalTx != nil {
+		GlobalTx.Rollback()
+	}
+
+	Stderr.Printf(red(message)+"\n", args...)
+	os.Exit(1)
 }
 
 func EqualTimePtrs(t1, t2 *time.Time) bool {

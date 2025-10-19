@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"os"
 	"time"
 
 	"github.com/AmrSaber/kv/src/common"
@@ -36,12 +35,10 @@ var ttlCmd = &cobra.Command{
 
 		if expiresAt == nil {
 			if value != nil {
-				common.Error("Key %q does not exipre", key)
+				common.Fail("Key %q does not exipre", key)
 			} else {
-				common.Error("Key %q does not exist", key)
+				common.Fail("Key %q does not exist", key)
 			}
-
-			os.Exit(1)
 		}
 
 		if ttlFlags.seconds {

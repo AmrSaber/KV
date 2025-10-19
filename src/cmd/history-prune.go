@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"os"
-
 	"github.com/AmrSaber/kv/src/common"
 	"github.com/AmrSaber/kv/src/services"
 	"github.com/spf13/cobra"
@@ -37,18 +35,15 @@ var historyPruneCmd = &cobra.Command{
 		if !historyPruneFlags.all {
 			if len(args) == 0 {
 				if historyPruneFlags.prefix {
-					common.Error("Prefix must be provided")
+					common.Fail("Prefix must be provided")
 				} else {
-					common.Error("Key must be provided")
+					common.Fail("Key must be provided")
 				}
-
-				os.Exit(1)
 			}
 
 			key = args[0]
 		} else if len(args) > 0 {
-			common.Error("Cannot have an argument with --all")
-			os.Exit(1)
+			common.Fail("Cannot have an argument with --all")
 		}
 
 		if historyPruneFlags.all || historyPruneFlags.prefix {

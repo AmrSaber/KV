@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"os"
 	"time"
 
 	"github.com/AmrSaber/kv/src/common"
@@ -41,8 +40,7 @@ var expireCmd = &cobra.Command{
 
 		value, _ := services.GetValue(key)
 		if value == nil || *value == "" {
-			common.Error("Key %q does not exist", key)
-			os.Exit(1)
+			common.Fail("Key %q does not exist", key)
 		}
 
 		if expireFlags.never {

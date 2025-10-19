@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"os"
-
 	"github.com/AmrSaber/kv/src/common"
 	"github.com/AmrSaber/kv/src/services"
 	"github.com/spf13/cobra"
@@ -42,8 +40,7 @@ var deleteCmd = &cobra.Command{
 		}
 
 		if value, _ := services.GetValue(key); value == nil || *value == "" {
-			common.Error("Key %q does not exist", key)
-			os.Exit(1)
+			common.Fail("Key %q does not exist", key)
 		}
 
 		services.SetValue(key, "", nil)

@@ -13,6 +13,7 @@ var GlobalTx *sql.Tx
 
 var migrations = []string{
 	`PRAGMA journal_mode=WAL`,
+	`PRAGMA busy_timeout = 5000`,
 	`
 	CREATE TABLE IF NOT EXISTS store (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,

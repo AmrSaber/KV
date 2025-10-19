@@ -31,7 +31,3 @@ func Quiet(enable bool) {
 func Warn(msg string) {
 	Stderr.Println(yellow(msg))
 }
-
-func Error(msg string, args ...any) {
-	Stderr.Printf(red(msg)+"\n", args...)
-}

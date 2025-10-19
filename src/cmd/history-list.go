@@ -127,8 +127,7 @@ var historyListCmd = &cobra.Command{
 			t.SetStyle(table.StyleLight)
 			t.Render()
 		default:
-			common.Error("Unsupported format %q", historyListFlags.output)
-			os.Exit(1)
+			common.Fail("Unsupported format %q", historyListFlags.output)
 		}
 	},
 }

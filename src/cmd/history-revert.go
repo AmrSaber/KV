@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"os"
-
 	"github.com/AmrSaber/kv/src/common"
 	"github.com/AmrSaber/kv/src/services"
 	"github.com/spf13/cobra"
@@ -36,8 +34,7 @@ var historyRevertCmd = &cobra.Command{
 		key := args[0]
 
 		if historyRevertFlags.steps < 1 {
-			common.Error("steps must be greater than 0, got %v", historyRevertFlags.steps)
-			os.Exit(1)
+			common.Fail("steps must be greater than 0, got %v", historyRevertFlags.steps)
 		}
 
 		historyItem := services.GetHistoryItem(key, historyRevertFlags.steps)
