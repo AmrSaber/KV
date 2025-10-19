@@ -12,7 +12,7 @@ import (
 
 var expireFlags = struct {
 	after time.Duration
-	at    time.Time
+	never bool
 }{}
 
 var expireCmd = &cobra.Command{
@@ -20,7 +20,8 @@ var expireCmd = &cobra.Command{
 	Aliases: []string{"ex", "exp"},
 	Short:   "Set key expiration",
 	Long: `
-	Sets expiration for the given key. You must use --after to specify expiration time.
+	Sets expiration for the given key.
+	You must use --after to specify expiration time, or use --never to remove any expiration from the key.
 
 	For --after, acceptable durations suffixes are: s (second), m (minute), h (hour).
 	Example durations: 1h, 30m, 10s, 2h3m4s
@@ -39,8 +40,6 @@ var expireCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		key := args[0]
 
-		expiresAt := time.Now().Add(expireFlags.after)
-
 		common.RunTx(func(tx *sql.Tx) {
 			value, _ := services.GetValue(tx, key)
 			if value == nil || *value == "" {
@@ -48,7 +47,12 @@ var expireCmd = &cobra.Command{
 				os.Exit(1)
 			}
 
-			services.SetValue(tx, key, *value, &expiresAt)
+			if expireFlags.never {
+				services.SetValue(tx, key, *value, nil)
+			} else {
+				expiresAt := time.Now().Add(expireFlags.after)
+				services.SetValue(tx, key, *value, &expiresAt)
+			}
 		})
 	},
 }
@@ -57,5 +61,8 @@ func init() {
 	rootCmd.AddCommand(expireCmd)
 
 	expireCmd.Flags().DurationVar(&expireFlags.after, "after", 0, "Expires this value after given duration.")
-	expireCmd.MarkFlagRequired("after")
+	expireCmd.Flags().BoolVar(&expireFlags.never, "never", false, "Remove any expiration from the key.")
+
+	expireCmd.MarkFlagsMutuallyExclusive("never", "after")
+	expireCmd.MarkFlagsOneRequired("never", "after")
 }

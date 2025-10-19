@@ -53,6 +53,11 @@ var listCmd = &cobra.Command{
 			}
 		}
 
+		hasExpires := false
+		for _, item := range items {
+			hasExpires = hasExpires || (item.ExpiresAt != nil)
+		}
+
 		switch listFlags.output {
 		case "yaml":
 			output, _ := yaml.Marshal(items)
@@ -64,9 +69,18 @@ var listCmd = &cobra.Command{
 			t := table.NewWriter()
 			t.SetOutputMirror(os.Stdout)
 
-			header := []any{"Key", "Value", "Timestamp", "Expires At"}
-			if listFlags.noValues {
-				header = append(header[0:1], header[2:]...)
+			displayValues := !listFlags.noValues
+
+			header := []any{"Key"}
+
+			if displayValues {
+				header = append(header, "Value")
+			}
+
+			header = append(header, "Timestamp")
+
+			if hasExpires {
+				header = append(header, "Expires At")
 			}
 
 			t.AppendHeader(header)
@@ -77,15 +91,16 @@ var listCmd = &cobra.Command{
 					expiresAt = item.ExpiresAt.Local().Format(time.DateTime)
 				}
 
-				row := []any{
-					color.New(color.FgBlue).Sprint(item.Key),
-					item.Value,
-					color.New(color.FgGreen).Sprint(item.Timestamp.Local().Format(time.DateTime)),
-					color.New(color.FgGreen).Sprint(expiresAt),
+				row := []any{color.New(color.FgBlue).Sprint(item.Key)}
+
+				if displayValues {
+					row = append(row, item.Value)
 				}
 
-				if listFlags.noValues {
-					row = append(row[0:1], row[2:]...)
+				row = append(row, color.New(color.FgGreen).Sprint(item.Timestamp.Local().Format(time.DateTime)))
+
+				if hasExpires {
+					row = append(row, color.New(color.FgGreen).Sprint(expiresAt))
 				}
 
 				t.AppendRow(row)
