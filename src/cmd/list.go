@@ -16,6 +16,7 @@ import (
 )
 
 var listFlags = struct {
+	deleted  bool
 	noValues bool
 	output   string
 }{}
@@ -31,7 +32,11 @@ var listCmd = &cobra.Command{
 			return nil, cobra.ShellCompDirectiveNoFileComp
 		}
 
-		return completeKeyArg(cmd, args, toComplete)
+		if listFlags.deleted {
+			return completeKeyArg(toComplete, services.MatchDeleted)
+		}
+
+		return completeKeyArg(toComplete, services.MatchExisting)
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		var prefix string
@@ -39,7 +44,13 @@ var listCmd = &cobra.Command{
 			prefix = args[0]
 		}
 
-		items := services.ListItems(nil, prefix)
+		matchType := services.MatchExisting
+		if listFlags.deleted {
+			matchType = services.MatchDeleted
+			listFlags.noValues = true
+		}
+
+		items := services.ListItems(nil, prefix, matchType)
 
 		// Sort items by key
 		sort.Slice(items, func(i, j int) bool {
@@ -119,6 +130,7 @@ func init() {
 	rootCmd.AddCommand(listCmd)
 
 	listCmd.Flags().BoolVarP(&listFlags.noValues, "no-values", "v", false, "Hide values")
+	listCmd.Flags().BoolVarP(&listFlags.deleted, "deleted", "d", false, "List deleted keys")
 	listCmd.Flags().StringVarP(&listFlags.output, "output", "o", "table", "Print format, options: json, yaml, table")
 	listCmd.RegisterFlagCompletionFunc(
 		"output",

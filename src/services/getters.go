@@ -2,6 +2,7 @@ package services
 
 import (
 	"database/sql"
+	"fmt"
 	"time"
 
 	"github.com/AmrSaber/kv/src/common"
@@ -37,43 +38,38 @@ func GetValue(tx *sql.Tx, key string) (*string, *time.Time) {
 	return retValue, retExpiresAt
 }
 
-func MatchExistingKeysByPrefix(tx *sql.Tx, prefix string) []string {
-	if tx == nil {
-		var keys []string
-		common.RunTx(func(tx *sql.Tx) { keys = MatchExistingKeysByPrefix(tx, prefix) })
-		return keys
-	}
+type MatchType int
 
-	rows, err := tx.Query("SELECT key FROM store WHERE key LIKE ? || '%' AND is_latest = 1 AND value != ''", prefix)
-	common.FailOn(err)
+const (
+	MatchAll MatchType = iota
+	MatchExisting
+	MatchDeleted
+)
 
-	var keys []string
-	for rows.Next() {
-		var key string
-		err = rows.Scan(&key)
-		common.FailOn(err)
-
-		keys = append(keys, key)
-	}
-
-	return keys
-}
-
-func ListItems(tx *sql.Tx, prefix string) []KVItem {
+func ListItems(tx *sql.Tx, prefix string, matchType MatchType) []KVItem {
 	if tx == nil {
 		var items []KVItem
-		common.RunTx(func(tx *sql.Tx) { items = ListItems(tx, prefix) })
+		common.RunTx(func(tx *sql.Tx) { items = ListItems(tx, prefix, matchType) })
 		return items
 	}
 
-	rows, err := tx.Query(`
+	query := `
 		SELECT key, value, expires_at, timestamp
 		FROM store
-		WHERE key LIKE ? || '%' AND is_latest = 1 AND value != ''
-	`,
-		prefix,
-	)
+		WHERE key LIKE ? || '%' AND is_latest = 1
+	`
+	switch matchType {
+	case MatchExisting:
+		query += " AND value != ''"
+	case MatchDeleted:
+		query += " AND value = ''"
+	case MatchAll:
+		// Do nothing
+	default:
+		panic(fmt.Sprintf("Match type %q is not supported", matchType))
+	}
 
+	rows, err := tx.Query(query, prefix)
 	common.FailOn(err)
 
 	var items []KVItem
@@ -92,4 +88,15 @@ func ListItems(tx *sql.Tx, prefix string) []KVItem {
 	}
 
 	return items
+}
+
+func ListKeys(tx *sql.Tx, prefix string, matchType MatchType) []string {
+	items := ListItems(tx, prefix, matchType)
+
+	keys := make([]string, 0, len(items))
+	for _, item := range items {
+		keys = append(keys, item.Key)
+	}
+
+	return keys
 }

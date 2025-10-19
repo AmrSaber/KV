@@ -16,7 +16,7 @@ var deleteFlags = struct {
 
 var deleteCmd = &cobra.Command{
 	Use:     "delete <key|prefix>",
-	Aliases: []string{"del"},
+	Aliases: []string{"del", "rm"},
 	Short:   "Delete key or keys prefix",
 	GroupID: "kv",
 	Args:    cobra.ExactArgs(1),
@@ -25,13 +25,13 @@ var deleteCmd = &cobra.Command{
 			return nil, cobra.ShellCompDirectiveNoFileComp
 		}
 
-		return completeKeyArg(cmd, args, toComplete)
+		return completeKeyArg(toComplete, services.MatchExisting)
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		key := args[0]
 		if deleteFlags.prefix {
 			common.RunTx(func(tx *sql.Tx) {
-				keys := services.MatchExistingKeysByPrefix(tx, key)
+				keys := services.ListKeys(tx, key, services.MatchExisting)
 				for _, key := range keys {
 					services.SetValue(tx, key, "", nil)
 

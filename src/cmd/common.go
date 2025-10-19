@@ -5,7 +5,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func completeKeyArg(_ *cobra.Command, _ []string, toComplete string) ([]cobra.Completion, cobra.ShellCompDirective) {
-	matchingKeys := services.MatchExistingKeysByPrefix(nil, toComplete)
+func completeKeyArg(toComplete string, matchType services.MatchType) ([]cobra.Completion, cobra.ShellCompDirective) {
+	matchingKeys := services.ListKeys(nil, toComplete, matchType)
 	return []cobra.Completion(matchingKeys), cobra.ShellCompDirectiveNoFileComp
 }

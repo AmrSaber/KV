@@ -18,7 +18,7 @@ var getCmd = &cobra.Command{
 			return nil, cobra.ShellCompDirectiveNoFileComp
 		}
 
-		return completeKeyArg(cmd, args, toComplete)
+		return completeKeyArg(toComplete, services.MatchExisting)
 	},
 	Run: func(cmd *cobra.Command, args []string) {
 		key := args[0]
