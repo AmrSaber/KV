@@ -11,10 +11,25 @@ var deleteFlags = struct {
 	prune  bool
 }{}
 
+// deleteCmd represents the delete command
 var deleteCmd = &cobra.Command{
 	Use:     "delete <key|prefix>",
 	Aliases: []string{"del", "rm"},
-	Short:   "Delete key or keys prefix",
+	Short:   "Delete a key or keys matching a prefix",
+	Long: `Delete a key or multiple keys matching a prefix.
+
+By default, deletion is soft (keeps history). Use --prune to permanently delete including history.`,
+	Example: `  # Delete a single key (soft delete, keeps history)
+  kv delete api-key
+
+  # Permanently delete a key and its history
+  kv delete old-key --prune
+
+  # Delete all keys with a prefix
+  kv delete temp --prefix
+
+  # Permanently delete all keys with a prefix
+  kv delete cache --prefix --prune`,
 	GroupID: "kv",
 	Args:    cobra.ExactArgs(1),
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]cobra.Completion, cobra.ShellCompDirective) {

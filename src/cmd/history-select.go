@@ -14,10 +14,19 @@ import (
 
 var historySelectFlags = struct{ noValues bool }{}
 
+// historySelectCmd represents the history select command
 var historySelectCmd = &cobra.Command{
-	Use:   "select",
-	Short: "Interactive selection from the history of the given key",
-	Args:  cobra.ExactArgs(1),
+	Use:   "select <key>",
+	Short: "Interactively select and restore a value from history",
+	Long: `Interactively select and restore a value from the key's history using a visual selector.
+
+This provides a user-friendly way to browse and choose from previous values.`,
+	Example: `  # Interactively select from history
+  kv history select api-key
+
+  # Select from history without showing values
+  kv history select api-key --no-values`,
+	Args: cobra.ExactArgs(1),
 
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]cobra.Completion, cobra.ShellCompDirective) {
 		if historyPruneFlags.all || len(args) != 0 {

@@ -10,16 +10,24 @@ var historyRevertFlags = struct {
 	steps int
 }{}
 
+// historyRevertCmd represents the history revert command
 var historyRevertCmd = &cobra.Command{
-	Use:   "revert",
-	Short: "Revert key to an old value and prints it",
-	Long: `
-		Reverts a key to an old value and prints it.
-		By default this reverts the key 1 step back. Use --steps flag to choose the number of steps (same as index from list history command).
+	Use:   "revert <key>",
+	Short: "Revert a key to a previous value",
+	Long: `Revert a key to a previous value from its history.
 
-		When reverting, a new entry is added to the history with the latest state keeping all the old history as it is.
-		So continiously calling revert on a key will only cycle between current and last state polluting the history.
-	`,
+By default, reverts 1 step back. Use --steps to specify the number of steps (same as index from 'kv history list').
+
+Note: Reverting creates a new history entry with the reverted value, preserving all previous history.
+Calling revert multiple times without other changes will toggle between the current and previous values.`,
+	Example: `  # Revert to previous value (1 step back)
+  kv history revert api-key
+
+  # Revert 3 steps back
+  kv history revert api-key --steps 3
+
+  # Revert to a specific index from history list
+  kv history revert config --steps 5`,
 	Args: cobra.ExactArgs(1),
 
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]cobra.Completion, cobra.ShellCompDirective) {

@@ -20,11 +20,27 @@ var historyListFlags = struct {
 	reverse  bool
 }{}
 
+// historyListCmd represents the history list command
 var historyListCmd = &cobra.Command{
-	Use:     "list",
+	Use:     "list <key>",
 	Aliases: []string{"ls"},
-	Short:   "List key history",
-	Args:    cobra.ExactArgs(1),
+	Short:   "View the complete history for a key",
+	Long: `View the complete history for a key, showing all previous values and timestamps.
+
+Index 0 (displayed as "-") indicates the current/latest value.
+Higher indices represent older values.`,
+	Example: `  # View history for a key
+  kv history list api-key
+
+  # View history with JSON output
+  kv history list api-key --output json
+
+  # View history in reverse order (oldest first)
+  kv history list api-key --reverse
+
+  # View history without values
+  kv history list api-key --no-values`,
+	Args: cobra.ExactArgs(1),
 
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]cobra.Completion, cobra.ShellCompDirective) {
 		if historyPruneFlags.all || len(args) != 0 {

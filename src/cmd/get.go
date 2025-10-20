@@ -8,9 +8,21 @@ import (
 
 var getFlags = struct{ password string }{}
 
+// getCmd represents the get command
 var getCmd = &cobra.Command{
-	Use:     "get <key>",
-	Short:   "Get stored value",
+	Use:   "get <key>",
+	Short: "Retrieve the value for the specified key",
+	Long: `Retrieve the value for the specified key.
+
+If the key is encrypted, provide the password using --password flag.`,
+	Example: `  # Get a plain value
+  kv get api-key
+
+  # Get an encrypted value
+  kv get github-token --password "mypass"
+
+  # Use in a shell script
+  curl -H "Authorization: Bearer $(kv get api-key)" https://api.example.com`,
 	GroupID: "kv",
 	Args:    cobra.ExactArgs(1),
 

@@ -11,17 +11,21 @@ var historyPruneFlags = struct {
 	prefix bool
 }{}
 
+// historyPruneCmd represents the history prune command
 var historyPruneCmd = &cobra.Command{
-	Use:   "prune",
-	Short: "Clear history",
-	Long: `
-		Clears history for:
-			- A singel key provided as argument
-			- A list of keys prefixed by given argument and --prefix flag
-			- All keys
+	Use:   "prune <key|prefix>",
+	Short: "Clear history for keys while keeping current values",
+	Long: `Clear history for one or more keys while keeping their current values.
 
-		If a deleted key is targeted for pruning, it's permanently deleted.
-	`,
+If a deleted key is targeted for pruning, it will be permanently deleted.`,
+	Example: `  # Clear history for a single key
+  kv history prune api-key
+
+  # Clear history for all keys with a prefix
+  kv history prune temp --prefix
+
+  # Clear history for all keys
+  kv history prune --all`,
 	Args: cobra.MaximumNArgs(1),
 
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]cobra.Completion, cobra.ShellCompDirective) {

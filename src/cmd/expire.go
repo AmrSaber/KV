@@ -13,19 +13,29 @@ var expireFlags = struct {
 	never bool
 }{}
 
+// expireCmd represents the expire command
 var expireCmd = &cobra.Command{
 	Use:     "expire <key>",
 	Aliases: []string{"ex", "exp"},
-	Short:   "Set key expiration",
-	Long: `
-	Sets expiration for the given key.
-	You must use --after to specify expiration time, or use --never to remove any expiration from the key.
+	Short:   "Set or remove expiration for a key",
+	Long: `Set or remove expiration for a key.
 
-	For --after, acceptable durations suffixes are: s (second), m (minute), h (hour).
-	Example durations: 1h, 30m, 10s, 2h3m4s
+Use --after with duration suffixes: s (second), m (minute), h (hour)
+Example durations: 1h, 30m, 10s, 2h3m4s
 
-	Providing any negative duration expires the key immediately.
-	`,
+Use --never to remove expiration.
+Providing a negative duration expires the key immediately.`,
+	Example: `  # Set key to expire in 1 hour
+  kv expire session-token --after 1h
+
+  # Set key to expire in 30 minutes
+  kv expire temp-data --after 30m
+
+  # Remove expiration from a key
+  kv expire session-token --never
+
+  # Expire key immediately
+  kv expire old-token --after -1s`,
 	GroupID: "ttl",
 	Args:    cobra.ExactArgs(1),
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]cobra.Completion, cobra.ShellCompDirective) {

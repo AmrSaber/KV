@@ -21,10 +21,29 @@ var listFlags = struct {
 	output   string
 }{}
 
+// listCmd represents the list command
 var listCmd = &cobra.Command{
-	Use:     "list",
+	Use:     "list [prefix]",
 	Aliases: []string{"ls"},
-	Short:   "List keys, optinally matching given prefix.",
+	Short:   "List all keys, optionally matching a prefix",
+	Long: `List all keys in the store, optionally filtered by prefix.
+
+Output formats available: table (default), json, yaml
+Locked values are displayed as [Locked] in table view.`,
+	Example: `  # List all keys
+  kv list
+
+  # List keys with a specific prefix
+  kv list config
+
+  # List with JSON output
+  kv list --output json
+
+  # List keys only (hide values)
+  kv list --no-values
+
+  # List deleted keys
+  kv list --deleted`,
 	GroupID: "kv",
 	Args:    cobra.MaximumNArgs(1),
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]cobra.Completion, cobra.ShellCompDirective) {

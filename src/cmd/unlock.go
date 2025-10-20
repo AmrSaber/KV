@@ -12,14 +12,21 @@ var unlockFlags = struct {
 	password string
 }{}
 
+// unlockCmd represents the unlock command
 var unlockCmd = &cobra.Command{
-	Use:   "unlock",
-	Short: "Decrypt key(s)",
-	Long: `
-		Decrypt key(s) using given password.
+	Use:   "unlock <key|prefix>",
+	Short: "Decrypt a key or keys back to plain text",
+	Long: `Decrypt a key or multiple keys using the provided password, converting them back to plain text.
 
-		This also removes the latest record from item history and replaces it with a new one.
-	`,
+Note: This removes the latest record from history and replaces it with a plain-text one.`,
+	Example: `  # Unlock a single key
+  kv unlock api-key --password "mypass"
+
+  # Unlock all keys with a prefix
+  kv unlock secrets --prefix --password "mypass"
+
+  # Unlock all keys in the store
+  kv unlock --all --password "mypass"`,
 	GroupID: "encryption",
 	Args:    cobra.MaximumNArgs(1),
 

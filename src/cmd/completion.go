@@ -7,10 +7,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// completionCmd represents the completion command
 var completionCmd = &cobra.Command{
 	Use:   "completion [bash|zsh|fish|powershell]",
-	Short: "Generate completion script",
-	Long: fmt.Sprintf(`To load completions:
+	Short: "Generate shell completion script",
+	Long: fmt.Sprintf(`Generate shell completion script for the specified shell.
+
+Enables auto-completion for commands, flags, and key names.
+
+To load completions:
 
 Bash:
 
@@ -49,6 +54,17 @@ PowerShell:
   PS> %[1]s completion powershell > %[1]s.ps1
   # and source this file from your PowerShell profile.
 `, rootCmd.Name()),
+	Example: fmt.Sprintf(`  # Generate bash completion
+  %[1]s completion bash
+
+  # Install bash completion (Linux)
+  %[1]s completion bash > /etc/bash_completion.d/%[1]s
+
+  # Install zsh completion
+  %[1]s completion zsh > "${fpath[1]}/_%[1]s"
+
+  # Install fish completion
+  %[1]s completion fish > ~/.config/fish/completions/%[1]s.fish`, rootCmd.Name()),
 	DisableFlagsInUseLine: true,
 	ValidArgs:             []string{"bash", "zsh", "fish", "powershell"},
 	Args:                  cobra.MatchAll(cobra.ExactArgs(1), cobra.OnlyValidArgs),

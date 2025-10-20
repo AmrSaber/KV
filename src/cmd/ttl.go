@@ -13,9 +13,26 @@ var ttlFlags = struct {
 	seconds bool
 }{}
 
+// ttlCmd represents the ttl command
 var ttlCmd = &cobra.Command{
 	Use:     "ttl <key>",
-	Short:   "Get how long before the key expires",
+	Short:   "Check the remaining time before a key expires",
+	Long: `Check the remaining time before a key expires.
+
+By default, displays the time remaining with expiration date.
+Use --date to get only the expiration timestamp.
+Use --seconds to get remaining time in seconds (useful for scripts).`,
+	Example: `  # Check time remaining (human-readable with date)
+  kv ttl session-token
+  # Output: 59m56s (expires at 2025-10-20 22:29:25)
+
+  # Get only the expiration date
+  kv ttl session-token --date
+  # Output: 2025-10-20 22:29:25
+
+  # Get remaining time in seconds
+  kv ttl session-token --seconds
+  # Output: 3596`,
 	GroupID: "ttl",
 	Args:    cobra.ExactArgs(1),
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]cobra.Completion, cobra.ShellCompDirective) {

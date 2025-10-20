@@ -12,17 +12,22 @@ var lockFlags = struct {
 	password string
 }{}
 
+// lockCmd represents the lock command
 var lockCmd = &cobra.Command{
-	Use:   "lock",
-	Short: "Encrypt key(s)",
-	Long: `
-		Encrypts keys using given password.
+	Use:   "lock <key|prefix>",
+	Short: "Encrypt a key or keys with password protection",
+	Long: `Encrypt a key or multiple keys using AES-256-GCM encryption with the provided password.
 
-		This also removes the latest record from item history and replaces it with a new one
-		so that the plain value is no longer in the history.
+Note: This removes the latest record from history and replaces it with an encrypted one.
+If plain-text values exist in older history records, consider using 'kv history prune' to remove them.`,
+	Example: `  # Lock a single key
+  kv lock api-key --password "mypass"
 
-		If the plain value exists in other records of item history, you may want to prune this key.
-	`,
+  # Lock all keys with a prefix
+  kv lock secrets --prefix --password "mypass"
+
+  # Lock all keys in the store
+  kv lock --all --password "mypass"`,
 	GroupID: "encryption",
 	Args:    cobra.MaximumNArgs(1),
 

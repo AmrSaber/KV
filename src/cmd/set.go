@@ -18,16 +18,28 @@ var setFlags = struct {
 // setCmd represents the set command
 var setCmd = &cobra.Command{
 	Use:   "set <key> [value]",
-	Short: "Set value, optionally with a TTL",
-	Long: `
-	Assigned the given value to the given key. If no value is provided reads from stdin.
+	Short: "Store a value for the specified key",
+	Long: `Store a value for the specified key. If no value is provided, reads from stdin.
 
-	You can pass --expires-after flag to set the value to expire after given duration.
-	Acceptable durations suffixes are: s (second), m (minute), h (hour).
-	Example durations: 1h, 30m, 10s, 2h3m4s
+Optionally set automatic expiration using --expires-after with duration suffixes:
+  s (second), m (minute), h (hour)
+  Example durations: 1h, 30m, 10s, 2h3m4s
 
-	Providing any negative duration expires the key immediately.
-	`,
+Providing a negative duration expires the key immediately.`,
+	Example: `  # Store a simple key-value pair
+  kv set api-key "sk-1234567890"
+
+  # Store a value with automatic expiration
+  kv set session-token "abc123" --expires-after 1h
+
+  # Store encrypted value with password protection
+  kv set github-token "ghp_secret" --password "mypass"
+
+  # Store multi-line value from stdin
+  echo "line 1\nline 2" | kv set my-config
+
+  # Store JSON configuration
+  kv set app.config '{"port": 8080, "debug": true}'`,
 	GroupID: "kv",
 	Args:    cobra.RangeArgs(1, 2),
 

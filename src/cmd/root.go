@@ -13,7 +13,12 @@ var rootFlags = struct{ quiet bool }{}
 
 var rootCmd = &cobra.Command{
 	Use:   "kv",
-	Short: "Your key-value personal store for the CLI",
+	Short: "A lightweight, local key-value store for your terminal",
+	Long: `KV is a command-line key-value store with encryption, TTL, and version control.
+
+Store configuration, API keys, temporary data, and more—all in your terminal.
+Features include AES-256 encryption, automatic expiration, complete history tracking,
+and multiple output formats.`,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		common.Quiet(rootFlags.quiet)
 	},
