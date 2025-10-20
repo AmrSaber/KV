@@ -14,14 +14,11 @@ var unlockFlags = struct {
 
 var unlockCmd = &cobra.Command{
 	Use:   "unlock",
-	Short: "Encrypt key(s)",
+	Short: "Decrypt key(s)",
 	Long: `
-		Encrypts keys using given password.
+		Decrypt key(s) using given password.
 
-		This also removes the latest record from item history and replaces it with a new one
-		so that the plain value is no longer in the history.
-
-		If the plain value exists in other records of item history, you may want to prune this key.
+		This also removes the latest record from item history and replaces it with a new one.
 	`,
 	GroupID: "encryption",
 	Args:    cobra.MaximumNArgs(1),

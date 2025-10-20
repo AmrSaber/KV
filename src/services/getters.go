@@ -112,14 +112,14 @@ func ListKeyHistory(key string) []KVItem {
 func GetHistoryItem(key string, steps int) KVItem {
 	var item KVItem
 	err := common.GlobalTx.QueryRow(`
-		SELECT key, value, expires_at, timestamp
+		SELECT key, value, timestamp, is_locked
 		FROM store
 		WHERE key = ?
 		ORDER BY id DESC
 		LIMIT ?, 1`,
 		key,
 		steps,
-	).Scan(&item.Key, &item.Value, &item.ExpiresAt, &item.Timestamp)
+	).Scan(&item.Key, &item.Value, &item.Timestamp, &item.IsLocked)
 	common.FailOn(err)
 
 	return item
