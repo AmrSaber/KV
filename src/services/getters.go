@@ -31,6 +31,29 @@ func GetValue(key string) (*string, *time.Time) {
 	return retValue, retExpiresAt
 }
 
+func GetItem(key string) *KVItem {
+	var item KVItem
+	var expiresAt sql.NullTime
+
+	err := common.GlobalTx.QueryRow(`
+		SELECT value, timestamp, is_locked, expires_at
+		FROM store
+		WHERE key = ? AND is_latest = 1 AND value != ''`,
+		key,
+	).Scan(&item.Value, &item.Timestamp, &item.IsLocked, &expiresAt)
+	if err == sql.ErrNoRows {
+		return nil
+	} else {
+		common.FailOn(err)
+	}
+
+	if expiresAt.Valid {
+		item.ExpiresAt = &expiresAt.Time
+	}
+
+	return &item
+}
+
 type MatchType int
 
 const (

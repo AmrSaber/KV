@@ -23,6 +23,7 @@ var historyPruneCmd = &cobra.Command{
 		If a deleted key is targeted for pruning, it's permanently deleted.
 	`,
 	Args: cobra.MaximumNArgs(1),
+
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]cobra.Completion, cobra.ShellCompDirective) {
 		if historyPruneFlags.all || len(args) != 0 {
 			return nil, cobra.ShellCompDirectiveNoFileComp
@@ -30,6 +31,7 @@ var historyPruneCmd = &cobra.Command{
 
 		return completeKeyArg(toComplete, services.MatchAll)
 	},
+
 	Run: func(cmd *cobra.Command, args []string) {
 		var key string
 		if !historyPruneFlags.all {

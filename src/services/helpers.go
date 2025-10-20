@@ -29,7 +29,7 @@ func clearExpiredValues() {
 		err = rows.Scan(&key)
 		common.FailOn(err)
 
-		SetValue(key, "", nil)
+		SetValue(key, "", nil, false)
 	}
 }
 

@@ -37,10 +37,12 @@ var historyRevertCmd = &cobra.Command{
 			common.Fail("steps must be greater than 0, got %v", historyRevertFlags.steps)
 		}
 
-		historyItem := services.GetHistoryItem(key, historyRevertFlags.steps)
-		services.SetValue(key, historyItem.Value, nil)
+		item := services.GetHistoryItem(key, historyRevertFlags.steps)
+		services.SetValue(key, item.Value, nil, item.IsLocked)
 
-		common.Stdout.Println(historyItem.Value)
+		if !item.IsLocked {
+			common.Stdout.Println(item.Value)
+		}
 	},
 }
 

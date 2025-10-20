@@ -40,6 +40,8 @@ var historySelectCmd = &cobra.Command{
 			value := item.Value
 			if historySelectFlags.noValues {
 				value = ""
+			} else if item.IsLocked {
+				value = "[Locked]"
 			}
 
 			row := fmt.Sprintf(
@@ -65,10 +67,12 @@ var historySelectCmd = &cobra.Command{
 			common.Fail("")
 		}
 
-		value := items[selectedIndex].Value
+		selectedItem := items[selectedIndex]
 
-		services.SetValue(key, value, nil)
-		common.Stdout.Println(value)
+		services.SetValue(key, selectedItem.Value, nil, selectedItem.IsLocked)
+		if !selectedItem.IsLocked {
+			common.Stdout.Println(selectedItem)
+		}
 	},
 }
 

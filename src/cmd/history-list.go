@@ -38,6 +38,10 @@ var historyListCmd = &cobra.Command{
 		key := args[0]
 		kvItems := services.ListKeyHistory(key)
 
+		if len(kvItems) == 0 {
+			common.Fail("Key %q does not exist", key)
+		}
+
 		type IndexedItem struct {
 			Index           int `json:"index,omitempty" yaml:"index,omitempty"`
 			services.KVItem `json:",inline" yaml:",inline"`
@@ -52,6 +56,10 @@ var historyListCmd = &cobra.Command{
 
 			// Hide key since they're all for the same key
 			item.Key = ""
+
+			if item.IsLocked {
+				item.Value = "[Locked]"
+			}
 
 			historyItems = append(historyItems, item)
 		}

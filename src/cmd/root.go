@@ -42,6 +42,7 @@ func init() {
 	rootCmd.AddGroup(
 		&cobra.Group{Title: "Key-Value", ID: "kv"},
 		&cobra.Group{Title: "TTL", ID: "ttl"},
+		&cobra.Group{Title: "Encryption", ID: "encryption"},
 	)
 
 	rootCmd.PersistentFlags().BoolVarP(&rootFlags.quiet, "quiet", "q", false, "Do not print any output")

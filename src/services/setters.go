@@ -6,7 +6,7 @@ import (
 	"github.com/AmrSaber/kv/src/common"
 )
 
-func SetValue(key string, value string, expiresAt *time.Time) {
+func SetValue(key string, value string, expiresAt *time.Time, isLocked bool) {
 	// Skip write if attempting to write identical values
 	currentValue, currentExipry := GetValue(key)
 	if common.EqualStringPtrs(currentValue, &value) && common.EqualTimePtrs(currentExipry, expiresAt) {
@@ -16,9 +16,10 @@ func SetValue(key string, value string, expiresAt *time.Time) {
 	common.FailOn(err)
 
 	_, err = common.GlobalTx.Exec(
-		`INSERT INTO store (key, value, expires_at) VALUES (?, ?, ?)`,
+		`INSERT INTO store (key, value, is_locked, expires_at) VALUES (?, ?, ?, ?)`,
 		key,
 		value,
+		isLocked,
 		common.FormatTimePtr(expiresAt),
 	)
 	common.FailOn(err)
@@ -27,4 +28,25 @@ func SetValue(key string, value string, expiresAt *time.Time) {
 func PruneKey(key string) {
 	_, err := common.GlobalTx.Exec("DELETE FROM store WHERE key = ?", key)
 	common.FailOn(err)
+}
+
+func LockKey(key string, password string) {
+	item := GetItem(key)
+	if item == nil {
+		common.Fail("Key %q does not exist", key)
+	}
+
+	if item.IsLocked {
+		common.Fail("Key %q is already locked, unlock it first", key)
+	}
+
+	// Delete existing record so value is no longer in history
+	_, err := common.GlobalTx.Exec("DELETE FROM store WHERE key = ? AND is_latest = ''", key)
+	common.FailOn(err)
+
+	encryptedValue, err := common.Encrypt(item.Value, password)
+	common.FailOn(err)
+
+	// Set the new encrypted value
+	SetValue(key, encryptedValue, item.ExpiresAt, true)
 }

@@ -12,7 +12,7 @@ import (
 
 var setFlags = struct {
 	expiresAfter time.Duration
-	expiresAt    time.Time
+	password     string
 }{}
 
 // setCmd represents the set command
@@ -58,10 +58,16 @@ var setCmd = &cobra.Command{
 		}
 
 		if value == "" {
-			expiresAt = nil
+			common.Fail("No value provided")
 		}
 
-		services.SetValue(key, value, expiresAt)
+		if setFlags.password != "" {
+			var err error
+			value, err = common.Encrypt(value, setFlags.password)
+			common.FailOn(err)
+		}
+
+		services.SetValue(key, value, expiresAt, setFlags.password != "")
 	},
 }
 
@@ -69,4 +75,5 @@ func init() {
 	rootCmd.AddCommand(setCmd)
 
 	setCmd.Flags().DurationVar(&setFlags.expiresAfter, "expires-after", 0, "Expires this value after given duration.")
+	setCmd.Flags().StringVar(&setFlags.password, "password", "", "Password to lock this value")
 }

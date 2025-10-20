@@ -38,16 +38,16 @@ var expireCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		key := args[0]
 
-		value, _ := services.GetValue(key)
-		if value == nil || *value == "" {
+		item := services.GetItem(key)
+		if item == nil {
 			common.Fail("Key %q does not exist", key)
 		}
 
 		if expireFlags.never {
-			services.SetValue(key, *value, nil)
+			services.SetValue(key, item.Value, nil, item.IsLocked)
 		} else {
 			expiresAt := time.Now().Add(expireFlags.after)
-			services.SetValue(key, *value, &expiresAt)
+			services.SetValue(key, item.Value, &expiresAt, item.IsLocked)
 		}
 	},
 }

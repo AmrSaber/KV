@@ -29,7 +29,7 @@ var deleteCmd = &cobra.Command{
 		if deleteFlags.prefix {
 			keys := services.ListKeys(key, services.MatchExisting)
 			for _, key := range keys {
-				services.SetValue(key, "", nil)
+				services.SetValue(key, "", nil, false)
 
 				if deleteFlags.prune {
 					services.PruneKey(key)
@@ -43,7 +43,7 @@ var deleteCmd = &cobra.Command{
 			common.Fail("Key %q does not exist", key)
 		}
 
-		services.SetValue(key, "", nil)
+		services.SetValue(key, "", nil, false)
 
 		if deleteFlags.prune {
 			services.PruneKey(key)
