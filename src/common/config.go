@@ -29,7 +29,7 @@ func ReadConfig() Config {
 	if configBytes, err := os.ReadFile(configPath); err == nil {
 		err = yaml.Unmarshal(configBytes, &config)
 		if err != nil {
-			Warn("Invalid config json, ignoring...")
+			Warn("Invalid config YAML, ignoring...")
 		}
 	}
 

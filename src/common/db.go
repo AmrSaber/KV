@@ -25,8 +25,16 @@ var migrations = []string{
 		expires_at DATETIME DEFAULT NULL
 	);
 	`,
+	// Ensure only one latest record per key
+	`CREATE UNIQUE INDEX IF NOT EXISTS idx_store_unique_latest_key ON store(key) WHERE is_latest = 1;`,
+	// Index for listing operations with prefix matching
 	`CREATE INDEX IF NOT EXISTS idx_store_latest_key_value ON store(key, is_latest, value);`,
+	// Index for TTL cleanup queries
 	`CREATE INDEX IF NOT EXISTS idx_store_latest_expire ON store(is_latest, expires_at);`,
+	// Index for history queries ordered by timestamp
+	`CREATE INDEX IF NOT EXISTS idx_store_key_timestamp ON store(key, timestamp);`,
+	// Index for history queries ordered by id (more efficient than timestamp)
+	`CREATE INDEX IF NOT EXISTS idx_store_key_id ON store(key, id);`,
 }
 
 func StartGlobalTransaction() {

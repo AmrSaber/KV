@@ -52,7 +52,7 @@ Use --seconds to get remaining time in seconds (useful for scripts).`,
 
 		if expiresAt == nil {
 			if value != nil {
-				common.Fail("Key %q does not exipre", key)
+				common.Fail("Key %q does not expire", key)
 			} else {
 				common.Fail("Key %q does not exist", key)
 			}
