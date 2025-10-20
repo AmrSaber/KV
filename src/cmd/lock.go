@@ -66,8 +66,8 @@ var lockCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(lockCmd)
 
-	lockCmd.Flags().StringVar(&lockFlags.password, "with", "", "Encryption password")
-	lockCmd.MarkFlagRequired("with")
+	lockCmd.Flags().StringVarP(&lockFlags.password, "password", "p", "", "Encryption password")
+	lockCmd.MarkFlagRequired("password")
 
 	lockCmd.Flags().BoolVar(&lockFlags.all, "all", false, "Lock all keys")
 	lockCmd.Flags().BoolVar(&lockFlags.prefix, "prefix", false, "Lock all keys with given prefix")

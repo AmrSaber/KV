@@ -75,5 +75,5 @@ func init() {
 	rootCmd.AddCommand(setCmd)
 
 	setCmd.Flags().DurationVar(&setFlags.expiresAfter, "expires-after", 0, "Expires this value after given duration.")
-	setCmd.Flags().StringVar(&setFlags.password, "password", "", "Password to lock this value")
+	setCmd.Flags().StringVarP(&setFlags.password, "password", "p", "", "Password to lock this value")
 }

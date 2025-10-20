@@ -34,6 +34,7 @@ func LockKey(key string, password string) {
 	item := GetItem(key)
 	if item == nil {
 		common.Fail("Key %q does not exist", key)
+		return // To shut up the compiler
 	}
 
 	if item.IsLocked {
@@ -41,7 +42,7 @@ func LockKey(key string, password string) {
 	}
 
 	// Delete existing record so value is no longer in history
-	_, err := common.GlobalTx.Exec("DELETE FROM store WHERE key = ? AND is_latest = ''", key)
+	_, err := common.GlobalTx.Exec("DELETE FROM store WHERE key = ? AND is_latest = 1", key)
 	common.FailOn(err)
 
 	encryptedValue, err := common.Encrypt(item.Value, password)
@@ -49,4 +50,29 @@ func LockKey(key string, password string) {
 
 	// Set the new encrypted value
 	SetValue(key, encryptedValue, item.ExpiresAt, true)
+}
+
+func UnlockKey(key string, password string) error {
+	item := GetItem(key)
+	if item == nil {
+		common.Fail("Key %q does not exist", key)
+		return nil // To shut up the compiler
+	}
+
+	if !item.IsLocked {
+		common.Fail("Key %q is not locked", key)
+	}
+
+	// Delete existing record so value is no longer in history
+	_, err := common.GlobalTx.Exec("DELETE FROM store WHERE key = ? AND is_latest = 1", key)
+	common.FailOn(err)
+
+	decryptedValue, err := common.Decrypt(item.Value, password)
+	if err != nil {
+		return err
+	}
+
+	// Set the new encrypted value
+	SetValue(key, decryptedValue, item.ExpiresAt, false)
+	return nil
 }

@@ -50,5 +50,5 @@ var getCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(getCmd)
 
-	getCmd.Flags().StringVar(&getFlags.password, "password", "", "Password to decrypt value if it's encrypted")
+	getCmd.Flags().StringVarP(&getFlags.password, "password", "p", "", "Password to decrypt value if it's encrypted")
 }
