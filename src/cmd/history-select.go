@@ -40,8 +40,10 @@ var historySelectCmd = &cobra.Command{
 			value := item.Value
 			if historySelectFlags.noValues {
 				value = ""
-			} else if item.IsLocked {
-				value = "[Locked]"
+			}
+
+			if item.IsLocked {
+				value = color.New(color.FgRed).Sprint("[Locked]")
 			}
 
 			row := fmt.Sprintf(
