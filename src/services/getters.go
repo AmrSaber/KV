@@ -64,7 +64,7 @@ const (
 
 func ListItems(prefix string, matchType MatchType) []KVItem {
 	query := `
-		SELECT key, value, expires_at, timestamp
+		SELECT key, value, expires_at, timestamp, is_locked
 		FROM store
 		WHERE key LIKE ? || '%' AND is_latest = 1
 	`
@@ -98,7 +98,7 @@ func ListKeys(prefix string, matchType MatchType) []string {
 
 func ListKeyHistory(key string) []KVItem {
 	rows, err := common.GlobalTx.Query(`
-		SELECT key, value, expires_at, timestamp
+		SELECT key, value, expires_at, timestamp, is_locked
 		FROM store
 		WHERE key = ?
 		ORDER BY id ASC`,
@@ -131,7 +131,7 @@ func parseKVItems(rows *sql.Rows) []KVItem {
 		var item KVItem
 		var expiresAt sql.NullTime
 
-		err := rows.Scan(&item.Key, &item.Value, &expiresAt, &item.Timestamp)
+		err := rows.Scan(&item.Key, &item.Value, &expiresAt, &item.Timestamp, &item.IsLocked)
 		common.FailOn(err)
 
 		if expiresAt.Valid {
