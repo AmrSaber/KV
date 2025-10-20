@@ -58,7 +58,7 @@ var historyListCmd = &cobra.Command{
 			item.Key = ""
 
 			if item.IsLocked {
-				item.Value = "[Locked]"
+				item.Value = ""
 			}
 
 			historyItems = append(historyItems, item)
@@ -73,6 +73,11 @@ var historyListCmd = &cobra.Command{
 		hasExpires := false
 		for _, item := range historyItems {
 			hasExpires = hasExpires || (item.ExpiresAt != nil)
+		}
+
+		hasLocked := false
+		for _, item := range historyItems {
+			hasLocked = hasLocked || item.IsLocked
 		}
 
 		if historyListFlags.reverse {
@@ -91,6 +96,7 @@ var historyListCmd = &cobra.Command{
 			t.SetOutputMirror(os.Stdout)
 
 			displayValues := !historyListFlags.noValues
+			displayLocked := hasLocked && historyListFlags.noValues
 
 			header := []any{"Index"}
 
@@ -102,6 +108,10 @@ var historyListCmd = &cobra.Command{
 
 			if hasExpires {
 				header = append(header, "Expires At")
+			}
+
+			if displayLocked {
+				header = append(header, "Locked")
 			}
 
 			t.AppendHeader(header)
@@ -120,13 +130,27 @@ var historyListCmd = &cobra.Command{
 				row := []any{index}
 
 				if displayValues {
-					row = append(row, item.Value)
+					value := item.Value
+					if item.IsLocked {
+						value = color.New(color.FgRed).Sprint("[Locked]")
+					}
+
+					row = append(row, value)
 				}
 
 				row = append(row, color.New(color.FgGreen).Sprint(item.Timestamp.Local().Format(time.DateTime)))
 
 				if hasExpires {
 					row = append(row, color.New(color.FgGreen).Sprint(expiresAt))
+				}
+
+				if displayLocked {
+					isLocked := "-"
+					if item.IsLocked {
+						isLocked = color.New(color.FgYellow).Sprint("Yes")
+					}
+
+					row = append(row, isLocked)
 				}
 
 				t.AppendRow(row)
