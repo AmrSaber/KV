@@ -76,3 +76,21 @@ func UnlockKey(key string, password string) error {
 	SetValue(key, decryptedValue, item.ExpiresAt, false)
 	return nil
 }
+
+func RenameKey(oldKey string, newKey string) {
+	// Check if old key exists
+	oldItem := GetItem(oldKey)
+	if oldItem == nil {
+		common.Fail("Key %q does not exist", oldKey)
+	}
+
+	// Check if new key already exists
+	newItem := GetItem(newKey)
+	if newItem != nil {
+		common.Fail("Key %q already exists", newKey)
+	}
+
+	// Rename the key across all history items
+	_, err := common.GlobalTx.Exec("UPDATE store SET key = ? WHERE key = ?", newKey, oldKey)
+	common.FailOn(err)
+}
