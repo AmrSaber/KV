@@ -11,16 +11,16 @@ Unlike traditional databases, KV is designed for simplicity and speed. No server
 
 ### KV vs Skate
 
-| Feature | Skate | KV |
-|---------|-------|-----|
-| Basic Key-Value Storage | ✅ | ✅ |
-| Multiple Databases | ✅ | ✅ (via prefixes) |
-| Binary Data | ✅ | ✅ |
-| **AES-256 Encryption** | ❌ | ✅ |
-| **Version History & Revert** | ❌ | ✅ |
-| **Auto-Expiration (TTL)** | ❌ | ✅ |
-| **Soft Deletes** | ❌ | ✅ |
-| **JSON/YAML Output** | ❌ | ✅ |
+| Feature                      | Skate | KV                |
+| ---------------------------- | ----- | ----------------- |
+| Basic Key-Value Storage      | ✅    | ✅                |
+| Multiple Databases           | ✅    | ✅ (via prefixes) |
+| Binary Data                  | ✅    | ✅                |
+| **AES-256 Encryption**       | ❌    | ✅                |
+| **Version History & Revert** | ❌    | ✅                |
+| **Auto-Expiration (TTL)**    | ❌    | ✅                |
+| **Soft Deletes**             | ❌    | ✅                |
+| **JSON/YAML Output**         | ❌    | ✅                |
 
 ## Why KV?
 
@@ -61,18 +61,21 @@ go install github.com/AmrSaber/kv@latest
 KV provides intelligent auto-completion for commands, flags, and most importantly, **relevant keys** for each command context.
 
 **Bash:**
+
 ```bash
 echo 'eval "$(kv completion bash)"' >> ~/.bashrc
 source ~/.bashrc
 ```
 
 **Zsh:**
+
 ```bash
 echo 'eval "$(kv completion zsh)"' >> ~/.zshrc
 source ~/.zshrc
 ```
 
 **Fish:**
+
 ```bash
 echo 'kv completion fish | source' >> ~/.config/fish/config.fish
 source ~/.config/fish/config.fish
@@ -519,10 +522,7 @@ Please report bugs and request features at:
 **https://github.com/AmrSaber/kv/issues**
 
 When reporting bugs, please include:
+
 - Your OS and Go version
 - Steps to reproduce the issue
 - Expected vs actual behavior
-
----
-
-**Built with Go and SQLite**
