@@ -3,32 +3,32 @@ package tests
 import (
 	"os"
 	"os/exec"
-	"path/filepath"
+	"path"
 	"testing"
 )
 
 func TestMain(m *testing.M) {
+	tmpDir, err := os.MkdirTemp("", "kv-bin")
+	if err != nil {
+		panic("Could not create temp directory to build project")
+	}
+
+	// Variable declared in helpers.go
+	BinaryLocation = path.Join(tmpDir, "kv")
+
 	// Build the kv binary before running tests
-	buildCmd := exec.Command("go", "build", "-o", "kv")
+	buildCmd := exec.Command("go", "build", "-o", BinaryLocation)
 	buildCmd.Dir = ".."
+
 	if err := buildCmd.Run(); err != nil {
 		panic("Failed to build kv binary: " + err.Error())
 	}
-
-	// Get absolute path to kv binary
-	kvPath, err := filepath.Abs("../kv")
-	if err != nil {
-		panic("Failed to get absolute path: " + err.Error())
-	}
-
-	// Update PATH to include parent directory
-	os.Setenv("PATH", filepath.Dir(kvPath)+":"+os.Getenv("PATH"))
 
 	// Run tests
 	code := m.Run()
 
 	// Cleanup (must be before os.Exit since defer won't run)
-	os.Remove("../kv")
+	os.RemoveAll(tmpDir)
 
 	os.Exit(code)
 }

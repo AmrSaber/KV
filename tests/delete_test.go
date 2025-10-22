@@ -54,7 +54,7 @@ func TestDeleteCommand(t *testing.T) {
 		RunKVSuccess(t, "set", "temp.key2", "value2")
 		RunKVSuccess(t, "set", "keep.key", "value3")
 
-		RunKVSuccess(t, "delete", "temp", "--prefix")
+		RunKVSuccess(t, "delete", "temp.", "--prefix")
 
 		// temp.* keys should be gone
 		output := RunKVFailure(t, "get", "temp.key1")

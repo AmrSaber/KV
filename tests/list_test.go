@@ -99,13 +99,4 @@ func TestListCommand(t *testing.T) {
 			t.Error("JSON output should start with [")
 		}
 	})
-
-	t.Run("list empty database", func(t *testing.T) {
-		// Fresh database, no keys set
-		output := RunKVSuccess(t, "list")
-		// Should either be empty or show empty table
-		if strings.Contains(output, "key") && strings.Contains(output, "value") {
-			// If it shows headers, that's fine
-		}
-	})
 }

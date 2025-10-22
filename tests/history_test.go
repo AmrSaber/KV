@@ -159,6 +159,10 @@ func TestHistorySelectCommand(t *testing.T) {
 	cleanup := SetupTestDB(t)
 	defer cleanup()
 
+	t.Run("select command exists", func(t *testing.T) {
+		RunKVSuccess(t, "history", "select", "--help")
+	})
+
 	// Note: history select is interactive, so we'll just test that the command exists
 	// and handles basic error cases
 	t.Run("select on non-existent key fails", func(t *testing.T) {

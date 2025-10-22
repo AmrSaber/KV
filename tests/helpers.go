@@ -1,3 +1,4 @@
+// Package tests contains integration tests for the tool
 package tests
 
 import (
@@ -7,19 +8,16 @@ import (
 	"testing"
 )
 
-// Helper to run kv command and return output
+var BinaryLocation string
+
 func RunKV(t *testing.T, args ...string) (string, error) {
 	t.Helper()
 
-	// Build path to the kv binary
-	kvBinary := "../kv"
-
-	cmd := exec.Command(kvBinary, args...)
+	cmd := exec.Command(BinaryLocation, args...)
 	output, err := cmd.CombinedOutput()
 	return strings.TrimSpace(string(output)), err
 }
 
-// Helper to run kv command and expect success
 func RunKVSuccess(t *testing.T, args ...string) string {
 	t.Helper()
 	output, err := RunKV(t, args...)
@@ -29,7 +27,6 @@ func RunKVSuccess(t *testing.T, args ...string) string {
 	return output
 }
 
-// Helper to run kv command and expect failure
 func RunKVFailure(t *testing.T, args ...string) string {
 	t.Helper()
 	output, err := RunKV(t, args...)
@@ -50,6 +47,7 @@ func SetupTestDB(t *testing.T) func() {
 	}
 
 	// Set XDG_DATA_HOME to use temp directory
+	// This affects go-application-paths package and it changes data location
 	os.Setenv("XDG_DATA_HOME", tmpDir)
 
 	// Return cleanup function

@@ -3,6 +3,7 @@ package tests
 import (
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestExpireCommand(t *testing.T) {
@@ -45,6 +46,26 @@ func TestExpireCommand(t *testing.T) {
 			t.Error("Key should still have expiration")
 		}
 	})
+
+	t.Run("keys with ttl in the past expire", func(t *testing.T) {
+		RunKVSuccess(t, "set", "temp", "data", "--expires-after", "-1h")
+
+		output := RunKVFailure(t, "get", "temp")
+		if !strings.Contains(output, "does not exist") {
+			t.Error("Key should have expired")
+		}
+	})
+
+	t.Run("keys with ttl actually expires", func(t *testing.T) {
+		RunKVSuccess(t, "set", "temp", "data", "--expires-after", "1s")
+
+		time.Sleep(2 * time.Second)
+
+		output := RunKVFailure(t, "get", "temp")
+		if !strings.Contains(output, "does not exist") {
+			t.Error("Key should have expired")
+		}
+	})
 }
 
 func TestTTLCommand(t *testing.T) {
@@ -62,7 +83,7 @@ func TestTTLCommand(t *testing.T) {
 
 	t.Run("check TTL of key without expiration", func(t *testing.T) {
 		RunKVSuccess(t, "set", "permanent", "data")
-		output, _ := RunKV(t, "ttl", "permanent")
+		output := RunKVFailure(t, "ttl", "permanent")
 
 		if !strings.Contains(output, "does not expire") {
 			t.Errorf("Should indicate no expiration, got: %s", output)

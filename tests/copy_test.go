@@ -10,8 +10,10 @@ func TestCopyCommand(t *testing.T) {
 	defer cleanup()
 
 	t.Run("basic copy", func(t *testing.T) {
+		value := "original value"
+
 		// Create a key
-		RunKVSuccess(t, "set", "source", "original value")
+		RunKVSuccess(t, "set", "source", value)
 
 		// Copy it
 		RunKVSuccess(t, "copy", "source", "destination")
@@ -20,10 +22,11 @@ func TestCopyCommand(t *testing.T) {
 		sourceValue := RunKVSuccess(t, "get", "source")
 		destValue := RunKVSuccess(t, "get", "destination")
 
-		if sourceValue != "original value" {
+		if sourceValue != value {
 			t.Errorf("Source should be 'original value', got: %s", sourceValue)
 		}
-		if destValue != "original value" {
+
+		if destValue != value {
 			t.Errorf("Destination should be 'original value', got: %s", destValue)
 		}
 	})
@@ -102,9 +105,11 @@ func TestCopyCommand(t *testing.T) {
 
 		// Check history shows both values
 		output := RunKVSuccess(t, "history", "list", "hist-dst")
+
 		if !strings.Contains(output, "old value") {
 			t.Error("History should contain old value")
 		}
+
 		if !strings.Contains(output, "new value") {
 			t.Error("History should contain new value")
 		}
