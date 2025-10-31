@@ -20,13 +20,13 @@ builds:
       - goos: windows
         goarch: arm64
     ldflags:
-      - -s -w -X main.version={{.Version}}
+      - "-s -w -X main.version={{.Version}}"
 
 archives:
   - format: binary
 
 checksum:
-  name_template: 'checksums.txt'
+  name_template: "checksums.txt"
 
 snapshot:
   version_template: "{{ incpatch .Version }}-next"
@@ -35,9 +35,9 @@ changelog:
   sort: asc
   filters:
     exclude:
-      - '^docs:'
-      - '^test:'
-      - '^chore:'
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
       - Merge pull request
       - Merge branch
 
@@ -45,3 +45,81 @@ release:
   github:
     owner: AmrSaber
     name: kv
+
+# Homebrew tap for macOS and Linux
+brews:
+  - repository:
+      owner: AmrSaber
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    directory: Formula
+    homepage: "https://github.com/AmrSaber/kv"
+    description: "A lightweight, feature-rich command-line key-value store with encryption, TTL, and version control"
+    license: "MIT"
+    install: |
+      bin.install "kv"
+
+      # Install shell completions
+      bash_completion.install "completions/kv.bash" => "kv"
+      zsh_completion.install "completions/kv.zsh" => "_kv"
+      fish_completion.install "completions/kv.fish"
+    test: |
+      system "#{bin}/kv", "--version"
+
+# Scoop bucket for Windows
+scoops:
+  - repository:
+      owner: AmrSaber
+      name: scoop-bucket
+      token: "{{ .Env.SCOOP_BUCKET_GITHUB_TOKEN }}"
+    homepage: "https://github.com/AmrSaber/kv"
+    description: "A lightweight, feature-rich command-line key-value store with encryption, TTL, and version control"
+    license: MIT
+
+# AUR package for Arch Linux
+aurs:
+  - homepage: "https://github.com/AmrSaber/kv"
+    description: "A lightweight, feature-rich command-line key-value store with encryption, TTL, and version control"
+    maintainers:
+      - "Amr Saber <amr.m.saber.mail@gmail.com>"
+    license: MIT
+    private_key: "{{ .Env.AUR_KEY }}"
+    git_url: "ssh://aur@aur.archlinux.org/kv-bin.git"
+    package: |-
+      # bin
+      install -Dm755 "./kv" "${pkgdir}/usr/bin/kv"
+
+      # license
+      install -Dm644 "./LICENSE" "${pkgdir}/usr/share/licenses/kv/LICENSE"
+
+      # completions
+      install -Dm644 "./completions/kv.bash" "${pkgdir}/usr/share/bash-completion/completions/kv"
+      install -Dm644 "./completions/kv.zsh" "${pkgdir}/usr/share/zsh/site-functions/_kv"
+      install -Dm644 "./completions/kv.fish" "${pkgdir}/usr/share/fish/vendor_completions.d/kv.fish"
+
+# Snap package for Linux
+snapcrafts:
+  - name: kv-cli
+    publish: true
+    summary: A lightweight command-line key-value store
+    description: |
+      KV is a lightweight, feature-rich key-value store that lives right in your terminal.
+      Store and retrieve data quickly with support for encryption, TTL, version control, and more.
+
+      Features:
+      - Local SQLite storage (no servers required)
+      - AES-256-GCM encryption for sensitive data
+      - Automatic expiration with TTL
+      - Complete version history with revert capability
+      - JSON/YAML output formats
+      - Shell completions for bash, zsh, and fish
+    grade: stable
+    confinement: strict
+    license: MIT
+    base: core22
+    apps:
+      kv:
+        command: kv
+        plugs:
+          - home
+          - network

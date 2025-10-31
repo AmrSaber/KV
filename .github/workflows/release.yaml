@@ -26,6 +26,19 @@ jobs:
         with:
           go-version-file: "go.mod"
 
+      - name: Build binary for completions
+        run: go build -o kv .
+
+      - name: Generate shell completions
+        run: |
+          mkdir -p completions
+          ./kv completion bash > completions/kv.bash
+          ./kv completion zsh > completions/kv.zsh
+          ./kv completion fish > completions/kv.fish
+
+      - name: Install Snapcraft
+        run: sudo snap install snapcraft --classic
+
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
         with:
@@ -34,3 +47,7 @@ jobs:
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HOMEBREW_TAP_GITHUB_TOKEN: ${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN }}
+          SCOOP_BUCKET_GITHUB_TOKEN: ${{ secrets.SCOOP_BUCKET_GITHUB_TOKEN }}
+          AUR_KEY: ${{ secrets.AUR_KEY }}
+          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}

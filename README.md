@@ -52,11 +52,54 @@ Unlike traditional databases, KV is designed for simplicity and speed. No server
 
 ## Installation
 
+Choose the installation method that works best for your platform:
+
+### MacOS
+
+```bash
+brew install AmrSaber/tap/kv
+```
+
+### Linux
+
+**Homebrew:**
+
+```bash
+brew install AmrSaber/tap/kv
+```
+
+**Snap (Ubuntu, Fedora, Arch, openSUSE, etc.):**
+
+```bash
+sudo snap install kv
+```
+
+**Arch Linux (AUR):**
+
+```bash
+yay -S kv-bin
+# or
+paru -S kv-bin
+```
+
+### Windows
+
+**Scoop:**
+
+```bash
+scoop bucket add amrsaber https://github.com/AmrSaber/scoop-bucket
+scoop install kv
+```
+
+### Any Platform (Go)
+
 ```bash
 go install github.com/AmrSaber/kv@latest
 ```
 
 ### Enable Shell Completion (Optional but Recommended)
+
+> **Note:** Package manager installations (Homebrew, Snap, Scoop, AUR) automatically include shell completion. If you installed via `go install`, use the following manual completion setup.
 
 KV provides intelligent auto-completion for commands, flags, and most importantly, **relevant keys** for each command context.
 
@@ -82,12 +125,6 @@ source ~/.config/fish/config.fish
 ```
 
 Once enabled, you can tab-complete key names when using commands like `get`, `delete`, `lock`, and more!
-
-### What's Next?
-
-1. **Installed KV** - You're ready to go!
-2. **Enable shell completion** (optional) - Use the commands above for your shell
-3. **Try the Quick Start** - See KV in action with the examples below
 
 ## Quick Start
 
@@ -134,7 +171,7 @@ Every change is versioned. Made a mistake? Revert to any previous value. Need to
 
 View data as beautiful terminal tables, machine-readable JSON, or structured YAML—whatever fits your workflow.
 
-### Batch Operations
+### Batch Operations Support
 
 Work with multiple keys at once using prefix matching. Delete, list, or manage entire namespaces in one command.
 
