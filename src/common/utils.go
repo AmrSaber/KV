@@ -9,7 +9,7 @@ import (
 func FailOn(err error) {
 	if err != nil {
 		if GlobalTx != nil {
-			GlobalTx.Rollback()
+			_ = GlobalTx.Rollback()
 		}
 
 		panic(err)
@@ -18,7 +18,7 @@ func FailOn(err error) {
 
 func Fail(message string, args ...any) {
 	if GlobalTx != nil {
-		GlobalTx.Rollback()
+		_ = GlobalTx.Rollback()
 	}
 
 	if message != "" {
