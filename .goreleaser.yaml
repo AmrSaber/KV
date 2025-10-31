@@ -23,7 +23,21 @@ builds:
       - "-s -w -X main.version={{.Version}}"
 
 archives:
-  - format: binary
+  - id: binary
+    formats: [binary]
+  - id: archive
+    formats: [tar.gz]
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- .Version }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    format_overrides:
+      - goos: windows
+        formats: [zip]
 
 checksum:
   name_template: "checksums.txt"
@@ -48,11 +62,12 @@ release:
 
 # Homebrew tap for macOS and Linux
 brews:
-  - repository:
+  - ids:
+      - archive
+    repository:
       owner: AmrSaber
       name: homebrew-tap
       token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
-    directory: Formula
     homepage: "https://github.com/AmrSaber/kv"
     description: "A lightweight, feature-rich command-line key-value store with encryption, TTL, and version control"
     license: "MIT"
@@ -68,7 +83,9 @@ brews:
 
 # Scoop bucket for Windows
 scoops:
-  - repository:
+  - ids:
+      - archive
+    repository:
       owner: AmrSaber
       name: scoop-bucket
       token: "{{ .Env.SCOOP_BUCKET_GITHUB_TOKEN }}"
