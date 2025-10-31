@@ -1,5 +1,6 @@
 # KV - Your Personal Command-Line Key-Value Store
 
+[![Latest Release](https://img.shields.io/github/v/release/AmrSaber/kv?logo=github)](https://github.com/AmrSaber/kv/releases/latest)
 [![Go Version](https://img.shields.io/badge/Go-1.25.3-00ADD8?logo=go)](https://go.dev/)
 [![Built with SQLite](https://img.shields.io/badge/Database-SQLite-003B57?logo=sqlite)](https://www.sqlite.org/)
 
@@ -250,6 +251,19 @@ kv unlock api-key --password "mypass"
 
 # Lock multiple keys at once
 kv lock config --prefix --password "mypass"
+```
+
+**Warning:** Passing passwords directly on the command line (e.g., `--password "mypass"`) will save them in your shell history, making them visible to anyone with access to your terminal history file. For better security, use environment variables or command substitution:
+
+```bash
+# Using an environment variable
+kv set api-key "secret" --password "$KV_PASSWORD"
+
+# Using command substitution (e.g., from a password manager)
+kv get api-key --password "$(pass show kv/master)"
+
+# Or read from a file
+kv lock sensitive-data --password "$(cat ~/.kv-password)"
 ```
 
 ### Time-to-Live (TTL) Management
