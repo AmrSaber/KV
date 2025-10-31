@@ -72,7 +72,7 @@ brew install AmrSaber/tap/kv
 **Snap (Ubuntu, Fedora, Arch, openSUSE, etc.):**
 
 ```bash
-sudo snap install kv
+sudo snap install kv-cli
 ```
 
 **Arch Linux (AUR):**

@@ -38,6 +38,8 @@ archives:
     format_overrides:
       - goos: windows
         formats: [zip]
+    files:
+      - completions/*
 
 checksum:
   name_template: "checksums.txt"
@@ -135,8 +137,10 @@ snapcrafts:
     license: MIT
     base: core22
     apps:
-      kv:
+      kv-cli:
         command: kv
+        aliases:
+          - kv
         plugs:
           - home
           - network
