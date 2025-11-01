@@ -75,6 +75,12 @@ brew install AmrSaber/tap/kv
 sudo snap install kv-cli
 ```
 
+> **Note:** The snap package is named `kv-cli` (`kv` is reserved). After installation, the command will be `kv-cli`. To use just `kv`, create an alias:
+>
+> ```bash
+> sudo snap alias kv-cli.kv-cli kv
+> ```
+
 **Arch Linux (AUR):**
 
 ```bash
