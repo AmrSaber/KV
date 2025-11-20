@@ -43,7 +43,7 @@ func StartGlobalTransaction() {
 	}
 
 	dbPath := getDBPath()
-	os.MkdirAll(path.Dir(dbPath), os.ModeDir|os.ModePerm)
+	_ = os.MkdirAll(path.Dir(dbPath), os.ModeDir|os.ModePerm)
 
 	db, err := sql.Open("sqlite", dbPath)
 	FailOn(err)
