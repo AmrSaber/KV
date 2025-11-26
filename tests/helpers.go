@@ -48,11 +48,11 @@ func SetupTestDB(t *testing.T) func() {
 
 	// Set XDG_DATA_HOME to use temp directory
 	// This affects go-application-paths package and it changes data location
-	os.Setenv("XDG_DATA_HOME", tmpDir)
+	_ = os.Setenv("XDG_DATA_HOME", tmpDir)
 
 	// Return cleanup function
 	return func() {
-		os.Unsetenv("XDG_DATA_HOME")
-		os.RemoveAll(tmpDir)
+		_ = os.Unsetenv("XDG_DATA_HOME")
+		_ = os.RemoveAll(tmpDir)
 	}
 }

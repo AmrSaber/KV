@@ -11,9 +11,12 @@ import (
 
 var GlobalTx *sql.Tx
 
-var migrations = []string{
-	`PRAGMA journal_mode=WAL`,
+var pragmas = []string{
+	`PRAGMA journal_mode = WAL`,
 	`PRAGMA busy_timeout = 5000`,
+}
+
+var migrations = []string{
 	`
 	CREATE TABLE IF NOT EXISTS store (
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -45,16 +48,24 @@ func StartGlobalTransaction() {
 	dbPath := getDBPath()
 	_ = os.MkdirAll(path.Dir(dbPath), os.ModeDir|os.ModePerm)
 
-	db, err := sql.Open("sqlite", dbPath)
+	db, err := sql.Open("sqlite", dbPath+"?_txlock=immediate")
 	FailOn(err)
 
-	for _, query := range migrations {
-		_, err := db.Exec(query)
+	db.SetMaxOpenConns(1)
+
+	// Pragmas cannot run in transactions
+	for _, pragma := range pragmas {
+		err := runPragma(db, pragma)
 		FailOn(err)
 	}
 
-	GlobalTx, err = db.Begin()
+	GlobalTx, err = beginTarnsaction(db)
 	FailOn(err)
+
+	for _, query := range migrations {
+		_, err := GlobalTx.Exec(query)
+		FailOn(err)
+	}
 }
 
 func ClearDB() {

@@ -28,7 +28,7 @@ func TestMain(m *testing.M) {
 	code := m.Run()
 
 	// Cleanup (must be before os.Exit since defer won't run)
-	os.RemoveAll(tmpDir)
+	_ = os.RemoveAll(tmpDir)
 
 	os.Exit(code)
 }
