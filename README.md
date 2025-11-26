@@ -1,7 +1,7 @@
 # KV - Your Personal Command-Line Key-Value Store
 
 [![Latest Release](https://img.shields.io/github/v/release/AmrSaber/kv?logo=github)](https://github.com/AmrSaber/kv/releases/latest)
-[![Go Version](https://img.shields.io/badge/Go-1.25.3-00ADD8?logo=go)](https://go.dev/)
+[![Go Version](https://img.shields.io/badge/Go-1.25.4-00ADD8?logo=go)](https://go.dev/)
 [![Built with SQLite](https://img.shields.io/badge/Database-SQLite-003B57?logo=sqlite)](https://www.sqlite.org/)
 
 KV is a lightweight, feature-rich key-value store that lives right in your terminal. Think of it as a personal database for all those bits of information you need to store and retrieve quickly—configuration snippets, API keys, temporary notes, or any data you want at your fingertips.
