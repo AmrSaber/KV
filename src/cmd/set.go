@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"io"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/AmrSaber/kv/src/common"
@@ -63,6 +64,8 @@ Providing a negative duration expires the key immediately.`,
 
 			value = string(stdin)
 		}
+
+		value = strings.TrimSpace(value)
 
 		var expiresAt *time.Time
 		if cmd.Flags().Changed("expires-after") {
