@@ -10,10 +10,17 @@ import (
 
 var BinaryLocation string
 
-func RunKV(t *testing.T, args ...string) (string, error) {
+func RunKVCommand(t *testing.T, args ...string) *exec.Cmd {
 	t.Helper()
 
 	cmd := exec.Command(BinaryLocation, args...)
+	return cmd
+}
+
+func RunKV(t *testing.T, args ...string) (string, error) {
+	t.Helper()
+
+	cmd := RunKVCommand(t, args...)
 	output, err := cmd.CombinedOutput()
 	return strings.TrimSpace(string(output)), err
 }

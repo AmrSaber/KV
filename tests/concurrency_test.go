@@ -35,4 +35,70 @@ func TestConcurrency(t *testing.T) {
 			}
 		}
 	})
+
+	t.Run("Pipe get to set", func(t *testing.T) {
+		sourceKey, distKey := "source-key", "dist-key"
+		value := "some-value"
+
+		// Set initial value
+		RunKVSuccess(t, "set", sourceKey, value)
+
+		readCmd := RunKVCommand(t, "get", sourceKey)
+		writeCmd := RunKVCommand(t, "set", distKey)
+
+		readerOutPipe, err := readCmd.StdoutPipe()
+		if err != nil {
+			t.Fatal("Failed to get stdout pipe for reader command:", err)
+		}
+
+		// Redirect write command's input to read command's output
+		writeCmd.Stdin = readerOutPipe
+
+		// TODO: refactor into error group
+		var wg sync.WaitGroup
+		errs := make([]error, 0)
+
+		wg.Go(func() {
+			err := readCmd.Start()
+			if err != nil {
+				errs = append(errs, fmt.Errorf("Failed to start read command: %w", err))
+				return
+			}
+
+			err = readCmd.Wait()
+			if err != nil {
+				errs = append(errs, fmt.Errorf("Failed to wait for read command: %w", err))
+				return
+			}
+		})
+
+		wg.Go(func() {
+			err := writeCmd.Start()
+			if err != nil {
+				errs = append(errs, fmt.Errorf("Failed to start write command: %w", err))
+				return
+			}
+
+			err = writeCmd.Wait()
+			if err != nil {
+				errs = append(errs, fmt.Errorf("Failed to wait for write command: %w", err))
+				return
+			}
+		})
+
+		wg.Wait()
+
+		if len(errs) > 0 {
+			for _, err := range errs {
+				t.Error(err)
+			}
+
+			t.FailNow()
+		}
+
+		distValue := RunKVSuccess(t, "get", distKey)
+		if distValue != value {
+			t.Fatalf("Expected %q, got %q", value, distValue)
+		}
+	})
 }
