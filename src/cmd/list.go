@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"database/sql"
 	"encoding/json"
 	"os"
 	"sort"
@@ -69,7 +70,11 @@ Locked values are displayed as [Locked] in table view.`,
 			listFlags.noValues = true
 		}
 
-		items := services.ListItems(prefix, matchType)
+		var items []services.KVItem
+
+		services.RunInTransaction(func(tx *sql.Tx) {
+			items = services.ListItems(tx, prefix, matchType)
+		})
 
 		// Sort items by key
 		sort.Slice(items, func(i, j int) bool {

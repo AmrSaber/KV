@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/AmrSaber/kv/src/common"
-	"github.com/AmrSaber/kv/src/services"
 	"github.com/spf13/cobra"
 )
 
@@ -38,20 +37,10 @@ func Execute() {
 	// Set version after it's been potentially injected in main.go
 	rootCmd.Version = getVersion()
 
-	common.StartGlobalTransaction()
-	services.CleanUpDB()
-
 	err := rootCmd.Execute()
 	if err != nil {
-		if common.GlobalTx != nil {
-			_ = common.GlobalTx.Rollback()
-		}
-
 		os.Exit(1)
 	}
-
-	services.CleanUpDB()
-	_ = common.GlobalTx.Commit()
 }
 
 func init() {

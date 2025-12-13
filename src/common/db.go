@@ -9,7 +9,7 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-var GlobalTx *sql.Tx
+var db *sql.DB
 
 var pragmas = []string{
 	`PRAGMA journal_mode = WAL`,
@@ -40,11 +40,21 @@ var migrations = []string{
 	`CREATE INDEX IF NOT EXISTS idx_store_key_id ON store(key, id);`,
 }
 
-func StartGlobalTransaction() {
-	if GlobalTx != nil {
-		panic("Global transaction already started")
+func ClearDB() {
+	dbPath := path.Dir(getDBPath())
+	err := os.RemoveAll(dbPath)
+	FailOn(err)
+}
+
+func GetDB() *sql.DB {
+	if db == nil {
+		db = openDB()
 	}
 
+	return db
+}
+
+func openDB() *sql.DB {
 	dbPath := getDBPath()
 	_ = os.MkdirAll(path.Dir(dbPath), os.ModeDir|os.ModePerm)
 
@@ -59,19 +69,21 @@ func StartGlobalTransaction() {
 		FailOn(err)
 	}
 
-	GlobalTx, err = beginTarnsaction(db)
+	// Migrations transaction
+	tx, err := BeginTarnsaction(db)
 	FailOn(err)
+
+	defer func() { _ = tx.Rollback() }()
 
 	for _, query := range migrations {
-		_, err := GlobalTx.Exec(query)
+		_, err := tx.Exec(query)
 		FailOn(err)
 	}
-}
 
-func ClearDB() {
-	dbPath := path.Dir(getDBPath())
-	err := os.RemoveAll(dbPath)
+	err = tx.Commit()
 	FailOn(err)
+
+	return db
 }
 
 func getDBPath() string {

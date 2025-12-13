@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"database/sql"
+
 	"github.com/AmrSaber/kv/src/common"
 	"github.com/AmrSaber/kv/src/services"
 	"github.com/spf13/cobra"
@@ -45,8 +47,12 @@ Calling revert multiple times without other changes will toggle between the curr
 			common.Fail("steps must be greater than 0, got %v", historyRevertFlags.steps)
 		}
 
-		item := services.GetHistoryItem(key, historyRevertFlags.steps)
-		services.SetValue(key, item.Value, nil, item.IsLocked)
+		var item services.KVItem
+
+		services.RunInTransaction(func(tx *sql.Tx) {
+			item = services.GetHistoryItem(tx, key, historyRevertFlags.steps)
+			services.SetValue(tx, key, item.Value, nil, item.IsLocked)
+		})
 
 		if !item.IsLocked {
 			common.Stdout.Println(item.Value)

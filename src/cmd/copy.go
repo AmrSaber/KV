@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"database/sql"
+
 	"github.com/AmrSaber/kv/src/common"
 	"github.com/AmrSaber/kv/src/services"
 	"github.com/spf13/cobra"
@@ -34,14 +36,16 @@ If the destination key already exists, it will be updated (creating a new histor
 		fromKey := args[0]
 		toKey := args[1]
 
-		// Get the source item
-		fromItem := services.GetItem(fromKey)
-		if fromItem == nil {
-			common.Fail("Key %q does not exist", fromKey)
-		}
+		services.RunInTransaction(func(tx *sql.Tx) {
+			// Get the source item
+			fromItem := services.GetItem(tx, fromKey)
+			if fromItem == nil {
+				common.Fail("Key %q does not exist", fromKey)
+			}
 
-		// Copy to destination (without TTL)
-		services.SetValue(toKey, fromItem.Value, nil, fromItem.IsLocked)
+			// Copy to destination (without TTL)
+			services.SetValue(tx, toKey, fromItem.Value, nil, fromItem.IsLocked)
+		})
 	},
 }
 

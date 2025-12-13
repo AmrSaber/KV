@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"database/sql"
 	"time"
 
 	"github.com/AmrSaber/kv/src/common"
@@ -15,8 +16,8 @@ var ttlFlags = struct {
 
 // ttlCmd represents the ttl command
 var ttlCmd = &cobra.Command{
-	Use:     "ttl <key>",
-	Short:   "Check the remaining time before a key expires",
+	Use:   "ttl <key>",
+	Short: "Check the remaining time before a key expires",
 	Long: `Check the remaining time before a key expires.
 
 By default, displays the time remaining with expiration date.
@@ -48,7 +49,9 @@ Use --seconds to get remaining time in seconds (useful for scripts).`,
 		var value *string
 		var expiresAt *time.Time
 
-		value, expiresAt = services.GetValue(key)
+		services.RunInTransaction(func(tx *sql.Tx) {
+			value, expiresAt = services.GetValue(tx, key)
+		})
 
 		if expiresAt == nil {
 			if value != nil {

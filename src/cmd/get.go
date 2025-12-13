@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"database/sql"
+
 	"github.com/AmrSaber/kv/src/common"
 	"github.com/AmrSaber/kv/src/services"
 	"github.com/spf13/cobra"
@@ -36,7 +38,11 @@ If the key is encrypted, provide the password using --password flag.`,
 
 	Run: func(cmd *cobra.Command, args []string) {
 		key := args[0]
-		item := services.GetItem(key)
+		var item *services.KVItem
+
+		services.RunInTransaction(func(tx *sql.Tx) {
+			item = services.GetItem(tx, key)
+		})
 
 		if item == nil {
 			common.Fail("Key %q does not exist", key)

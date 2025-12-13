@@ -6,6 +6,6 @@ import (
 )
 
 func completeKeyArg(toComplete string, matchType services.MatchType) ([]cobra.Completion, cobra.ShellCompDirective) {
-	matchingKeys := services.ListKeys(toComplete, matchType)
+	matchingKeys := services.ListKeys(nil, toComplete, matchType)
 	return []cobra.Completion(matchingKeys), cobra.ShellCompDirectiveNoFileComp
 }

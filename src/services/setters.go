@@ -1,21 +1,22 @@
 package services
 
 import (
+	"database/sql"
 	"time"
 
 	"github.com/AmrSaber/kv/src/common"
 )
 
-func SetValue(key string, value string, expiresAt *time.Time, isLocked bool) {
+func SetValue(tx *sql.Tx, key string, value string, expiresAt *time.Time, isLocked bool) {
 	// Skip write if attempting to write identical values
-	currentValue, currentExipry := GetValue(key)
+	currentValue, currentExipry := GetValue(tx, key)
 	if common.EqualStringPtrs(currentValue, &value) && common.EqualTimePtrs(currentExipry, expiresAt) {
 		return
 	}
-	_, err := common.GlobalTx.Exec("UPDATE store SET is_latest = 0 WHERE key = ? AND is_latest = 1", key)
+	_, err := tx.Exec("UPDATE store SET is_latest = 0 WHERE key = ? AND is_latest = 1", key)
 	common.FailOn(err)
 
-	_, err = common.GlobalTx.Exec(
+	_, err = tx.Exec(
 		`INSERT INTO store (key, value, is_locked, expires_at) VALUES (?, ?, ?, ?)`,
 		key,
 		value,
@@ -25,13 +26,13 @@ func SetValue(key string, value string, expiresAt *time.Time, isLocked bool) {
 	common.FailOn(err)
 }
 
-func PruneKey(key string) {
-	_, err := common.GlobalTx.Exec("DELETE FROM store WHERE key = ?", key)
+func PruneKey(tx *sql.Tx, key string) {
+	_, err := tx.Exec("DELETE FROM store WHERE key = ?", key)
 	common.FailOn(err)
 }
 
-func LockKey(key string, password string) {
-	item := GetItem(key)
+func LockKey(tx *sql.Tx, key string, password string) {
+	item := GetItem(tx, key)
 	if item == nil {
 		common.Fail("Key %q does not exist", key)
 		return // To shut up the compiler
@@ -42,18 +43,18 @@ func LockKey(key string, password string) {
 	}
 
 	// Delete existing record so value is no longer in history
-	_, err := common.GlobalTx.Exec("DELETE FROM store WHERE key = ? AND is_latest = 1", key)
+	_, err := tx.Exec("DELETE FROM store WHERE key = ? AND is_latest = 1", key)
 	common.FailOn(err)
 
 	encryptedValue, err := common.Encrypt(item.Value, password)
 	common.FailOn(err)
 
 	// Set the new encrypted value
-	SetValue(key, encryptedValue, item.ExpiresAt, true)
+	SetValue(tx, key, encryptedValue, item.ExpiresAt, true)
 }
 
-func UnlockKey(key string, password string) error {
-	item := GetItem(key)
+func UnlockKey(tx *sql.Tx, key string, password string) error {
+	item := GetItem(tx, key)
 	if item == nil {
 		common.Fail("Key %q does not exist", key)
 		return nil // To shut up the compiler
@@ -64,7 +65,7 @@ func UnlockKey(key string, password string) error {
 	}
 
 	// Delete existing record so value is no longer in history
-	_, err := common.GlobalTx.Exec("DELETE FROM store WHERE key = ? AND is_latest = 1", key)
+	_, err := tx.Exec("DELETE FROM store WHERE key = ? AND is_latest = 1", key)
 	common.FailOn(err)
 
 	decryptedValue, err := common.Decrypt(item.Value, password)
@@ -73,24 +74,24 @@ func UnlockKey(key string, password string) error {
 	}
 
 	// Set the new encrypted value
-	SetValue(key, decryptedValue, item.ExpiresAt, false)
+	SetValue(tx, key, decryptedValue, item.ExpiresAt, false)
 	return nil
 }
 
-func RenameKey(oldKey string, newKey string) {
+func RenameKey(tx *sql.Tx, oldKey string, newKey string) {
 	// Check if old key exists
-	oldItem := GetItem(oldKey)
+	oldItem := GetItem(tx, oldKey)
 	if oldItem == nil {
 		common.Fail("Key %q does not exist", oldKey)
 	}
 
 	// Check if new key already exists
-	newItem := GetItem(newKey)
+	newItem := GetItem(tx, newKey)
 	if newItem != nil {
 		common.Fail("Key %q already exists", newKey)
 	}
 
 	// Rename the key across all history items
-	_, err := common.GlobalTx.Exec("UPDATE store SET key = ? WHERE key = ?", newKey, oldKey)
+	_, err := tx.Exec("UPDATE store SET key = ? WHERE key = ?", newKey, oldKey)
 	common.FailOn(err)
 }

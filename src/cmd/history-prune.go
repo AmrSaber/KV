@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"database/sql"
+
 	"github.com/AmrSaber/kv/src/common"
 	"github.com/AmrSaber/kv/src/services"
 	"github.com/spf13/cobra"
@@ -52,12 +54,14 @@ If a deleted key is targeted for pruning, it will be permanently deleted.`,
 			common.Fail("Cannot have an argument with --all")
 		}
 
-		if historyPruneFlags.all || historyPruneFlags.prefix {
-			services.ClearAllKeysHistory(key)
-			return
-		}
+		services.RunInTransaction(func(tx *sql.Tx) {
+			if historyPruneFlags.all || historyPruneFlags.prefix {
+				services.ClearAllKeysHistory(tx, key)
+				return
+			}
 
-		services.ClearKeyHistory(key)
+			services.ClearKeyHistory(tx, key)
+		})
 	},
 }
 

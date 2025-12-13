@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"database/sql"
+
 	"github.com/AmrSaber/kv/src/common"
 	"github.com/AmrSaber/kv/src/services"
 	"github.com/spf13/cobra"
@@ -56,15 +58,19 @@ If plain-text values exist in older history records, consider using 'kv history 
 		}
 
 		if lockFlags.all || lockFlags.prefix {
-			items := services.ListItems(key, services.MatchExisting)
-			for _, item := range items {
-				services.LockKey(item.Key, lockFlags.password)
-			}
+			services.RunInTransaction(func(tx *sql.Tx) {
+				items := services.ListItems(tx, key, services.MatchExisting)
+				for _, item := range items {
+					services.LockKey(tx, item.Key, lockFlags.password)
+				}
+			})
 
 			return
 		}
 
-		services.LockKey(key, lockFlags.password)
+		services.RunInTransaction(func(tx *sql.Tx) {
+			services.LockKey(tx, key, lockFlags.password)
+		})
 	},
 }
 

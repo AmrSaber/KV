@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"database/sql"
 	"encoding/json"
 	"os"
 	"slices"
@@ -52,7 +53,12 @@ Higher indices represent older values.`,
 
 	Run: func(cmd *cobra.Command, args []string) {
 		key := args[0]
-		kvItems := services.ListKeyHistory(key)
+
+		var kvItems []services.KVItem
+
+		services.RunInTransaction(func(tx *sql.Tx) {
+			kvItems = services.ListKeyHistory(tx, key)
+		})
 
 		if len(kvItems) == 0 {
 			common.Fail("Key %q does not exist", key)

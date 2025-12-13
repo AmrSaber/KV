@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"database/sql"
 	"fmt"
 	"slices"
 	"time"
@@ -39,48 +40,52 @@ This provides a user-friendly way to browse and choose from previous values.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		key := args[0]
 
-		items := services.ListKeyHistory(key)
-		slices.Reverse(items)
+		var selectedItem services.KVItem
+		services.RunInTransaction(func(tx *sql.Tx) {
+			items := services.ListKeyHistory(tx, key)
+			slices.Reverse(items)
 
-		items = items[1:]
+			items = items[1:]
 
-		rows := make([]string, 0, len(items))
-		for _, item := range items {
-			value := item.Value
-			if historySelectFlags.noValues {
-				value = ""
+			rows := make([]string, 0, len(items))
+			for _, item := range items {
+				value := item.Value
+				if historySelectFlags.noValues {
+					value = ""
+				}
+
+				if item.IsLocked {
+					value = color.New(color.FgRed).Sprint("[Locked]")
+				}
+
+				row := fmt.Sprintf(
+					"[%s] %s",
+					color.New(color.FgGreen).Sprint(item.Timestamp.Local().Format(time.DateTime)),
+					value,
+				)
+
+				rows = append(rows, row)
 			}
 
-			if item.IsLocked {
-				value = color.New(color.FgRed).Sprint("[Locked]")
+			prompt := promptui.Select{
+				Label: fmt.Sprintf("Select a value for %q", key),
+				Items: rows,
+
+				Size:         20,
+				HideHelp:     true,
+				HideSelected: true,
 			}
 
-			row := fmt.Sprintf(
-				"[%s] %s",
-				color.New(color.FgGreen).Sprint(item.Timestamp.Local().Format(time.DateTime)),
-				value,
-			)
+			selectedIndex, _, err := prompt.Run()
+			if err != nil {
+				common.Fail("")
+			}
 
-			rows = append(rows, row)
-		}
+			selectedItem := items[selectedIndex]
 
-		prompt := promptui.Select{
-			Label: fmt.Sprintf("Select a value for %q", key),
-			Items: rows,
+			services.SetValue(tx, key, selectedItem.Value, nil, selectedItem.IsLocked)
+		})
 
-			Size:         20,
-			HideHelp:     true,
-			HideSelected: true,
-		}
-
-		selectedIndex, _, err := prompt.Run()
-		if err != nil {
-			common.Fail("")
-		}
-
-		selectedItem := items[selectedIndex]
-
-		services.SetValue(key, selectedItem.Value, nil, selectedItem.IsLocked)
 		if !selectedItem.IsLocked {
 			common.Stdout.Println(selectedItem)
 		}

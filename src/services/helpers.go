@@ -2,18 +2,35 @@
 package services
 
 import (
+	"database/sql"
+
 	"github.com/AmrSaber/kv/src/common"
 )
 
-// CleanUpDB clears expired values, deletes old history, and prunes old cleared values
-func CleanUpDB() {
-	clearExpiredValues()
-	deleteOldHistory()
-	pruneOldClearedValues()
+func RunInTransaction(fn func(tx *sql.Tx)) {
+	tx, err := common.BeginTarnsaction(common.GetDB())
+	common.FailOn(err)
+
+	defer func() { _ = tx.Rollback() }()
+
+	// Make sure database is cleaned up before running transactions
+	cleanUpDB(tx)
+
+	fn(tx)
+
+	err = tx.Commit()
+	common.FailOn(err)
 }
 
-func clearExpiredValues() {
-	rows, err := common.GlobalTx.Query(`
+// cleanUpDB clears expired values, deletes old history, and prunes old cleared values
+func cleanUpDB(tx *sql.Tx) {
+	clearExpiredValues(tx)
+	deleteOldHistory(tx)
+	pruneOldClearedValues(tx)
+}
+
+func clearExpiredValues(tx *sql.Tx) {
+	rows, err := tx.Query(`
 		SELECT key
 		FROM store
 		WHERE
@@ -22,21 +39,21 @@ func clearExpiredValues() {
 			datetime(expires_at) < CURRENT_TIMESTAMP
 	`)
 	common.FailOn(err)
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	for rows.Next() {
 		var key string
 		err = rows.Scan(&key)
 		common.FailOn(err)
 
-		SetValue(key, "", nil, false)
+		SetValue(tx, key, "", nil, false)
 	}
 }
 
-func deleteOldHistory() {
+func deleteOldHistory(tx *sql.Tx) {
 	config := common.ReadConfig()
 
-	_, err := common.GlobalTx.Exec(`
+	_, err := tx.Exec(`
 		DELETE FROM store
 		WHERE id IN (
 			SELECT id
@@ -53,10 +70,10 @@ func deleteOldHistory() {
 	common.FailOn(err)
 }
 
-func pruneOldClearedValues() {
+func pruneOldClearedValues(tx *sql.Tx) {
 	config := common.ReadConfig()
 
-	rows, err := common.GlobalTx.Query(`
+	rows, err := tx.Query(`
 		SELECT key
 		FROM store
 		WHERE
@@ -73,6 +90,6 @@ func pruneOldClearedValues() {
 		err = rows.Scan(&key)
 		common.FailOn(err)
 
-		PruneKey(key)
+		PruneKey(tx, key)
 	}
 }

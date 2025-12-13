@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"database/sql"
+
 	"github.com/AmrSaber/kv/src/common"
 	"github.com/AmrSaber/kv/src/services"
 	"github.com/spf13/cobra"
@@ -42,27 +44,32 @@ By default, deletion is soft (keeps history). Use --prune to permanently delete 
 	Run: func(cmd *cobra.Command, args []string) {
 		key := args[0]
 		if deleteFlags.prefix {
-			keys := services.ListKeys(key, services.MatchExisting)
-			for _, key := range keys {
-				services.SetValue(key, "", nil, false)
+			services.RunInTransaction(func(tx *sql.Tx) {
+				keys := services.ListKeys(tx, key, services.MatchExisting)
 
-				if deleteFlags.prune {
-					services.PruneKey(key)
+				for _, key := range keys {
+					services.SetValue(tx, key, "", nil, false)
+
+					if deleteFlags.prune {
+						services.PruneKey(tx, key)
+					}
 				}
-			}
+			})
 
 			return
 		}
 
-		if value, _ := services.GetValue(key); value == nil || *value == "" {
-			common.Fail("Key %q does not exist", key)
-		}
+		services.RunInTransaction(func(tx *sql.Tx) {
+			if value, _ := services.GetValue(tx, key); value == nil || *value == "" {
+				common.Fail("Key %q does not exist", key)
+			}
 
-		services.SetValue(key, "", nil, false)
+			services.SetValue(tx, key, "", nil, false)
 
-		if deleteFlags.prune {
-			services.PruneKey(key)
-		}
+			if deleteFlags.prune {
+				services.PruneKey(tx, key)
+			}
+		})
 	},
 }
 

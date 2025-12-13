@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"database/sql"
 	"time"
 
 	"github.com/AmrSaber/kv/src/common"
@@ -48,17 +49,19 @@ Providing a negative duration expires the key immediately.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		key := args[0]
 
-		item := services.GetItem(key)
-		if item == nil {
-			common.Fail("Key %q does not exist", key)
-		}
+		services.RunInTransaction(func(tx *sql.Tx) {
+			item := services.GetItem(tx, key)
+			if item == nil {
+				common.Fail("Key %q does not exist", key)
+			}
 
-		if expireFlags.never {
-			services.SetValue(key, item.Value, nil, item.IsLocked)
-		} else {
-			expiresAt := time.Now().Add(expireFlags.after)
-			services.SetValue(key, item.Value, &expiresAt, item.IsLocked)
-		}
+			if expireFlags.never {
+				services.SetValue(tx, key, item.Value, nil, item.IsLocked)
+			} else {
+				expiresAt := time.Now().Add(expireFlags.after)
+				services.SetValue(tx, key, item.Value, &expiresAt, item.IsLocked)
+			}
+		})
 	},
 }
 

@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"database/sql"
+
 	"github.com/AmrSaber/kv/src/common"
 	"github.com/AmrSaber/kv/src/services"
 	"github.com/spf13/cobra"
@@ -55,21 +57,25 @@ Note: This removes the latest record from history and replaces it with a plain-t
 		}
 
 		if unlockFlags.all || unlockFlags.prefix {
-			items := services.ListItems(key, services.MatchExisting)
-			for _, item := range items {
-				err := services.UnlockKey(item.Key, unlockFlags.password)
-				if err != nil {
-					common.Fail("Wrong password for key %q", item.Key)
+			services.RunInTransaction(func(tx *sql.Tx) {
+				items := services.ListItems(tx, key, services.MatchExisting)
+				for _, item := range items {
+					err := services.UnlockKey(tx, item.Key, unlockFlags.password)
+					if err != nil {
+						common.Fail("Wrong password for key %q", item.Key)
+					}
 				}
-			}
+			})
 
 			return
 		}
 
-		err := services.UnlockKey(key, unlockFlags.password)
-		if err != nil {
-			common.Fail("Wrong password")
-		}
+		services.RunInTransaction(func(tx *sql.Tx) {
+			err := services.UnlockKey(tx, key, unlockFlags.password)
+			if err != nil {
+				common.Fail("Wrong password")
+			}
+		})
 	},
 }
 

@@ -8,19 +8,11 @@ import (
 
 func FailOn(err error) {
 	if err != nil {
-		if GlobalTx != nil {
-			_ = GlobalTx.Rollback()
-		}
-
 		panic(err)
 	}
 }
 
 func Fail(message string, args ...any) {
-	if GlobalTx != nil {
-		_ = GlobalTx.Rollback()
-	}
-
 	if message != "" {
 		Stderr.Printf(red(message)+"\n", args...)
 	}

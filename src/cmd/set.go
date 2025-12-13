@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"database/sql"
 	"io"
 	"os"
 	"time"
@@ -79,7 +80,9 @@ Providing a negative duration expires the key immediately.`,
 			common.FailOn(err)
 		}
 
-		services.SetValue(key, value, expiresAt, setFlags.password != "")
+		services.RunInTransaction(func(tx *sql.Tx) {
+			services.SetValue(tx, key, value, expiresAt, setFlags.password != "")
+		})
 	},
 }
 

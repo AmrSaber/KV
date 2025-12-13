@@ -13,7 +13,7 @@ func runPragma(db *sql.DB, pragma string) error {
 	})
 }
 
-func beginTarnsaction(db *sql.DB) (*sql.Tx, error) {
+func BeginTarnsaction(db *sql.DB) (*sql.Tx, error) {
 	var tx *sql.Tx
 
 	err := retryOnBusy(func() error {
