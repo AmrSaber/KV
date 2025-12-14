@@ -5,6 +5,8 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"golang.org/x/sync/errgroup"
 )
 
 func TestConcurrency(t *testing.T) {
@@ -54,46 +56,38 @@ func TestConcurrency(t *testing.T) {
 		// Redirect write command's input to read command's output
 		writeCmd.Stdin = readerOutPipe
 
-		// TODO: refactor into error group
-		var wg sync.WaitGroup
-		errs := make([]error, 0)
+		errGroup := &errgroup.Group{}
 
-		wg.Go(func() {
+		errGroup.Go(func() error {
 			err := readCmd.Start()
 			if err != nil {
-				errs = append(errs, fmt.Errorf("Failed to start read command: %w", err))
-				return
+				return fmt.Errorf("Failed to start read command: %w", err)
 			}
 
 			err = readCmd.Wait()
 			if err != nil {
-				errs = append(errs, fmt.Errorf("Failed to wait for read command: %w", err))
-				return
+				return fmt.Errorf("Failed to wait for read command: %w", err)
 			}
+
+			return nil
 		})
 
-		wg.Go(func() {
+		errGroup.Go(func() error {
 			err := writeCmd.Start()
 			if err != nil {
-				errs = append(errs, fmt.Errorf("Failed to start write command: %w", err))
-				return
+				return fmt.Errorf("Failed to start write command: %w", err)
 			}
 
 			err = writeCmd.Wait()
 			if err != nil {
-				errs = append(errs, fmt.Errorf("Failed to wait for write command: %w", err))
-				return
+				return fmt.Errorf("Failed to wait for write command: %w", err)
 			}
+
+			return nil
 		})
 
-		wg.Wait()
-
-		if len(errs) > 0 {
-			for _, err := range errs {
-				t.Error(err)
-			}
-
-			t.FailNow()
+		if err := errGroup.Wait(); err != nil {
+			t.Fatal(err)
 		}
 
 		distValue := RunKVSuccess(t, "get", distKey)
