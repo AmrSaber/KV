@@ -86,15 +86,6 @@ func ListItems(tx *sql.Tx, prefix string, matchType MatchType) []KVItem {
 }
 
 func ListKeys(tx *sql.Tx, prefix string, matchType MatchType) []string {
-	if tx == nil {
-		var keys []string
-		RunInTransaction(func(tx *sql.Tx) {
-			keys = ListKeys(tx, prefix, matchType)
-		})
-
-		return keys
-	}
-
 	items := ListItems(tx, prefix, matchType)
 
 	keys := make([]string, 0, len(items))
