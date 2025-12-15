@@ -16,10 +16,10 @@ var expireFlags = struct {
 
 // expireCmd represents the expire command
 var expireCmd = &cobra.Command{
-	Use:     "expire <key>",
+	Use:     "expire <key|key1 key2...>",
 	Aliases: []string{"ex", "exp"},
-	Short:   "Set or remove expiration for a key",
-	Long: `Set or remove expiration for a key.
+	Short:   "Set or remove expiration for a key or keys",
+	Long: `Set or remove expiration for a key or multiple keys.
 
 Use --after with duration suffixes: s (second), m (minute), h (hour)
 Example durations: 1h, 30m, 10s, 2h3m4s
@@ -29,37 +29,33 @@ Providing a negative duration expires the key immediately.`,
 	Example: `  # Set key to expire in 1 hour
   kv expire session-token --after 1h
 
-  # Set key to expire in 30 minutes
-  kv expire temp-data --after 30m
+  # Set multiple keys to expire in 30 minutes
+  kv expire temp-data cache-key session-id --after 30m
 
-  # Remove expiration from a key
-  kv expire session-token --never
+  # Remove expiration from multiple keys
+  kv expire session-token api-key --never
 
   # Expire key immediately
   kv expire old-token --after -1s`,
 	GroupID: "ttl",
-	Args:    cobra.ExactArgs(1),
+	Args:    cobra.MinimumNArgs(1),
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]cobra.Completion, cobra.ShellCompDirective) {
-		if len(args) != 0 {
-			return nil, cobra.ShellCompDirectiveNoFileComp
-		}
-
 		return completeKeyArg(toComplete, services.MatchExisting)
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		key := args[0]
-
 		services.RunInTransaction(func(tx *sql.Tx) {
-			item := services.GetItem(tx, key)
-			if item == nil {
-				common.Fail("Key %q does not exist", key)
-			}
+			for _, key := range args {
+				item := services.GetItem(tx, key)
+				if item == nil {
+					common.Fail("Key %q does not exist", key)
+				}
 
-			if expireFlags.never {
-				services.SetValue(tx, key, item.Value, nil, item.IsLocked)
-			} else {
-				expiresAt := time.Now().Add(expireFlags.after)
-				services.SetValue(tx, key, item.Value, &expiresAt, item.IsLocked)
+				if expireFlags.never {
+					services.SetValue(tx, key, item.Value, nil, item.IsLocked)
+				} else {
+					expiresAt := time.Now().Add(expireFlags.after)
+					services.SetValue(tx, key, item.Value, &expiresAt, item.IsLocked)
+				}
 			}
 		})
 	},

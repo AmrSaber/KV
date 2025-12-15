@@ -15,7 +15,7 @@ var deleteFlags = struct {
 
 // deleteCmd represents the delete command
 var deleteCmd = &cobra.Command{
-	Use:     "delete <key|prefix>",
+	Use:     "delete <key|prefix|key1 key2...>",
 	Aliases: []string{"del", "rm"},
 	Short:   "Delete a key or keys matching a prefix",
 	Long: `Delete a key or multiple keys matching a prefix.
@@ -24,8 +24,11 @@ By default, deletion is soft (keeps history). Use --prune to permanently delete 
 	Example: `  # Delete a single key (soft delete, keeps history)
   kv delete api-key
 
-  # Permanently delete a key and its history
-  kv delete old-key --prune
+  # Delete multiple keys
+  kv delete api-key temp-data old-token
+
+  # Permanently delete multiple keys and their history
+  kv delete old-key1 old-key2 --prune
 
   # Delete all keys with a prefix
   kv delete temp --prefix
@@ -33,17 +36,21 @@ By default, deletion is soft (keeps history). Use --prune to permanently delete 
   # Permanently delete all keys with a prefix
   kv delete cache --prefix --prune`,
 	GroupID: "kv",
-	Args:    cobra.ExactArgs(1),
+	Args:    cobra.MinimumNArgs(1),
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]cobra.Completion, cobra.ShellCompDirective) {
-		if len(args) != 0 {
+		if deleteFlags.prefix {
 			return nil, cobra.ShellCompDirectiveNoFileComp
 		}
 
 		return completeKeyArg(toComplete, services.MatchExisting)
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		key := args[0]
 		if deleteFlags.prefix {
+			if len(args) > 1 {
+				common.Fail("Cannot use --prefix with multiple keys")
+			}
+
+			key := args[0]
 			services.RunInTransaction(func(tx *sql.Tx) {
 				keys := services.ListKeys(tx, key, services.MatchExisting)
 
@@ -59,15 +66,19 @@ By default, deletion is soft (keeps history). Use --prune to permanently delete 
 			return
 		}
 
+		// Handle multiple keys - fail on first error
 		services.RunInTransaction(func(tx *sql.Tx) {
-			if value, _ := services.GetValue(tx, key); value == nil || *value == "" {
-				common.Fail("Key %q does not exist", key)
-			}
+			for _, key := range args {
+				value, _ := services.GetValue(tx, key)
+				if value == nil || *value == "" {
+					common.Fail("Key %q does not exist", key)
+				}
 
-			services.SetValue(tx, key, "", nil, false)
+				services.SetValue(tx, key, "", nil, false)
 
-			if deleteFlags.prune {
-				services.PruneKey(tx, key)
+				if deleteFlags.prune {
+					services.PruneKey(tx, key)
+				}
 			}
 		})
 	},

@@ -14,7 +14,7 @@ var hideFlags = struct {
 
 // hideCmd represents the hide command
 var hideCmd = &cobra.Command{
-	Use:     "hide <key|prefix>",
+	Use:     "hide <key|prefix|key1 key2...>",
 	Aliases: []string{"obscure", "redact", "conceal"},
 	Short:   "Mark a key or keys as hidden",
 	Long: `Mark a key or multiple keys as hidden. Hidden keys show as [Hidden] in list and history-list commands.
@@ -24,14 +24,17 @@ Hidden values are still accessible via 'kv get' and can be shown again with 'kv 
 	Example: `  # Hide a single key
   kv hide api-key
 
+  # Hide multiple keys
+  kv hide api-key db-password secret-token
+
   # Hide all keys with a prefix
   kv hide secrets --prefix
   kv hide secrets -p`,
 	GroupID: "security",
-	Args:    cobra.MaximumNArgs(1),
+	Args:    cobra.MinimumNArgs(1),
 
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]cobra.Completion, cobra.ShellCompDirective) {
-		if len(args) != 0 {
+		if hideFlags.prefix {
 			return nil, cobra.ShellCompDirectiveNoFileComp
 		}
 
@@ -43,13 +46,16 @@ Hidden values are still accessible via 'kv get' and can be shown again with 'kv 
 			if hideFlags.prefix {
 				common.Fail("Prefix must be provided")
 			} else {
-				common.Fail("Key must be provided")
+				common.Fail("At least one key must be provided")
 			}
 		}
 
-		key := args[0]
-
 		if hideFlags.prefix {
+			if len(args) > 1 {
+				common.Fail("Cannot use --prefix with multiple keys")
+			}
+
+			key := args[0]
 			services.RunInTransaction(func(tx *sql.Tx) {
 				items := services.ListItems(tx, key, services.MatchExisting)
 				for _, item := range items {
@@ -60,8 +66,11 @@ Hidden values are still accessible via 'kv get' and can be shown again with 'kv 
 			return
 		}
 
+		// Handle multiple keys - fail on first error
 		services.RunInTransaction(func(tx *sql.Tx) {
-			services.HideKey(tx, key)
+			for _, key := range args {
+				services.HideKey(tx, key)
+			}
 		})
 	},
 }
