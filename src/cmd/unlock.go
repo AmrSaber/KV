@@ -29,7 +29,7 @@ Note: This removes the latest record from history and replaces it with a plain-t
 
   # Unlock all keys in the store
   kv unlock --all --password "mypass"`,
-	GroupID: "encryption",
+	GroupID: "security",
 	Args:    cobra.MaximumNArgs(1),
 
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]cobra.Completion, cobra.ShellCompDirective) {

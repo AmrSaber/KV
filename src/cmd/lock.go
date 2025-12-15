@@ -30,7 +30,7 @@ If plain-text values exist in older history records, consider using 'kv history 
 
   # Lock all keys in the store
   kv lock --all --password "mypass"`,
-	GroupID: "encryption",
+	GroupID: "security",
 	Args:    cobra.MaximumNArgs(1),
 
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]cobra.Completion, cobra.ShellCompDirective) {

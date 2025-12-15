@@ -79,7 +79,7 @@ Higher indices represent older values.`,
 			// Hide key since they're all for the same key
 			item.Key = ""
 
-			if item.IsLocked {
+			if item.IsLocked || item.IsHidden {
 				item.Value = ""
 			}
 
@@ -153,8 +153,12 @@ Higher indices represent older values.`,
 
 				if displayValues {
 					value := item.Value
+
+					// [Locked] takes precedence over [Hidden]
 					if item.IsLocked {
 						value = color.New(color.FgRed).Sprint("[Locked]")
+					} else if item.IsHidden {
+						value = color.New(color.FgRed).Sprint("[Hidden]")
 					}
 
 					row = append(row, value)

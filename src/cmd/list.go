@@ -82,9 +82,9 @@ Locked values are displayed as [Locked] in table view.`,
 			return comp < 0
 		})
 
-		// Remove the value of locked items
+		// Remove the value of locked or hidden items
 		for i, item := range items {
-			if item.IsLocked {
+			if item.IsLocked || item.IsHidden {
 				items[i].Value = ""
 			}
 		}
@@ -147,8 +147,12 @@ Locked values are displayed as [Locked] in table view.`,
 
 				if displayValues {
 					value := item.Value
+
+					// [Locked] takes precedence over [Hidden]
 					if item.IsLocked {
 						value = color.New(color.FgRed).Sprint("[Locked]")
+					} else if item.IsHidden {
+						value = color.New(color.FgRed).Sprint("[Hidden]")
 					}
 
 					row = append(row, value)

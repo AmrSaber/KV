@@ -36,11 +36,11 @@ func GetItem(tx *sql.Tx, key string) *KVItem {
 	var expiresAt sql.NullTime
 
 	err := tx.QueryRow(`
-		SELECT value, timestamp, is_locked, expires_at
+		SELECT value, timestamp, is_locked, is_hidden, expires_at
 		FROM store
 		WHERE key = ? AND is_latest = 1 AND value != ''`,
 		key,
-	).Scan(&item.Value, &item.Timestamp, &item.IsLocked, &expiresAt)
+	).Scan(&item.Value, &item.Timestamp, &item.IsLocked, &item.IsHidden, &expiresAt)
 	if err == sql.ErrNoRows {
 		return nil
 	} else {
@@ -64,7 +64,7 @@ const (
 
 func ListItems(tx *sql.Tx, prefix string, matchType MatchType) []KVItem {
 	query := `
-		SELECT key, value, expires_at, timestamp, is_locked
+		SELECT key, value, expires_at, timestamp, is_locked, is_hidden
 		FROM store
 		WHERE key LIKE ? || '%' AND is_latest = 1
 	`
@@ -107,7 +107,7 @@ func ListKeys(tx *sql.Tx, prefix string, matchType MatchType) []string {
 
 func ListKeyHistory(tx *sql.Tx, key string) []KVItem {
 	rows, err := tx.Query(`
-		SELECT key, value, expires_at, timestamp, is_locked
+		SELECT key, value, expires_at, timestamp, is_locked, is_hidden
 		FROM store
 		WHERE key = ?
 		ORDER BY id ASC`,
@@ -121,14 +121,14 @@ func ListKeyHistory(tx *sql.Tx, key string) []KVItem {
 func GetHistoryItem(tx *sql.Tx, key string, steps int) KVItem {
 	var item KVItem
 	err := tx.QueryRow(`
-		SELECT key, value, timestamp, is_locked
+		SELECT key, value, timestamp, is_locked, is_hidden
 		FROM store
 		WHERE key = ?
 		ORDER BY id DESC
 		LIMIT ?, 1`,
 		key,
 		steps,
-	).Scan(&item.Key, &item.Value, &item.Timestamp, &item.IsLocked)
+	).Scan(&item.Key, &item.Value, &item.Timestamp, &item.IsLocked, &item.IsHidden)
 	common.FailOn(err)
 
 	return item
@@ -140,7 +140,7 @@ func parseKVItems(rows *sql.Rows) []KVItem {
 		var item KVItem
 		var expiresAt sql.NullTime
 
-		err := rows.Scan(&item.Key, &item.Value, &expiresAt, &item.Timestamp, &item.IsLocked)
+		err := rows.Scan(&item.Key, &item.Value, &expiresAt, &item.Timestamp, &item.IsLocked, &item.IsHidden)
 		common.FailOn(err)
 
 		if expiresAt.Valid {
