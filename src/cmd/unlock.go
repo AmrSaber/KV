@@ -16,8 +16,9 @@ var unlockFlags = struct {
 
 // unlockCmd represents the unlock command
 var unlockCmd = &cobra.Command{
-	Use:   "unlock <key|prefix|key1 key2...>",
-	Short: "Decrypt a key or keys back to plain text",
+	Use:     "unlock <key|prefix|key1 key2...>",
+	Aliases: []string{"decrypt"},
+	Short:   "Decrypt a key or keys back to plain text",
 	Long: `Decrypt a key or multiple keys using the provided password, converting them back to plain text.
 
 Note: This removes the latest record from history and replaces it with a plain-text one.`,

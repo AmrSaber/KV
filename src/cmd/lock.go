@@ -16,8 +16,9 @@ var lockFlags = struct {
 
 // lockCmd represents the lock command
 var lockCmd = &cobra.Command{
-	Use:   "lock <key|prefix|key1 key2...>",
-	Short: "Encrypt a key or keys with password protection",
+	Use:     "lock <key|prefix|key1 key2...>",
+	Aliases: []string{"encrypt"},
+	Short:   "Encrypt a key or keys with password protection",
 	Long: `Encrypt a key or multiple keys using AES-256-GCM encryption with the provided password.
 
 Note: This removes the latest record from history and replaces it with an encrypted one.
