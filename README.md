@@ -462,6 +462,11 @@ cat backup.db | kv db import -
 # Or simply:
 kv db import < backup.db
 
+# Restore from automatic backup (created during import)
+kv db restore
+# Output: Database restored from: /path/to/kv.db.backup
+# Note: This restores the backup created during the last import operation
+
 # Practical examples:
 
 # Create daily backups
@@ -487,9 +492,12 @@ gunzip -c kv-backup.db.gz | kv db import -
 
 **Safety features:**
 - Import automatically creates a backup at `<db-path>.backup` before replacing
+- You can restore from this backup anytime using `kv db restore`
 - Import validates the file is a valid database before proceeding
 - Export fails if file exists (use `--force` to override)
 - Export validates destination directory exists
+- Restore validates the backup is a valid database before restoring
+- Restore preserves the backup file after restoration
 
 ### Utility Commands
 

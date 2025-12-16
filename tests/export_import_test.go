@@ -274,3 +274,123 @@ func TestExportImportRoundTrip(t *testing.T) {
 		t.Error("History should contain all versions")
 	}
 }
+
+func TestRestoreCommand(t *testing.T) {
+	cleanup := SetupTestDB(t)
+	defer cleanup()
+
+	t.Run("restore fails when no backup exists", func(t *testing.T) {
+		output := RunKVFailure(t, "db", "restore")
+		if !strings.Contains(output, "No backup file found") {
+			t.Errorf("Expected 'No backup file found' error, got: %s", output)
+		}
+	})
+
+	// Setup test data and create a backup via import
+	RunKVSuccess(t, "set", "original1", "value1")
+	RunKVSuccess(t, "set", "original2", "value2", "--password", "pass")
+	RunKVSuccess(t, "set", "original3", "value3")
+	RunKVSuccess(t, "hide", "original3")
+
+	tmpDir := t.TempDir()
+	exportPath := filepath.Join(tmpDir, "backup.db")
+	RunKVSuccess(t, "db", "export", exportPath)
+
+	// Import to create a backup
+	RunKVSuccess(t, "db", "import", exportPath)
+
+	t.Run("restore fails with invalid backup file", func(t *testing.T) {
+		// Get DB path and backup path
+		dbPath := common.GetDBPath()
+		backupPath := dbPath + ".backup"
+
+		// Save current backup
+		validBackupPath := backupPath + ".valid"
+		err := common.CopyFile(backupPath, validBackupPath)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer func() {
+			// Restore valid backup
+			_ = os.Remove(backupPath)
+			_ = common.CopyFile(validBackupPath, backupPath)
+			_ = os.Remove(validBackupPath)
+		}()
+
+		// Replace backup with invalid content
+		err = os.WriteFile(backupPath, []byte("not a database"), 0o644)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		output := RunKVFailure(t, "db", "restore")
+		if !strings.Contains(output, "Invalid backup") {
+			t.Errorf("Expected 'Invalid backup' error, got: %s", output)
+		}
+	})
+
+	t.Run("restore successfully restores from backup", func(t *testing.T) {
+		// Modify database
+		RunKVSuccess(t, "set", "new-key", "new-value")
+		RunKVSuccess(t, "delete", "original1")
+
+		// Verify changes
+		output := RunKVSuccess(t, "get", "new-key")
+		if output != "new-value" {
+			t.Error("new-key should exist before restore")
+		}
+
+		RunKVFailure(t, "get", "original1")
+
+		// Restore
+		output = RunKVSuccess(t, "db", "restore")
+		if !strings.Contains(output, "restored from") {
+			t.Errorf("Expected success message, got: %s", output)
+		}
+
+		// Verify restoration
+		output = RunKVSuccess(t, "get", "original1")
+		if output != "value1" {
+			t.Errorf("Expected 'value1', got: %s", output)
+		}
+
+		output = RunKVFailure(t, "get", "new-key")
+		if !strings.Contains(output, "does not exist") {
+			t.Error("new-key should not exist after restore")
+		}
+	})
+
+	t.Run("restore preserves backup file", func(t *testing.T) {
+		dbPath := common.GetDBPath()
+		backupPath := dbPath + ".backup"
+
+		// Verify backup still exists
+		if _, err := os.Stat(backupPath); os.IsNotExist(err) {
+			t.Error("Backup file should still exist after restore")
+		}
+
+		// Verify it's still valid
+		if err := common.ValidateSqliteFile(backupPath); err != nil {
+			t.Errorf("Backup file should still be valid: %v", err)
+		}
+	})
+
+	t.Run("restore preserves all data attributes", func(t *testing.T) {
+		// Verify locked key
+		output := RunKVSuccess(t, "list", "original2")
+		if !strings.Contains(output, "[Locked]") {
+			t.Error("original2 should be locked")
+		}
+
+		output = RunKVSuccess(t, "get", "original2", "--password", "pass")
+		if output != "value2" {
+			t.Errorf("Expected 'value2', got: %s", output)
+		}
+
+		// Verify hidden key
+		output = RunKVSuccess(t, "list", "original3")
+		if !strings.Contains(output, "[Hidden]") {
+			t.Error("original3 should be hidden")
+		}
+	})
+}

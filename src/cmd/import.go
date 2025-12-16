@@ -20,7 +20,8 @@ The imported file must be a valid database file created with the 'export' comman
 This will completely replace the current database with the imported one.
 
 WARNING: This operation is destructive. The current database will be backed up
-to <db-path>.backup before importing.
+to <db-path>.backup before importing. You can restore from this backup using
+the 'kv db restore' command if needed.
 
 Use "-" as the file path to read from stdin (useful for piping).`,
 	Example: `  # Import database from a file
@@ -87,7 +88,8 @@ Use "-" as the file path to read from stdin (useful for piping).`,
 			if err != nil {
 				common.Fail("Failed to backup current database: %v", err)
 			}
-			fmt.Printf("Current database backed up to: %s\n", backupPath)
+
+			fmt.Print("Current database backed up")
 		}
 
 		// Remove WAL files (should be empty after VACUUM, but remove just in case)

@@ -19,7 +19,9 @@ var exportCmd = &cobra.Command{
 	Long: `Export the entire database to a binary file.
 
 The exported file captures the complete state of the database and can be
-imported later using the 'import' command to restore the exact state.
+imported later using the 'kv db import' command to restore the exact state.
+When importing, a backup of the current database is automatically created,
+which can be restored using 'kv db restore' if needed.
 
 Use "-" as the file path to write to stdout (useful for piping).`,
 	Example: `  # Export database to a file
