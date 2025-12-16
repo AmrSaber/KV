@@ -18,9 +18,11 @@ Unlike traditional databases, KV is designed for simplicity and speed. No server
 | Multiple Databases           | ✅    | ✅ (via prefixes) |
 | Binary Data                  | ✅    | ✅                |
 | **AES-256 Encryption**       | ❌    | ✅                |
+| **Value Visibility Control** | ❌    | ✅                |
 | **Version History & Revert** | ❌    | ✅                |
 | **Auto-Expiration (TTL)**    | ❌    | ✅                |
 | **Soft Deletes**             | ❌    | ✅                |
+| **Multi-Key Operations**     | ❌    | ✅                |
 | **JSON/YAML Output**         | ❌    | ✅                |
 
 ## Why KV?
@@ -40,10 +42,11 @@ Unlike traditional databases, KV is designed for simplicity and speed. No server
 - [Command Reference](#command-reference)
   - [Basic Key-Value Operations](#working-with-basic-key-value-operations)
   - [Managing Encrypted Values](#managing-encrypted-values)
+  - [Managing Value Visibility (Hide/Show)](#managing-value-visibility-hideshow)
   - [Time-to-Live (TTL) Management](#time-to-live-ttl-management)
   - [Version Control & History](#version-control--history)
   - [Output Formats](#output-formats)
-  - [Batch Operations](#batch-operations)
+  - [Batch Operations & Multiple Keys](#batch-operations--multiple-keys)
   - [Utility Commands](#utility-commands)
 - [Configuration](#configuration)
 - [Data Storage](#data-storage)
@@ -164,7 +167,7 @@ kv set github-token "ghp_secret" --password "mypass"
 
 ### Encryption & Security
 
-Lock individual values with password protection using military-grade AES-256-GCM encryption. Perfect for API keys, credentials, and sensitive configuration.
+Lock individual values with password protection using military-grade AES-256-GCM encryption. Perfect for API keys, credentials, and sensitive configuration. Hide sensitive values from list output (without encryption) for privacy.
 
 ### Time-to-Live (TTL)
 
@@ -178,9 +181,9 @@ Every change is versioned. Made a mistake? Revert to any previous value. Need to
 
 View data as beautiful terminal tables, machine-readable JSON, or structured YAML—whatever fits your workflow.
 
-### Batch Operations Support
+### Batch & Multi-Key Operations
 
-Work with multiple keys at once using prefix matching. Delete, list, or manage entire namespaces in one command.
+Work with multiple keys at once — either by specifying them explicitly or using prefix matching. Operations are transactional: all keys succeed or none do.
 
 ---
 
@@ -270,6 +273,40 @@ kv get api-key --password "$(pass show kv/master)"
 
 # Or read from a file
 kv lock sensitive-data --password "$(cat ~/.kv-password)"
+```
+
+### Managing Value Visibility (Hide/Show)
+
+> **Privacy Note:** Hiding values is not encryption—it only controls visibility in output. Hidden values show as `[Hidden]` in lists but remain accessible via `get`. For true security, use encryption with `lock` instead.
+
+```bash
+# Hide sensitive values from list output
+kv set api-key "sk-1234567890"
+kv hide api-key
+
+# List shows hidden values as [Hidden]
+kv list
+# Output:
+# ┌─────────┬──────────┬─────────────────────┐
+# │ KEY     │ VALUE    │ TIMESTAMP           │
+# ├─────────┼──────────┼─────────────────────┤
+# │ api-key │ [Hidden] │ 2025-10-20 21:29:02 │
+# └─────────┴──────────┴─────────────────────┘
+
+# Hidden values are still accessible via get
+kv get api-key
+# Output: sk-1234567890
+
+# Show a hidden value again
+kv show api-key
+
+# Hide multiple keys at once
+kv hide api-key db-password secret-token
+
+# Hide all keys with a prefix
+kv hide secrets --prefix
+
+# Note: Locked keys always show as [Locked] (takes precedence over hidden state)
 ```
 
 ### Time-to-Live (TTL) Management
@@ -371,17 +408,26 @@ kv list --no-values
 kv list --output yaml
 ```
 
-### Batch Operations
+### Batch Operations & Multiple Keys
 
 ```bash
-# Delete all keys with a prefix
-kv delete cache --prefix
+# Operate on multiple keys at once
+kv delete old-key temp-data cache-value
+kv hide api-key db-password auth-token
+kv lock secret1 secret2 secret3 --password "mypass"
+kv expire session1 session2 session3 --after 1h
 
-# Lock all keys matching a prefix
-kv lock secrets --prefix --password "mypass"
+# Or use prefix matching for batch operations
+kv delete cache --prefix
+kv hide secrets --prefix
+kv lock config --prefix --password "mypass"
+kv unlock secrets --prefix --password "mypass"
 
 # Unlock all keys at once
 kv unlock --all --password "mypass"
+
+# Note: Multi-key operations are transactional — if any key fails,
+# none of the changes are applied (all-or-nothing behavior)
 ```
 
 ### Utility Commands
