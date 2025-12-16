@@ -89,7 +89,7 @@ Use "-" as the file path to read from stdin (useful for piping).`,
 				common.Fail("Failed to backup current database: %v", err)
 			}
 
-			fmt.Print("Current database backed up")
+			fmt.Println("Current database backed up")
 		}
 
 		// Remove WAL files (should be empty after VACUUM, but remove just in case)
