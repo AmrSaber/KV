@@ -190,7 +190,7 @@ func init() {
 	listCmd.Flags().BoolVarP(&listFlags.noValues, "no-values", "v", false, "Hide values")
 	listCmd.Flags().BoolVarP(&listFlags.deleted, "deleted", "d", false, "List deleted keys")
 	listCmd.Flags().StringVarP(&listFlags.output, "output", "o", "table", "Print format, options: json, yaml, table")
-	listCmd.RegisterFlagCompletionFunc(
+	_ = listCmd.RegisterFlagCompletionFunc(
 		"output",
 		cobra.FixedCompletions([]string{"json", "yaml", "table"}, cobra.ShellCompDirectiveDefault),
 	)

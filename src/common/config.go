@@ -8,8 +8,8 @@ import (
 )
 
 type Config struct {
-	PruneHistoryAfterDays int `yaml:"prune-history-after-days,omitempty"`
-	HistoryLength         int `yaml:"history-length,omitempty"`
+	PruneHistoryAfterDays int `json:"pruneHistoryAfterDays" yaml:"prune-history-after-days,omitempty"`
+	HistoryLength         int `json:"historyLength" yaml:"history-length,omitempty"`
 }
 
 func (c Config) String() string {

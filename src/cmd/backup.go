@@ -11,11 +11,11 @@ import (
 var backupCmd = &cobra.Command{
 	Use:   "backup",
 	Short: "Create DB backup",
-	Long: `Creates a backup for the database.
+	Long: `Creates a backup for the database. See info command for backup location.
 
-	Created backup can be later restored using 'kv db restore'.
+Created backup can be later restored using 'kv db restore'.
 
-	Only a single backup is kept, so creating a backup removes existing backups.
+Only a single backup is kept, so creating a backup removes existing backups.
 `,
 	Example: `  # Backup DB
 	kv db backup

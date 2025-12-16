@@ -8,7 +8,7 @@ import (
 // implodeCmd represents the implode command
 var implodeCmd = &cobra.Command{
 	Use:   "implode",
-	Short: "Permanently delete all keys and history",
+	Short: "Permanently delete all keys, history, and backups",
 	Long: `Permanently delete all keys and their history from the store.
 
 This command is not suitable to run concurrently with other commands,

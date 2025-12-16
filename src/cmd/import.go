@@ -23,9 +23,16 @@ var importCmd = &cobra.Command{
 The imported file must be a valid database file created with the 'export' command.
 This will completely replace the current database with the imported one.
 
-WARNING: This operation is destructive. The current database will be backed up
-to <db-path>.backup before importing. You can restore from this backup using
-the 'kv db restore' command if needed.
+WARNING: This operation is destructive.
+
+If --backup flag is set the current database will be backed up
+to <db-path>.backup before importing.
+You can restore from this backup using the 'kv db restore' command if needed.
+
+If --backup flag is not passed, a temp backup will be created in case import fails.
+It will be automatically deleted if import fails.
+
+For (persistent) backup location, see 'info' command.
 
 Use "-" as the file path to read from stdin (useful for piping).`,
 	Example: `  # Import database from a file
