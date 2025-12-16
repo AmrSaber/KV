@@ -47,6 +47,7 @@ Unlike traditional databases, KV is designed for simplicity and speed. No server
   - [Version Control & History](#version-control--history)
   - [Output Formats](#output-formats)
   - [Batch Operations & Multiple Keys](#batch-operations--multiple-keys)
+  - [Backup & Restore](#backup--restore)
   - [Utility Commands](#utility-commands)
 - [Configuration](#configuration)
 - [Data Storage](#data-storage)
@@ -429,6 +430,66 @@ kv unlock --all --password "mypass"
 # Note: Multi-key operations are transactional — if any key fails,
 # none of the changes are applied (all-or-nothing behavior)
 ```
+
+### Backup & Restore
+
+> **Note:** Export creates a complete snapshot of your database including all keys, values, encryption, hidden state, TTL settings, and full history. Import completely replaces your current database with the imported one, creating a backup of your current database first.
+
+```bash
+# Export database to a file
+kv db export backup.db
+# Output: Database exported to: backup.db
+
+# Export to absolute path
+kv db export /path/to/backups/kv-backup-2025-10-20.db
+
+# Overwrite existing backup file
+kv db export backup.db --force
+
+# Export to stdout (useful for piping)
+kv db export - > backup.db
+# Or simply:
+kv db export > backup.db
+
+# Import database from a file (replaces current database)
+kv db import backup.db
+# Output:
+# Current database backed up to: /path/to/kv.db.backup
+# Database imported successfully
+
+# Import from stdin
+cat backup.db | kv db import -
+# Or simply:
+kv db import < backup.db
+
+# Practical examples:
+
+# Create daily backups
+kv db export ~/backups/kv-$(date +%Y-%m-%d).db
+
+# Transfer database between machines
+# On source machine:
+kv db export - | ssh user@remote 'kv db import -'
+
+# Compress backup
+kv db export - | gzip > kv-backup.db.gz
+# Restore from compressed backup
+gunzip -c kv-backup.db.gz | kv db import -
+```
+
+**What gets preserved in export/import:**
+- All keys and values (plain text, encrypted, and hidden)
+- Password-encrypted keys (with their encryption intact)
+- Hidden/visible state
+- TTL and expiration settings
+- Complete version history for all keys
+- All configuration and metadata
+
+**Safety features:**
+- Import automatically creates a backup at `<db-path>.backup` before replacing
+- Import validates the file is a valid database before proceeding
+- Export fails if file exists (use `--force` to override)
+- Export validates destination directory exists
 
 ### Utility Commands
 

@@ -16,8 +16,15 @@ var pragmas = []string{
 	`PRAGMA busy_timeout = 5000`,
 }
 
+func CloseDB() {
+	if db != nil {
+		_ = db.Close()
+		db = nil
+	}
+}
+
 func ClearDB() {
-	dbPath := path.Dir(getDBPath())
+	dbPath := path.Dir(GetDBPath())
 	err := os.RemoveAll(dbPath)
 	FailOn(err)
 }
@@ -31,7 +38,7 @@ func GetDB() *sql.DB {
 }
 
 func openDB() *sql.DB {
-	dbPath := getDBPath()
+	dbPath := GetDBPath()
 	_ = os.MkdirAll(path.Dir(dbPath), os.ModeDir|os.ModePerm)
 
 	db, err := sql.Open("sqlite", dbPath+"?_txlock=immediate")
@@ -60,11 +67,23 @@ func openDB() *sql.DB {
 	return db
 }
 
-func getDBPath() string {
+func GetDBPath() string {
 	scope := gap.NewScope(gap.User, "kv")
 
 	dbPath, err := scope.DataPath("kv.db")
 	FailOn(err)
 
 	return dbPath
+}
+
+func ValidateSqliteFile(path string) error {
+	testDB, err := sql.Open("sqlite", path+"?mode=ro")
+	if err != nil {
+		return err
+	}
+
+	defer func() { _ = testDB.Close() }()
+
+	// Try to query to ensure it's actually valid
+	return testDB.Ping()
 }
