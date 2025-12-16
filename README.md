@@ -451,21 +451,26 @@ kv db export - > backup.db
 # Or simply:
 kv db export > backup.db
 
-# Import database from a file (replaces current database)
-kv db import backup.db
+# Import database from a file (replaces current database) and create a backup for existing database
+kv db import backup.db --backup
 # Output:
-# Current database backed up to: /path/to/kv.db.backup
+# Current database backed up
 # Database imported successfully
 
 # Import from stdin
-cat backup.db | kv db import -
+cat backup.db | kv db import
 # Or simply:
 kv db import < backup.db
 
-# Restore from automatic backup (created during import)
+# Create a manual backup
+kv db backup
+# Output: Database backup created successfully
+# Note: Only one backup is kept - creating a new backup replaces the previous one
+
+# Restore from backup (created during import or via backup command)
 kv db restore
 # Output: Database restored from: /path/to/kv.db.backup
-# Note: This restores the backup created during the last import operation
+# Note: This restores the most recent backup (from import or manual backup)
 
 # Practical examples:
 
@@ -483,6 +488,7 @@ gunzip -c kv-backup.db.gz | kv db import -
 ```
 
 **What gets preserved in export/import:**
+
 - All keys and values (plain text, encrypted, and hidden)
 - Password-encrypted keys (with their encryption intact)
 - Hidden/visible state
@@ -491,8 +497,11 @@ gunzip -c kv-backup.db.gz | kv db import -
 - All configuration and metadata
 
 **Safety features:**
+
 - Import automatically creates a backup at `<db-path>.backup` before replacing
-- You can restore from this backup anytime using `kv db restore`
+- Manual backups can be created anytime using `kv db backup`
+- You can restore from the most recent backup using `kv db restore`
+- Only one backup is maintained (new backups replace the previous one)
 - Import validates the file is a valid database before proceeding
 - Export fails if file exists (use `--force` to override)
 - Export validates destination directory exists

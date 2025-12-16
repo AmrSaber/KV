@@ -29,32 +29,43 @@ func ClearDB() {
 	FailOn(err)
 }
 
-func GetDB() *sql.DB {
+func GetDB() (*sql.DB, error) {
+	var err error
+
 	if db == nil {
-		db = openDB()
+		db, err = openDB()
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	return db
+	return db, nil
 }
 
-func openDB() *sql.DB {
+func openDB() (*sql.DB, error) {
 	dbPath := GetDBPath()
 	_ = os.MkdirAll(path.Dir(dbPath), os.ModeDir|os.ModePerm)
 
 	db, err := sql.Open("sqlite", dbPath+"?_txlock=immediate")
-	FailOn(err)
+	if err != nil {
+		return nil, err
+	}
 
 	db.SetMaxOpenConns(1)
 
 	// Pragmas cannot run in transactions
 	for _, pragma := range pragmas {
 		err := runPragma(db, pragma)
-		FailOn(err)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// Migrations transaction
 	tx, err := BeginTarnsaction(db)
-	FailOn(err)
+	if err != nil {
+		return nil, err
+	}
 
 	defer func() { _ = tx.Rollback() }()
 
@@ -62,9 +73,11 @@ func openDB() *sql.DB {
 	runMigrations(tx)
 
 	err = tx.Commit()
-	FailOn(err)
+	if err != nil {
+		return nil, err
+	}
 
-	return db
+	return db, nil
 }
 
 func GetDBPath() string {
@@ -86,4 +99,40 @@ func ValidateSqliteFile(path string) error {
 
 	// Try to query to ensure it's actually valid
 	return testDB.Ping()
+}
+
+func GetDefaultBackupPath() string {
+	destPath := GetDBPath()
+	return destPath + ".backup"
+}
+
+func BackupDB(path string) error {
+	// Get destination path
+	destPath := GetDBPath()
+	backupPath := GetDefaultBackupPath()
+
+	// Vacuum current database to commit all WAL changes to main file
+	db, err := GetDB()
+	if err != nil {
+		return err
+	}
+
+	_, err = db.Exec("VACUUM")
+	if err != nil {
+		return err
+	}
+
+	// Close database connection
+	CloseDB()
+
+	// Remove old backup if exists
+	_ = os.Remove(backupPath)
+
+	// Backup current database if it exists
+	err = CopyFile(destPath, backupPath)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

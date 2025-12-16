@@ -394,3 +394,72 @@ func TestRestoreCommand(t *testing.T) {
 		}
 	})
 }
+
+func TestBackupCommand(t *testing.T) {
+	cleanup := SetupTestDB(t)
+	defer cleanup()
+
+	// Create comprehensive test data
+	RunKVSuccess(t, "set", "plain", "plain-value")
+	RunKVSuccess(t, "set", "locked", "locked-value", "--password", "mypass")
+	RunKVSuccess(t, "set", "hidden", "hidden-value")
+	RunKVSuccess(t, "hide", "hidden")
+	RunKVSuccess(t, "set", "expiring", "expiring-value", "--expires-after", "2h")
+	RunKVSuccess(t, "set", "versioned", "v1")
+	RunKVSuccess(t, "set", "versioned", "v2")
+	RunKVSuccess(t, "set", "versioned", "v3")
+
+	// Backup
+	RunKVSuccess(t, "db", "backup")
+
+	// Destroy data
+	RunKVSuccess(t, "delete", "plain")
+	RunKVSuccess(t, "delete", "locked")
+	RunKVSuccess(t, "delete", "hidden")
+	RunKVSuccess(t, "delete", "expiring")
+	RunKVSuccess(t, "delete", "versioned", "--prune")
+
+	// Restore
+	RunKVSuccess(t, "db", "restore")
+
+	// Verify all data
+	output := RunKVSuccess(t, "get", "plain")
+	if output != "plain-value" {
+		t.Errorf("Expected 'plain-value', got: %s", output)
+	}
+
+	output = RunKVSuccess(t, "get", "locked", "--password", "mypass")
+	if output != "locked-value" {
+		t.Errorf("Expected 'locked-value', got: %s", output)
+	}
+
+	output = RunKVSuccess(t, "get", "hidden")
+	if output != "hidden-value" {
+		t.Errorf("Expected 'hidden-value', got: %s", output)
+	}
+
+	output = RunKVSuccess(t, "list", "hidden")
+	if !strings.Contains(output, "[Hidden]") {
+		t.Error("hidden should be marked as hidden")
+	}
+
+	output = RunKVSuccess(t, "get", "expiring")
+	if output != "expiring-value" {
+		t.Errorf("Expected 'expiring-value', got: %s", output)
+	}
+
+	output = RunKVSuccess(t, "ttl", "expiring")
+	if !strings.Contains(output, "expires at") {
+		t.Error("expiring should have TTL")
+	}
+
+	output = RunKVSuccess(t, "get", "versioned")
+	if output != "v3" {
+		t.Errorf("Expected 'v3', got: %s", output)
+	}
+
+	output = RunKVSuccess(t, "history", "list", "versioned")
+	if !strings.Contains(output, "v1") || !strings.Contains(output, "v2") || !strings.Contains(output, "v3") {
+		t.Error("History should contain all versions")
+	}
+}

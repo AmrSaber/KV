@@ -10,6 +10,10 @@ import (
 	_ "modernc.org/sqlite"
 )
 
+var importFlags = struct {
+	backup bool
+}{}
+
 // importCmd represents the import command
 var importCmd = &cobra.Command{
 	Use:   "import <file-path>",
@@ -69,46 +73,48 @@ Use "-" as the file path to read from stdin (useful for piping).`,
 
 		// Get destination path
 		destPath := common.GetDBPath()
-		backupPath := destPath + ".backup"
+		backupPath := common.GetDefaultBackupPath()
 
-		// Vacuum current database to commit all WAL changes to main file
-		db := common.GetDB()
-		_, err := db.Exec("VACUUM")
-		common.FailOn(err)
+		if !importFlags.backup {
+			// Create temp backup file
+			tmpFile, err := os.CreateTemp("", "kv-backup-*")
+			common.FailOn(err)
+			defer func() { _ = os.Remove(tmpFile.Name()) }()
 
-		// Close database connection
-		common.CloseDB()
-
-		// Remove old backup if exists
-		_ = os.Remove(backupPath)
-
-		// Backup current database if it exists
-		if _, err := os.Stat(destPath); err == nil {
-			err = os.Rename(destPath, backupPath)
-			if err != nil {
-				common.Fail("Failed to backup current database: %v", err)
-			}
-
-			fmt.Println("Current database backed up")
+			backupPath = tmpFile.Name()
 		}
 
-		// Remove WAL files (should be empty after VACUUM, but remove just in case)
+		err := common.BackupDB(backupPath)
+		if err != nil {
+			common.FailOn(err)
+		}
+
+		// Remove DB files (WAL should already be removed, but just in case)
+		_ = os.Remove(destPath)
 		_ = os.Remove(destPath + "-wal")
 		_ = os.Remove(destPath + "-shm")
+
+		fmt.Println("Current database backed up")
 
 		// Copy source to destination
 		err = common.CopyFile(sourcePath, destPath)
 		if err != nil {
-			if _, err := os.Stat(backupPath); err == nil {
-				_ = os.Remove(destPath)
-				_ = os.Rename(backupPath, destPath)
-			}
+			// Restore backup
+			_ = os.Remove(destPath)
+			_ = os.Rename(backupPath, destPath)
 
 			common.Fail("Failed to import database: %v", err)
 		}
 
-		// Reopen database (migrations will run automatically)
-		common.GetDB()
+		// Reopen database to make sure migrations succeed
+		_, err = common.GetDB()
+		if err != nil {
+			// Restore backup
+			_ = os.Remove(destPath)
+			_ = os.Rename(backupPath, destPath)
+
+			common.Fail("Failed to import database: %v", err)
+		}
 
 		fmt.Println("Database imported successfully")
 	},
@@ -116,4 +122,6 @@ Use "-" as the file path to read from stdin (useful for piping).`,
 
 func init() {
 	dbCmd.AddCommand(importCmd)
+
+	importCmd.Flags().BoolVarP(&importFlags.backup, "backup", "b", false, "Backup existing database")
 }

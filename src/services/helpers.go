@@ -8,7 +8,10 @@ import (
 )
 
 func RunInTransaction(fn func(tx *sql.Tx)) {
-	tx, err := common.BeginTarnsaction(common.GetDB())
+	db, err := common.GetDB()
+	common.FailOn(err)
+
+	tx, err := common.BeginTarnsaction(db)
 	common.FailOn(err)
 
 	defer func() { _ = tx.Rollback() }()

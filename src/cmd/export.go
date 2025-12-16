@@ -63,8 +63,10 @@ Use "-" as the file path to write to stdout (useful for piping).`,
 		}
 
 		// Export using VACUUM INTO
-		db := common.GetDB()
-		_, err := db.Exec("VACUUM INTO ?", destPath)
+		db, err := common.GetDB()
+		common.FailOn(err)
+
+		_, err = db.Exec("VACUUM INTO ?", destPath)
 		common.FailOn(err)
 
 		fmt.Printf("Database exported to: %s\n", destPath)
@@ -81,7 +83,9 @@ func exportToStdout() {
 	defer func() { _ = os.Remove(tmpPath) }()
 
 	// Export to temp file
-	db := common.GetDB()
+	db, err := common.GetDB()
+	common.FailOn(err)
+
 	_, err = db.Exec("VACUUM INTO ?", tmpPath)
 	common.FailOn(err)
 

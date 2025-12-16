@@ -23,7 +23,7 @@ if needed.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// Get database path
 		dbPath := common.GetDBPath()
-		backupPath := dbPath + ".backup"
+		backupPath := common.GetDefaultBackupPath()
 
 		// Check if backup exists
 		if _, err := os.Stat(backupPath); os.IsNotExist(err) {
@@ -50,7 +50,10 @@ if needed.`,
 		}
 
 		// Reopen database (migrations will run automatically)
-		common.GetDB()
+		_, err = common.GetDB()
+		if err != nil {
+			common.Fail("Failed to restore from backup: %v", err)
+		}
 
 		fmt.Println("Database restored from backup")
 	},
