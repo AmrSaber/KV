@@ -117,3 +117,126 @@ func TestTTLCommand(t *testing.T) {
 		}
 	})
 }
+
+func TestExpireMultipleKeys(t *testing.T) {
+	cleanup := SetupTestDB(t)
+	defer cleanup()
+
+	t.Run("expire multiple keys successfully", func(t *testing.T) {
+		RunKVSuccess(t, "set", "exp1", "value1")
+		RunKVSuccess(t, "set", "exp2", "value2")
+		RunKVSuccess(t, "set", "exp3", "value3")
+
+		RunKVSuccess(t, "expire", "exp1", "exp2", "exp3", "--after", "1h")
+
+		// All keys should have expiration
+		output := RunKVSuccess(t, "ttl", "exp1")
+		if !strings.Contains(output, "expires at") {
+			t.Error("exp1 should have expiration")
+		}
+
+		output = RunKVSuccess(t, "ttl", "exp2")
+		if !strings.Contains(output, "expires at") {
+			t.Error("exp2 should have expiration")
+		}
+
+		output = RunKVSuccess(t, "ttl", "exp3")
+		if !strings.Contains(output, "expires at") {
+			t.Error("exp3 should have expiration")
+		}
+	})
+
+	t.Run("remove expiration from multiple keys", func(t *testing.T) {
+		RunKVSuccess(t, "set", "nexp1", "value1", "--expires-after", "1h")
+		RunKVSuccess(t, "set", "nexp2", "value2", "--expires-after", "1h")
+		RunKVSuccess(t, "set", "nexp3", "value3", "--expires-after", "1h")
+
+		RunKVSuccess(t, "expire", "nexp1", "nexp2", "nexp3", "--never")
+
+		// All keys should not have expiration
+		output, _ := RunKV(t, "ttl", "nexp1")
+		if !strings.Contains(output, "does not expire") {
+			t.Error("nexp1 should not have expiration")
+		}
+
+		output, _ = RunKV(t, "ttl", "nexp2")
+		if !strings.Contains(output, "does not expire") {
+			t.Error("nexp2 should not have expiration")
+		}
+
+		output, _ = RunKV(t, "ttl", "nexp3")
+		if !strings.Contains(output, "does not expire") {
+			t.Error("nexp3 should not have expiration")
+		}
+	})
+
+	// Setup keys for transaction rollback tests
+	RunKVSuccess(t, "set", "a", "value-a")
+	RunKVSuccess(t, "set", "b", "value-b")
+
+	testCases := []struct {
+		name string
+		keys []string
+	}{
+		{"expire fails on first non-existent key", []string{"missing", "a", "b"}},
+		{"expire fails on middle non-existent key", []string{"a", "missing", "b"}},
+		{"expire fails on last non-existent key", []string{"a", "b", "missing"}},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			args := append([]string{"expire"}, tc.keys...)
+			args = append(args, "--after", "1h")
+			output := RunKVFailure(t, args...)
+			if !strings.Contains(output, "does not exist") {
+				t.Errorf("Expected 'does not exist' error, got: %s", output)
+			}
+
+			// Keys should not have expiration (transaction rollback)
+			output, _ = RunKV(t, "ttl", "a")
+			if !strings.Contains(output, "does not expire") {
+				t.Error("a should not have expiration due to transaction rollback")
+			}
+
+			output, _ = RunKV(t, "ttl", "b")
+			if !strings.Contains(output, "does not expire") {
+				t.Error("b should not have expiration due to transaction rollback")
+			}
+		})
+	}
+
+	t.Run("expire multiple keys with --never after partial failure", func(t *testing.T) {
+		RunKVSuccess(t, "set", "nexp4", "value1", "--expires-after", "1h")
+		RunKVSuccess(t, "set", "nexp5", "value2", "--expires-after", "1h")
+
+		// First try with missing key - should fail
+		output := RunKVFailure(t, "expire", "nexp4", "missing", "nexp5", "--never")
+		if !strings.Contains(output, "does not exist") {
+			t.Errorf("Expected 'does not exist' error, got: %s", output)
+		}
+
+		// Keys should still have expiration (transaction rollback)
+		output = RunKVSuccess(t, "ttl", "nexp4")
+		if !strings.Contains(output, "expires at") {
+			t.Error("nexp4 should still have expiration due to transaction rollback")
+		}
+
+		output = RunKVSuccess(t, "ttl", "nexp5")
+		if !strings.Contains(output, "expires at") {
+			t.Error("nexp5 should still have expiration due to transaction rollback")
+		}
+
+		// Now expire them successfully
+		RunKVSuccess(t, "expire", "nexp4", "nexp5", "--never")
+
+		output, _ = RunKV(t, "ttl", "nexp4")
+		if !strings.Contains(output, "does not expire") {
+			t.Error("nexp4 should not have expiration after successful expire")
+		}
+
+		output, _ = RunKV(t, "ttl", "nexp5")
+		if !strings.Contains(output, "does not expire") {
+			t.Error("nexp5 should not have expiration after successful expire")
+		}
+	})
+}

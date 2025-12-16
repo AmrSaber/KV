@@ -107,3 +107,90 @@ func TestDeleteCommand(t *testing.T) {
 		}
 	})
 }
+
+func TestDeleteMultipleKeys(t *testing.T) {
+	cleanup := SetupTestDB(t)
+	defer cleanup()
+
+	t.Run("delete multiple keys successfully", func(t *testing.T) {
+		RunKVSuccess(t, "set", "d1", "value1")
+		RunKVSuccess(t, "set", "d2", "value2")
+		RunKVSuccess(t, "set", "d3", "value3")
+
+		RunKVSuccess(t, "delete", "d1", "d2", "d3")
+
+		// All keys should be deleted
+		output := RunKVFailure(t, "get", "d1")
+		if !strings.Contains(output, "does not exist") {
+			t.Error("d1 should be deleted")
+		}
+
+		output = RunKVFailure(t, "get", "d2")
+		if !strings.Contains(output, "does not exist") {
+			t.Error("d2 should be deleted")
+		}
+
+		output = RunKVFailure(t, "get", "d3")
+		if !strings.Contains(output, "does not exist") {
+			t.Error("d3 should be deleted")
+		}
+	})
+
+	t.Run("delete multiple keys with prune", func(t *testing.T) {
+		RunKVSuccess(t, "set", "p1", "value1")
+		RunKVSuccess(t, "set", "p2", "value2")
+		RunKVSuccess(t, "set", "p3", "value3")
+
+		RunKVSuccess(t, "delete", "p1", "p2", "p3", "--prune")
+
+		// All keys and their history should be deleted
+		output := RunKVFailure(t, "history", "list", "p1")
+		if !strings.Contains(output, "No history") && !strings.Contains(output, "does not exist") {
+			t.Error("p1 history should be deleted")
+		}
+
+		output = RunKVFailure(t, "history", "list", "p2")
+		if !strings.Contains(output, "No history") && !strings.Contains(output, "does not exist") {
+			t.Error("p2 history should be deleted")
+		}
+
+		output = RunKVFailure(t, "history", "list", "p3")
+		if !strings.Contains(output, "No history") && !strings.Contains(output, "does not exist") {
+			t.Error("p3 history should be deleted")
+		}
+	})
+
+	// Setup keys for transaction rollback tests
+	RunKVSuccess(t, "set", "a", "value-a")
+	RunKVSuccess(t, "set", "b", "value-b")
+
+	testCases := []struct {
+		name string
+		keys []string
+	}{
+		{"delete fails on first non-existent key", []string{"missing", "a", "b"}},
+		{"delete fails on middle non-existent key", []string{"a", "missing", "b"}},
+		{"delete fails on last non-existent key", []string{"a", "b", "missing"}},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			args := append([]string{"delete"}, tc.keys...)
+			output := RunKVFailure(t, args...)
+			if !strings.Contains(output, "does not exist") {
+				t.Errorf("Expected 'does not exist' error, got: %s", output)
+			}
+
+			// Keys should still exist (transaction rollback)
+			output = RunKVSuccess(t, "get", "a")
+			if output != "value-a" {
+				t.Error("a should still exist due to transaction rollback")
+			}
+
+			output = RunKVSuccess(t, "get", "b")
+			if output != "value-b" {
+				t.Error("b should still exist due to transaction rollback")
+			}
+		})
+	}
+}

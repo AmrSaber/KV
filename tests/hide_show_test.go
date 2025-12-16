@@ -296,3 +296,134 @@ func TestHiddenInJSON(t *testing.T) {
 		}
 	})
 }
+
+func TestHideMultipleKeys(t *testing.T) {
+	cleanup := SetupTestDB(t)
+	defer cleanup()
+
+	t.Run("hide multiple keys successfully", func(t *testing.T) {
+		RunKVSuccess(t, "set", "key1", "value1")
+		RunKVSuccess(t, "set", "key2", "value2")
+		RunKVSuccess(t, "set", "key3", "value3")
+
+		RunKVSuccess(t, "hide", "key1", "key2", "key3")
+
+		// All keys should be hidden
+		output := RunKVSuccess(t, "list", "key1")
+		if !strings.Contains(output, "[Hidden]") {
+			t.Error("key1 should be hidden")
+		}
+
+		output = RunKVSuccess(t, "list", "key2")
+		if !strings.Contains(output, "[Hidden]") {
+			t.Error("key2 should be hidden")
+		}
+
+		output = RunKVSuccess(t, "list", "key3")
+		if !strings.Contains(output, "[Hidden]") {
+			t.Error("key3 should be hidden")
+		}
+	})
+
+	// Setup keys for transaction rollback tests
+	RunKVSuccess(t, "set", "a", "value-a")
+	RunKVSuccess(t, "set", "b", "value-b")
+
+	testCases := []struct {
+		name string
+		keys []string
+	}{
+		{"hide fails on first non-existent key", []string{"missing", "a", "b"}},
+		{"hide fails on middle non-existent key", []string{"a", "missing", "b"}},
+		{"hide fails on last non-existent key", []string{"a", "b", "missing"}},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			args := append([]string{"hide"}, tc.keys...)
+			output := RunKVFailure(t, args...)
+			if !strings.Contains(output, "does not exist") {
+				t.Errorf("Expected 'does not exist' error, got: %s", output)
+			}
+
+			// Keys should not be hidden (transaction rollback)
+			output = RunKVSuccess(t, "list", "a")
+			if strings.Contains(output, "[Hidden]") {
+				t.Error("a should not be hidden due to transaction rollback")
+			}
+
+			output = RunKVSuccess(t, "list", "b")
+			if strings.Contains(output, "[Hidden]") {
+				t.Error("b should not be hidden due to transaction rollback")
+			}
+		})
+	}
+}
+
+func TestShowMultipleKeys(t *testing.T) {
+	cleanup := SetupTestDB(t)
+	defer cleanup()
+
+	t.Run("show multiple keys successfully", func(t *testing.T) {
+		RunKVSuccess(t, "set", "h1", "secret1")
+		RunKVSuccess(t, "set", "h2", "secret2")
+		RunKVSuccess(t, "set", "h3", "secret3")
+		RunKVSuccess(t, "hide", "h1")
+		RunKVSuccess(t, "hide", "h2")
+		RunKVSuccess(t, "hide", "h3")
+
+		RunKVSuccess(t, "show", "h1", "h2", "h3")
+
+		// All keys should be visible
+		output := RunKVSuccess(t, "list", "h1")
+		if strings.Contains(output, "[Hidden]") {
+			t.Error("h1 should be visible")
+		}
+
+		output = RunKVSuccess(t, "list", "h2")
+		if strings.Contains(output, "[Hidden]") {
+			t.Error("h2 should be visible")
+		}
+
+		output = RunKVSuccess(t, "list", "h3")
+		if strings.Contains(output, "[Hidden]") {
+			t.Error("h3 should be visible")
+		}
+	})
+
+	// Setup hidden keys for transaction rollback tests
+	RunKVSuccess(t, "set", "a", "value-a")
+	RunKVSuccess(t, "set", "b", "value-b")
+	RunKVSuccess(t, "hide", "a")
+	RunKVSuccess(t, "hide", "b")
+
+	testCases := []struct {
+		name string
+		keys []string
+	}{
+		{"show fails on first non-existent key", []string{"missing", "a", "b"}},
+		{"show fails on middle non-existent key", []string{"a", "missing", "b"}},
+		{"show fails on last non-existent key", []string{"a", "b", "missing"}},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			args := append([]string{"show"}, tc.keys...)
+			output := RunKVFailure(t, args...)
+			if !strings.Contains(output, "does not exist") {
+				t.Errorf("Expected 'does not exist' error, got: %s", output)
+			}
+
+			// Keys should still be hidden (transaction rollback)
+			output = RunKVSuccess(t, "list", "a")
+			if !strings.Contains(output, "[Hidden]") {
+				t.Error("a should still be hidden due to transaction rollback")
+			}
+
+			output = RunKVSuccess(t, "list", "b")
+			if !strings.Contains(output, "[Hidden]") {
+				t.Error("b should still be hidden due to transaction rollback")
+			}
+		})
+	}
+}
