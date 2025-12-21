@@ -15,6 +15,7 @@ import (
 var setFlags = struct {
 	expiresAfter time.Duration
 	password     string
+	hidden       bool
 }{}
 
 // setCmd represents the set command
@@ -85,6 +86,9 @@ Providing a negative duration expires the key immediately.`,
 
 		services.RunInTransaction(func(tx *sql.Tx) {
 			services.SetValue(tx, key, value, expiresAt, setFlags.password != "")
+			if setFlags.hidden {
+				services.HideKey(tx, key)
+			}
 		})
 	},
 }
@@ -94,4 +98,5 @@ func init() {
 
 	setCmd.Flags().DurationVar(&setFlags.expiresAfter, "expires-after", 0, "Expires this value after given duration.")
 	setCmd.Flags().StringVarP(&setFlags.password, "password", "p", "", "Password to lock this value")
+	setCmd.Flags().BoolVar(&setFlags.hidden, "hidden", false, "Mark key as hidden")
 }
