@@ -23,10 +23,7 @@ builds:
       - "-s -w -X main.version={{.Version}}"
 
 archives:
-  - id: binary
-    formats: [binary]
-  - id: archive
-    formats: [tar.gz]
+  - formats: [tar.gz]
     name_template: >-
       {{ .ProjectName }}_
       {{- .Version }}_
@@ -65,9 +62,7 @@ release:
 
 # Homebrew tap for macOS and Linux
 brews:
-  - ids:
-      - archive
-    repository:
+  - repository:
       owner: AmrSaber
       name: homebrew-tap
       token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
@@ -86,9 +81,7 @@ brews:
 
 # Scoop bucket for Windows
 scoops:
-  - ids:
-      - archive
-    repository:
+  - repository:
       owner: AmrSaber
       name: scoop-bucket
       token: "{{ .Env.SCOOP_BUCKET_GITHUB_TOKEN }}"
