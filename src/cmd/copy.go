@@ -41,6 +41,7 @@ If the destination key already exists, it will be updated (creating a new histor
 			fromItem := services.GetItem(tx, fromKey)
 			if fromItem == nil {
 				common.Fail("Key %q does not exist", fromKey)
+				panic("Unreachable") // To suppress compiler warnings
 			}
 
 			// Copy to destination (without TTL)

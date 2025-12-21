@@ -2,6 +2,7 @@ package common
 
 import (
 	"database/sql"
+	"io"
 	"os"
 	"path"
 
@@ -106,17 +107,13 @@ func GetDefaultBackupPath() string {
 	return destPath + ".backup"
 }
 
-func BackupDB(path string) error {
-	// Get destination path
-	destPath := GetDBPath()
-	backupPath := GetDefaultBackupPath()
-
-	// Vacuum current database to commit all WAL changes to main file
+func BackupDB(writer io.Writer) error {
 	db, err := GetDB()
 	if err != nil {
 		return err
 	}
 
+	// Vacuum current database to commit all WAL changes to main file
 	_, err = db.Exec("VACUUM")
 	if err != nil {
 		return err
@@ -125,11 +122,15 @@ func BackupDB(path string) error {
 	// Close database connection
 	CloseDB()
 
-	// Remove old backup if exists
-	_ = os.Remove(backupPath)
+	dbFile, err := os.Open(GetDBPath())
+	if err != nil {
+		return err
+	}
+
+	defer func() { _ = dbFile.Close() }()
 
 	// Backup current database if it exists
-	err = CopyFile(destPath, backupPath)
+	_, err = io.Copy(writer, dbFile)
 	if err != nil {
 		return err
 	}

@@ -433,61 +433,47 @@ kv unlock --all --password "mypass"
 
 ### Backup & Restore
 
-> **Note:** Export creates a complete snapshot of your database including all keys, values, encryption, hidden state, TTL settings, and full history. Import completely replaces your current database with the imported one, creating a backup of your current database first.
+> **Note:** Backup creates a complete snapshot of your database including all keys, values, encryption, hidden state, TTL settings, and full history. Restore completely replaces your current database with the backup, creating a temporary backup of your current database first in case restoration fails.
 
 ```bash
-# Export database to a file
-kv db export backup.db
-# Output: Database exported to: backup.db
-
-# Export to absolute path
-kv db export /path/to/backups/kv-backup-2025-10-20.db
-
-# Overwrite existing backup file
-kv db export backup.db --force
-
-# Export to stdout (useful for piping)
-kv db export - > backup.db
-# Or simply:
-kv db export > backup.db
-
-# Import database from a file (replaces current database) and create a backup for existing database
-kv db import backup.db --backup
-# Output:
-# Current database backed up
-# Database imported successfully
-
-# Import from stdin
-cat backup.db | kv db import
-# Or simply:
-kv db import < backup.db
-
-# Create a manual backup
+# Create a backup to default location
 kv db backup
-# Output: Database backup created successfully
-# Note: Only one backup is kept - creating a new backup replaces the previous one
+# Output: Backup created successfully
 
-# Restore from backup (created during import or via backup command)
+# Backup to a custom path
+kv db backup --path ~/backups/kv-$(date +%Y-%m-%d).db
+
+# Backup to stdout (useful for piping)
+kv db backup --stdout > backup.db
+
+# Restore from default backup location
 kv db restore
-# Output: Database restored from: /path/to/kv.db.backup
-# Note: This restores the most recent backup (from import or manual backup)
+# Output: Database restored from backup successfully
+
+# Restore from custom path
+kv db restore --path /path/to/backup.db
+
+# Restore from stdin
+cat backup.db | kv db restore --stdin
+# Or simply:
+kv db restore --stdin < backup.db
 
 # Practical examples:
 
-# Create daily backups
-kv db export ~/backups/kv-$(date +%Y-%m-%d).db
-
 # Transfer database between machines
 # On source machine:
-kv db export - | ssh user@remote 'kv db import -'
+kv db backup --stdout | ssh user@remote 'kv db restore --stdin'
 
 # Compress backup
-kv db export - | gzip > kv-backup.db.gz
+kv db backup --stdout | gzip > kv-backup.db.gz
 # Restore from compressed backup
-gunzip -c kv-backup.db.gz | kv db import -
+gunzip -c kv-backup.db.gz | kv db restore --stdin
+
+# Create dated backups
+kv db backup --path ~/kv-backups/backup-$(date +%Y-%m-%d).db
 ```
 
-**What gets preserved in export/import:**
+**What gets preserved in backup/restore:**
 
 - All keys and values (plain text, encrypted, and hidden)
 - Password-encrypted keys (with their encryption intact)
@@ -498,15 +484,11 @@ gunzip -c kv-backup.db.gz | kv db import -
 
 **Safety features:**
 
-- Import automatically creates a backup at `<db-path>.backup` before replacing
-- Manual backups can be created anytime using `kv db backup`
-- You can restore from the most recent backup using `kv db restore`
-- Only one backup is maintained (new backups replace the previous one)
-- Import validates the file is a valid database before proceeding
-- Export fails if file exists (use `--force` to override)
-- Export validates destination directory exists
-- Restore validates the backup is a valid database before restoring
-- Restore preserves the backup file after restoration
+- Backup overwrites existing file at the target path (use custom paths to keep multiple backups)
+- Restore creates a temporary backup before replacing the database (auto-deleted on success)
+- Restore validates the backup is a valid database before proceeding
+- If restore fails, the original database is automatically recovered from the temporary backup
+- See `kv info` for default backup location
 
 ### Utility Commands
 

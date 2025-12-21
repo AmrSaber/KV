@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 )
 
+// CopyFile copies content from `src` file into `dst` file
 func CopyFile(src, dst string) error {
 	sourceFile, err := os.Open(src)
 	if err != nil {
@@ -23,6 +24,7 @@ func CopyFile(src, dst string) error {
 	return err
 }
 
+// NormalizePath fills in home directory if needed, and make path into absolute path
 func NormalizePath(path string) string {
 	if len(path) > 0 && path[0] == '~' {
 		home, err := os.UserHomeDir()

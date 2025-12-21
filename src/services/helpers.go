@@ -7,6 +7,7 @@ import (
 	"github.com/AmrSaber/kv/src/common"
 )
 
+// RunInTransaction automatically cleans up DB then runs given function, all inside a transaction.
 func RunInTransaction(fn func(tx *sql.Tx)) {
 	db, err := common.GetDB()
 	common.FailOn(err)
@@ -17,7 +18,7 @@ func RunInTransaction(fn func(tx *sql.Tx)) {
 	defer func() { _ = tx.Rollback() }()
 
 	// Make sure database is cleaned up before running transactions
-	cleanUpDB(tx)
+	cleanupDB(tx)
 
 	fn(tx)
 
@@ -25,8 +26,8 @@ func RunInTransaction(fn func(tx *sql.Tx)) {
 	common.FailOn(err)
 }
 
-// cleanUpDB clears expired values, deletes old history, and prunes old cleared values
-func cleanUpDB(tx *sql.Tx) {
+// cleanupDB clears expired values, deletes old history, and prunes old cleared values
+func cleanupDB(tx *sql.Tx) {
 	clearExpiredValues(tx)
 	deleteOldHistory(tx)
 	pruneOldClearedValues(tx)
