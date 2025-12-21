@@ -196,8 +196,9 @@ func init() {
 	historyListCmd.Flags().BoolVarP(&historyListFlags.noValues, "no-values", "v", false, "Hide values")
 	historyListCmd.Flags().BoolVarP(&historyListFlags.reverse, "reverse", "r", false, "Reverse history order")
 	historyListCmd.Flags().StringVarP(&historyListFlags.output, "output", "o", "table", "Print format, options: json, yaml, table")
-	historyListCmd.RegisterFlagCompletionFunc(
+	err := historyListCmd.RegisterFlagCompletionFunc(
 		"output",
 		cobra.FixedCompletions([]string{"json", "yaml", "table"}, cobra.ShellCompDirectiveDefault),
 	)
+	common.FailOn(err)
 }

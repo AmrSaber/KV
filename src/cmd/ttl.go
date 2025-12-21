@@ -62,7 +62,7 @@ Use --seconds to get remaining time in seconds (useful for scripts).`,
 		}
 
 		if ttlFlags.seconds {
-			common.Stdout.Println(int(expiresAt.Sub(time.Now()).Seconds()))
+			common.Stdout.Println(int(time.Until(*expiresAt).Seconds()))
 			return
 		}
 
@@ -71,7 +71,7 @@ Use --seconds to get remaining time in seconds (useful for scripts).`,
 			return
 		}
 
-		ttl := expiresAt.Sub(time.Now()).Truncate(time.Second).String()
+		ttl := time.Until(*expiresAt).Truncate(time.Second).String()
 		common.Stdout.Printf("%s (expires at %s)\n", ttl, expiresAt.Local().Format(time.DateTime))
 	},
 }
