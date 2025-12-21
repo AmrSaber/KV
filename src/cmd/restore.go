@@ -18,12 +18,10 @@ var restoreFlags = struct {
 var restoreCmd = &cobra.Command{
 	Use:   "restore",
 	Short: "Restore DB backup",
-	Long: `Restore database from backup and replace the current database (if exists).
+	Long: `Restore database from backup, completely replacing any existing data (and history).
 
-The backup file must be a valid database file created with the 'backup' command.
-This will completely replace the current database with the backup.
+The backup file must be a valid database file created with the 'backup' command. Backups are generally forward-compatible, so any backup created by an older version is compatible with newer versions, but not the other way around.
 
-WARNING: This operation is destructive.
 `,
 
 	Example: `# Restore database from default backup location
@@ -59,7 +57,7 @@ cat backup.db | kv db restore --stdin`,
 			backupPath = tempFile.Name()
 		}
 
-		// Check if backup exists
+		// Make sure backup exists
 		if _, err := os.Stat(backupPath); err != nil {
 			common.Fail("Could not read %q: %v", backupPath, err)
 		}

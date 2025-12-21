@@ -64,6 +64,11 @@ func TestBackupCommand(t *testing.T) {
 		if len(output) == 0 {
 			t.Error("Expected binary output to stdout")
 		}
+
+		// No logs when writing to stdout
+		if strings.Contains(output, "created successfully") {
+			t.Error("Unexpected log in binary output")
+		}
 	})
 }
 
