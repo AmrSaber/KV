@@ -15,7 +15,7 @@ var showFlags = struct {
 // showCmd represents the show command
 var showCmd = &cobra.Command{
 	Use:     "show <key|prefix|key1 key2...>",
-	Aliases: []string{"stet", "reveal"},
+	Aliases: []string{"stet", "reveal", "unhide"},
 	Short:   "Remove hidden status from a key or keys",
 	Long:    `Remove hidden status from a key or multiple keys, making values visible in list and history-list commands.`,
 	Example: `  # Show a single key
