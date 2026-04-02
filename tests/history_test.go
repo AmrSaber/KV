@@ -168,8 +168,18 @@ func TestHistorySelectCommand(t *testing.T) {
 	t.Run("select on non-existent key fails", func(t *testing.T) {
 		SetupTestDB(t)
 		output := RunKVFailure(t, "history", "select", "non-existent")
-		if !strings.Contains(output, "does not exist") && !strings.Contains(output, "No history") && !strings.Contains(output, "panic") && !strings.Contains(output, "no rows") {
-			t.Errorf("Expected error for non-existent key, got: %s", output)
+		if !strings.Contains(output, "does not exist") {
+			t.Errorf("Expected 'does not exist' error, got: %s", output)
+		}
+	})
+
+	t.Run("select on key with no previous history fails", func(t *testing.T) {
+		SetupTestDB(t)
+		RunKVSuccess(t, "set", "single", "only-value")
+
+		output := RunKVFailure(t, "history", "select", "single")
+		if !strings.Contains(output, "no previous history") {
+			t.Errorf("Expected 'no previous history' error, got: %s", output)
 		}
 	})
 }

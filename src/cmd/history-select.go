@@ -45,6 +45,15 @@ This provides a user-friendly way to browse and choose from previous values.`,
 			items := services.ListKeyHistory(tx, key)
 			slices.Reverse(items)
 
+			if len(items) == 0 {
+				common.Fail("Key %q does not exist", key)
+			}
+
+			// Drop current value, leaving only historical entries to select from
+			if len(items) <= 1 {
+				common.Fail("Key %q has no previous history", key)
+			}
+
 			items = items[1:]
 
 			rows := make([]string, 0, len(items))
@@ -81,13 +90,13 @@ This provides a user-friendly way to browse and choose from previous values.`,
 				common.Fail("")
 			}
 
-			selectedItem := items[selectedIndex]
+			selectedItem = items[selectedIndex]
 
 			services.SetValue(tx, key, selectedItem.Value, nil, selectedItem.IsLocked)
 		})
 
 		if !selectedItem.IsLocked {
-			common.Stdout.Println(selectedItem)
+			common.Stdout.Println(selectedItem.Value)
 		}
 	},
 }
