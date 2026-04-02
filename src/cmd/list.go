@@ -19,7 +19,9 @@ import (
 var listFlags = struct {
 	deleted  bool
 	noValues bool
-	output   string
+	show     bool
+
+	output string
 }{}
 
 // listCmd represents the list command
@@ -84,7 +86,7 @@ Locked values are displayed as [Locked] in table view.`,
 
 		// Remove the value of locked or hidden items
 		for i, item := range items {
-			if item.IsLocked || item.IsHidden {
+			if item.IsLocked || (item.IsHidden && !listFlags.show) {
 				items[i].Value = ""
 			}
 		}
@@ -151,7 +153,7 @@ Locked values are displayed as [Locked] in table view.`,
 					// [Locked] takes precedence over [Hidden]
 					if item.IsLocked {
 						value = color.New(color.FgRed).Sprint("[Locked]")
-					} else if item.IsHidden {
+					} else if item.IsHidden && !listFlags.show {
 						value = color.New(color.FgRed).Sprint("[Hidden]")
 					}
 
@@ -189,6 +191,8 @@ func init() {
 
 	listCmd.Flags().BoolVarP(&listFlags.noValues, "no-values", "v", false, "Hide values")
 	listCmd.Flags().BoolVarP(&listFlags.deleted, "deleted", "d", false, "List deleted keys")
+	listCmd.Flags().BoolVarP(&listFlags.show, "show", "s", false, "Force-show all values")
+
 	listCmd.Flags().StringVarP(&listFlags.output, "output", "o", "table", "Print format, options: json, yaml, table")
 	_ = listCmd.RegisterFlagCompletionFunc(
 		"output",
