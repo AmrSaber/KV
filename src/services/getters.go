@@ -76,7 +76,7 @@ func ListItems(tx *sql.Tx, prefix string, matchType MatchType) []KVItem {
 	case MatchAll:
 		// Do nothing
 	default:
-		panic(fmt.Sprintf("Match type %q is not supported", matchType))
+		panic(fmt.Sprintf("Match type %v is not supported", matchType))
 	}
 
 	rows, err := tx.Query(query, prefix)
