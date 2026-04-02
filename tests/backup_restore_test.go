@@ -10,16 +10,13 @@ import (
 )
 
 func TestBackupCommand(t *testing.T) {
-	cleanup := SetupTestDB(t)
-	defer cleanup()
-
-	// Setup test data
-	RunKVSuccess(t, "set", "key1", "value1")
-	RunKVSuccess(t, "set", "key2", "value2", "--password", "pass")
-	RunKVSuccess(t, "set", "key3", "value3")
-	RunKVSuccess(t, "hide", "key3")
-
 	t.Run("backup to default location", func(t *testing.T) {
+		SetupTestDB(t)
+		RunKVSuccess(t, "set", "key1", "value1")
+		RunKVSuccess(t, "set", "key2", "value2", "--password", "pass")
+		RunKVSuccess(t, "set", "key3", "value3")
+		RunKVSuccess(t, "hide", "key3")
+
 		backupPath := common.GetDefaultBackupPath()
 
 		RunKVSuccess(t, "db", "backup")
@@ -36,6 +33,12 @@ func TestBackupCommand(t *testing.T) {
 	})
 
 	t.Run("backup to file", func(t *testing.T) {
+		SetupTestDB(t)
+		RunKVSuccess(t, "set", "key1", "value1")
+		RunKVSuccess(t, "set", "key2", "value2", "--password", "pass")
+		RunKVSuccess(t, "set", "key3", "value3")
+		RunKVSuccess(t, "hide", "key3")
+
 		tmpDir := t.TempDir()
 		backupPath := filepath.Join(tmpDir, "backup.db")
 
@@ -53,11 +56,18 @@ func TestBackupCommand(t *testing.T) {
 	})
 
 	t.Run("backup fails if directory does not exist", func(t *testing.T) {
+		SetupTestDB(t)
 		backupPath := "/non/existent/path/backup.db"
 		RunKVFailure(t, "db", "backup", "--path", backupPath)
 	})
 
 	t.Run("backup to stdout", func(t *testing.T) {
+		SetupTestDB(t)
+		RunKVSuccess(t, "set", "key1", "value1")
+		RunKVSuccess(t, "set", "key2", "value2", "--password", "pass")
+		RunKVSuccess(t, "set", "key3", "value3")
+		RunKVSuccess(t, "hide", "key3")
+
 		output := RunKVSuccess(t, "db", "backup", "--stdout")
 
 		// Output should be binary data (non-empty)
@@ -73,9 +83,6 @@ func TestBackupCommand(t *testing.T) {
 }
 
 func TestRestoreCommand(t *testing.T) {
-	cleanup := SetupTestDB(t)
-	defer cleanup()
-
 	seedDB := func() {
 		RunKVSuccess(t, "set", "original1", "value1")
 		RunKVSuccess(t, "set", "original2", "value2", "--password", "pass")
@@ -113,6 +120,7 @@ func TestRestoreCommand(t *testing.T) {
 	}
 
 	t.Run("restore from default path", func(t *testing.T) {
+		SetupTestDB(t)
 		seedDB()
 
 		// Backup
@@ -145,6 +153,8 @@ func TestRestoreCommand(t *testing.T) {
 	})
 
 	t.Run("restore from custom path", func(t *testing.T) {
+		SetupTestDB(t)
+
 		backupFile, err := os.CreateTemp("", "kv-test-backup")
 		if err != nil {
 			t.Fatal(err)
@@ -161,6 +171,9 @@ func TestRestoreCommand(t *testing.T) {
 		}
 
 		seedDB()
+
+		// Create default backup first so we can verify it is not touched by the custom restore
+		RunKVSuccess(t, "db", "backup")
 
 		// Backup
 		RunKVSuccess(t, "db", "backup", "--path", backupFile.Name())
@@ -192,6 +205,7 @@ func TestRestoreCommand(t *testing.T) {
 	})
 
 	t.Run("restore from stdin", func(t *testing.T) {
+		SetupTestDB(t)
 		seedDB()
 
 		// Backup
@@ -236,10 +250,13 @@ func TestRestoreCommand(t *testing.T) {
 	})
 
 	t.Run("restore fails with non-existent file", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVFailure(t, "db", "restore", "--path", "/non/existent/file.db")
 	})
 
 	t.Run("restore fails with invalid database file", func(t *testing.T) {
+		SetupTestDB(t)
+
 		invalidBackup, err := os.CreateTemp("", "kv-test-invalid-backup")
 		if err != nil {
 			t.Fatal(err)

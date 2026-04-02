@@ -6,10 +6,8 @@ import (
 )
 
 func TestCopyCommand(t *testing.T) {
-	cleanup := SetupTestDB(t)
-	defer cleanup()
-
 	t.Run("basic copy", func(t *testing.T) {
+		SetupTestDB(t)
 		value := "original value"
 
 		// Create a key
@@ -32,6 +30,7 @@ func TestCopyCommand(t *testing.T) {
 	})
 
 	t.Run("copy to existing key overwrites", func(t *testing.T) {
+		SetupTestDB(t)
 		// Create two keys
 		RunKVSuccess(t, "set", "src", "source value")
 		RunKVSuccess(t, "set", "dst", "dest value")
@@ -47,6 +46,7 @@ func TestCopyCommand(t *testing.T) {
 	})
 
 	t.Run("copy preserves encryption", func(t *testing.T) {
+		SetupTestDB(t)
 		// Create encrypted key
 		RunKVSuccess(t, "set", "encrypted-src", "secret data", "--password", "testpass")
 
@@ -67,6 +67,7 @@ func TestCopyCommand(t *testing.T) {
 	})
 
 	t.Run("copy does not preserve TTL", func(t *testing.T) {
+		SetupTestDB(t)
 		// Create key with TTL
 		RunKVSuccess(t, "set", "ttl-src", "temp data", "--expires-after", "1h")
 
@@ -87,6 +88,7 @@ func TestCopyCommand(t *testing.T) {
 	})
 
 	t.Run("copy non-existent key fails", func(t *testing.T) {
+		SetupTestDB(t)
 		output := RunKVFailure(t, "copy", "non-existent", "dest")
 		if !strings.Contains(output, "does not exist") {
 			t.Errorf("Expected 'does not exist' error, got: %s", output)
@@ -94,6 +96,7 @@ func TestCopyCommand(t *testing.T) {
 	})
 
 	t.Run("copy creates history entry for existing destination", func(t *testing.T) {
+		SetupTestDB(t)
 		// Create destination with initial value
 		RunKVSuccess(t, "set", "hist-dst", "old value")
 

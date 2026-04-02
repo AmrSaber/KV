@@ -6,10 +6,8 @@ import (
 )
 
 func TestLockCommand(t *testing.T) {
-	cleanup := SetupTestDB(t)
-	defer cleanup()
-
 	t.Run("lock plain text key", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "plain", "secret")
 		RunKVSuccess(t, "lock", "plain", "--password", "mypass")
 
@@ -27,6 +25,7 @@ func TestLockCommand(t *testing.T) {
 	})
 
 	t.Run("lock already locked key fails", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "locked", "data", "--password", "pass1")
 		output := RunKVFailure(t, "lock", "locked", "--password", "pass2")
 		if !strings.Contains(output, "already locked") {
@@ -35,6 +34,7 @@ func TestLockCommand(t *testing.T) {
 	})
 
 	t.Run("lock non-existent key fails", func(t *testing.T) {
+		SetupTestDB(t)
 		output := RunKVFailure(t, "lock", "non-existent", "--password", "pass")
 		if !strings.Contains(output, "does not exist") {
 			t.Errorf("Expected 'does not exist' error, got: %s", output)
@@ -42,6 +42,7 @@ func TestLockCommand(t *testing.T) {
 	})
 
 	t.Run("lock with prefix", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "secrets.api", "key1")
 		RunKVSuccess(t, "set", "secrets.db", "key2")
 		RunKVSuccess(t, "set", "public.data", "data")
@@ -63,8 +64,7 @@ func TestLockCommand(t *testing.T) {
 
 	t.Run("lock all keys", func(t *testing.T) {
 		// Use fresh database to avoid locked keys from previous tests
-		cleanup2 := SetupTestDB(t)
-		defer cleanup2()
+		SetupTestDB(t)
 
 		RunKVSuccess(t, "set", "key1", "value1")
 		RunKVSuccess(t, "set", "key2", "value2")
@@ -81,10 +81,8 @@ func TestLockCommand(t *testing.T) {
 }
 
 func TestUnlockCommand(t *testing.T) {
-	cleanup := SetupTestDB(t)
-	defer cleanup()
-
 	t.Run("unlock locked key", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "encrypted", "data", "--password", "pass")
 		RunKVSuccess(t, "unlock", "encrypted", "--password", "pass")
 
@@ -102,6 +100,7 @@ func TestUnlockCommand(t *testing.T) {
 	})
 
 	t.Run("unlock with wrong password fails", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "locked", "secret", "--password", "correct")
 		output := RunKVFailure(t, "unlock", "locked", "--password", "wrong")
 		if !strings.Contains(output, "Wrong password") {
@@ -110,6 +109,7 @@ func TestUnlockCommand(t *testing.T) {
 	})
 
 	t.Run("unlock plain text key fails", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "plain", "data")
 		output := RunKVFailure(t, "unlock", "plain", "--password", "pass")
 		if !strings.Contains(output, "not locked") {
@@ -118,6 +118,7 @@ func TestUnlockCommand(t *testing.T) {
 	})
 
 	t.Run("unlock non-existent key fails", func(t *testing.T) {
+		SetupTestDB(t)
 		output := RunKVFailure(t, "unlock", "non-existent", "--password", "pass")
 		if !strings.Contains(output, "does not exist") {
 			t.Errorf("Expected 'does not exist' error, got: %s", output)
@@ -126,8 +127,7 @@ func TestUnlockCommand(t *testing.T) {
 
 	t.Run("unlock with prefix", func(t *testing.T) {
 		// Use fresh database to avoid plain text keys from previous tests
-		cleanup2 := SetupTestDB(t)
-		defer cleanup2()
+		SetupTestDB(t)
 
 		RunKVSuccess(t, "set", "enc.key1", "value1", "--password", "pass")
 		RunKVSuccess(t, "set", "enc.key2", "value2", "--password", "pass")
@@ -148,8 +148,7 @@ func TestUnlockCommand(t *testing.T) {
 
 	t.Run("unlock all keys", func(t *testing.T) {
 		// Use fresh database to avoid plain text keys from previous tests
-		cleanup2 := SetupTestDB(t)
-		defer cleanup2()
+		SetupTestDB(t)
 
 		RunKVSuccess(t, "set", "a", "data1", "--password", "pass")
 		RunKVSuccess(t, "set", "b", "data2", "--password", "pass")
@@ -165,10 +164,8 @@ func TestUnlockCommand(t *testing.T) {
 }
 
 func TestLockMultipleKeys(t *testing.T) {
-	cleanup := SetupTestDB(t)
-	defer cleanup()
-
 	t.Run("lock multiple keys successfully", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "lk1", "secret1")
 		RunKVSuccess(t, "set", "lk2", "secret2")
 		RunKVSuccess(t, "set", "lk3", "secret3")
@@ -198,10 +195,6 @@ func TestLockMultipleKeys(t *testing.T) {
 		}
 	})
 
-	// Setup keys for transaction rollback tests
-	RunKVSuccess(t, "set", "a", "value-a")
-	RunKVSuccess(t, "set", "b", "value-b")
-
 	testCases := []struct {
 		name string
 		keys []string
@@ -213,6 +206,11 @@ func TestLockMultipleKeys(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			// Setup keys for transaction rollback tests
+			SetupTestDB(t)
+			RunKVSuccess(t, "set", "a", "value-a")
+			RunKVSuccess(t, "set", "b", "value-b")
+
 			args := append([]string{"lock"}, tc.keys...)
 			args = append(args, "--password", "pass")
 			output := RunKVFailure(t, args...)
@@ -234,6 +232,7 @@ func TestLockMultipleKeys(t *testing.T) {
 	}
 
 	t.Run("lock fails on already locked key", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "lk6", "value1")
 		RunKVSuccess(t, "set", "lk7", "value2", "--password", "oldpass")
 		RunKVSuccess(t, "set", "lk8", "value3")
@@ -265,10 +264,8 @@ func TestLockMultipleKeys(t *testing.T) {
 }
 
 func TestUnlockMultipleKeys(t *testing.T) {
-	cleanup := SetupTestDB(t)
-	defer cleanup()
-
 	t.Run("unlock multiple keys successfully", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "uk1", "secret1", "--password", "pass")
 		RunKVSuccess(t, "set", "uk2", "secret2", "--password", "pass")
 		RunKVSuccess(t, "set", "uk3", "secret3", "--password", "pass")
@@ -298,10 +295,6 @@ func TestUnlockMultipleKeys(t *testing.T) {
 		}
 	})
 
-	// Setup locked keys for transaction rollback tests
-	RunKVSuccess(t, "set", "a", "value-a", "--password", "pass")
-	RunKVSuccess(t, "set", "b", "value-b", "--password", "pass")
-
 	testCases := []struct {
 		name string
 		keys []string
@@ -313,6 +306,11 @@ func TestUnlockMultipleKeys(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			// Setup locked keys for transaction rollback tests
+			SetupTestDB(t)
+			RunKVSuccess(t, "set", "a", "value-a", "--password", "pass")
+			RunKVSuccess(t, "set", "b", "value-b", "--password", "pass")
+
 			args := append([]string{"unlock"}, tc.keys...)
 			args = append(args, "--password", "pass")
 			output := RunKVFailure(t, args...)
@@ -334,6 +332,7 @@ func TestUnlockMultipleKeys(t *testing.T) {
 	}
 
 	t.Run("unlock fails on not locked key", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "uk6", "value1", "--password", "pass")
 		RunKVSuccess(t, "set", "uk7", "value2")
 		RunKVSuccess(t, "set", "uk8", "value3", "--password", "pass")
@@ -358,6 +357,7 @@ func TestUnlockMultipleKeys(t *testing.T) {
 	})
 
 	t.Run("unlock fails on wrong password", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "uk9", "value1", "--password", "pass1")
 		RunKVSuccess(t, "set", "uk10", "value2", "--password", "pass2")
 		RunKVSuccess(t, "set", "uk11", "value3", "--password", "pass1")

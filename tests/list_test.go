@@ -6,10 +6,8 @@ import (
 )
 
 func TestListCommand(t *testing.T) {
-	cleanup := SetupTestDB(t)
-	defer cleanup()
-
 	t.Run("list all keys", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "key1", "value1")
 		RunKVSuccess(t, "set", "key2", "value2")
 		RunKVSuccess(t, "set", "key3", "value3")
@@ -27,6 +25,7 @@ func TestListCommand(t *testing.T) {
 	})
 
 	t.Run("list with prefix", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "app.db.host", "localhost")
 		RunKVSuccess(t, "set", "app.db.port", "5432")
 		RunKVSuccess(t, "set", "app.name", "myapp")
@@ -48,6 +47,7 @@ func TestListCommand(t *testing.T) {
 	})
 
 	t.Run("list shows locked keys", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "plain", "data")
 		RunKVSuccess(t, "set", "encrypted", "secret", "--password", "pass")
 
@@ -64,6 +64,7 @@ func TestListCommand(t *testing.T) {
 	})
 
 	t.Run("list shows TTL column when keys have expiration", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "permanent", "data")
 		RunKVSuccess(t, "set", "temporary", "data", "--expires-after", "1h")
 
@@ -74,6 +75,7 @@ func TestListCommand(t *testing.T) {
 	})
 
 	t.Run("list with no-values flag", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "key", "secret-value")
 
 		output := RunKVSuccess(t, "list", "--no-values")
@@ -86,6 +88,7 @@ func TestListCommand(t *testing.T) {
 	})
 
 	t.Run("list with JSON output", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "json-key", "json-value")
 
 		output := RunKVSuccess(t, "list", "--output", "json")

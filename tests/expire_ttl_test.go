@@ -7,10 +7,8 @@ import (
 )
 
 func TestExpireCommand(t *testing.T) {
-	cleanup := SetupTestDB(t)
-	defer cleanup()
-
 	t.Run("set expiration on existing key", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "temp", "data")
 		RunKVSuccess(t, "expire", "temp", "--after", "1h")
 
@@ -21,6 +19,7 @@ func TestExpireCommand(t *testing.T) {
 	})
 
 	t.Run("remove expiration", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "temp", "data", "--expires-after", "1h")
 		RunKVSuccess(t, "expire", "temp", "--never")
 
@@ -31,6 +30,7 @@ func TestExpireCommand(t *testing.T) {
 	})
 
 	t.Run("expire non-existent key fails", func(t *testing.T) {
+		SetupTestDB(t)
 		output := RunKVFailure(t, "expire", "non-existent", "--after", "1h")
 		if !strings.Contains(output, "does not exist") {
 			t.Errorf("Expected 'does not exist' error, got: %s", output)
@@ -38,6 +38,7 @@ func TestExpireCommand(t *testing.T) {
 	})
 
 	t.Run("update expiration time", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "temp", "data", "--expires-after", "1h")
 		RunKVSuccess(t, "expire", "temp", "--after", "2h")
 
@@ -48,6 +49,7 @@ func TestExpireCommand(t *testing.T) {
 	})
 
 	t.Run("keys with ttl in the past expire", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "temp", "data", "--expires-after", "-1h")
 
 		output := RunKVFailure(t, "get", "temp")
@@ -57,6 +59,7 @@ func TestExpireCommand(t *testing.T) {
 	})
 
 	t.Run("keys with ttl actually expires", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "temp", "data", "--expires-after", "1s")
 
 		time.Sleep(2 * time.Second)
@@ -69,10 +72,8 @@ func TestExpireCommand(t *testing.T) {
 }
 
 func TestTTLCommand(t *testing.T) {
-	cleanup := SetupTestDB(t)
-	defer cleanup()
-
 	t.Run("check TTL of key with expiration", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "temp", "data", "--expires-after", "1h")
 		output := RunKVSuccess(t, "ttl", "temp")
 
@@ -82,6 +83,7 @@ func TestTTLCommand(t *testing.T) {
 	})
 
 	t.Run("check TTL of key without expiration", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "permanent", "data")
 		output := RunKVFailure(t, "ttl", "permanent")
 
@@ -91,6 +93,7 @@ func TestTTLCommand(t *testing.T) {
 	})
 
 	t.Run("check TTL with date flag", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "temp", "data", "--expires-after", "1h")
 		output := RunKVSuccess(t, "ttl", "temp", "--date")
 
@@ -101,6 +104,7 @@ func TestTTLCommand(t *testing.T) {
 	})
 
 	t.Run("TTL of non-existent key fails", func(t *testing.T) {
+		SetupTestDB(t)
 		output := RunKVFailure(t, "ttl", "non-existent")
 		if !strings.Contains(output, "does not exist") {
 			t.Errorf("Expected 'does not exist' error, got: %s", output)
@@ -108,6 +112,7 @@ func TestTTLCommand(t *testing.T) {
 	})
 
 	t.Run("TTL shows countdown", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "temp", "data", "--expires-after", "30m")
 		output := RunKVSuccess(t, "ttl", "temp")
 
@@ -119,10 +124,8 @@ func TestTTLCommand(t *testing.T) {
 }
 
 func TestExpireMultipleKeys(t *testing.T) {
-	cleanup := SetupTestDB(t)
-	defer cleanup()
-
 	t.Run("expire multiple keys successfully", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "exp1", "value1")
 		RunKVSuccess(t, "set", "exp2", "value2")
 		RunKVSuccess(t, "set", "exp3", "value3")
@@ -147,6 +150,7 @@ func TestExpireMultipleKeys(t *testing.T) {
 	})
 
 	t.Run("remove expiration from multiple keys", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "nexp1", "value1", "--expires-after", "1h")
 		RunKVSuccess(t, "set", "nexp2", "value2", "--expires-after", "1h")
 		RunKVSuccess(t, "set", "nexp3", "value3", "--expires-after", "1h")
@@ -170,10 +174,6 @@ func TestExpireMultipleKeys(t *testing.T) {
 		}
 	})
 
-	// Setup keys for transaction rollback tests
-	RunKVSuccess(t, "set", "a", "value-a")
-	RunKVSuccess(t, "set", "b", "value-b")
-
 	testCases := []struct {
 		name string
 		keys []string
@@ -185,6 +185,11 @@ func TestExpireMultipleKeys(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			// Setup keys for transaction rollback tests
+			SetupTestDB(t)
+			RunKVSuccess(t, "set", "a", "value-a")
+			RunKVSuccess(t, "set", "b", "value-b")
+
 			args := append([]string{"expire"}, tc.keys...)
 			args = append(args, "--after", "1h")
 			output := RunKVFailure(t, args...)
@@ -206,6 +211,7 @@ func TestExpireMultipleKeys(t *testing.T) {
 	}
 
 	t.Run("expire multiple keys with --never after partial failure", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "nexp4", "value1", "--expires-after", "1h")
 		RunKVSuccess(t, "set", "nexp5", "value2", "--expires-after", "1h")
 

@@ -6,10 +6,8 @@ import (
 )
 
 func TestDeleteCommand(t *testing.T) {
-	cleanup := SetupTestDB(t)
-	defer cleanup()
-
 	t.Run("delete existing key", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "to-delete", "value")
 		RunKVSuccess(t, "delete", "to-delete")
 
@@ -20,6 +18,7 @@ func TestDeleteCommand(t *testing.T) {
 	})
 
 	t.Run("delete keeps history by default", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "hist-key", "value1")
 		RunKVSuccess(t, "set", "hist-key", "value2")
 		RunKVSuccess(t, "delete", "hist-key")
@@ -32,6 +31,7 @@ func TestDeleteCommand(t *testing.T) {
 	})
 
 	t.Run("delete with prune removes history", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "prune-key", "value")
 		RunKVSuccess(t, "delete", "prune-key", "--prune")
 
@@ -43,6 +43,7 @@ func TestDeleteCommand(t *testing.T) {
 	})
 
 	t.Run("delete non-existent key fails", func(t *testing.T) {
+		SetupTestDB(t)
 		output := RunKVFailure(t, "delete", "non-existent")
 		if !strings.Contains(output, "does not exist") {
 			t.Errorf("Expected 'does not exist' error, got: %s", output)
@@ -50,6 +51,7 @@ func TestDeleteCommand(t *testing.T) {
 	})
 
 	t.Run("delete with prefix", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "temp.key1", "value1")
 		RunKVSuccess(t, "set", "temp.key2", "value2")
 		RunKVSuccess(t, "set", "keep.key", "value3")
@@ -75,6 +77,7 @@ func TestDeleteCommand(t *testing.T) {
 	})
 
 	t.Run("delete with prefix and prune", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "cache.a", "value")
 		RunKVSuccess(t, "set", "cache.b", "value")
 
@@ -88,6 +91,7 @@ func TestDeleteCommand(t *testing.T) {
 	})
 
 	t.Run("delete using del alias", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "alias-test", "value")
 		RunKVSuccess(t, "del", "alias-test")
 
@@ -98,6 +102,7 @@ func TestDeleteCommand(t *testing.T) {
 	})
 
 	t.Run("delete using rm alias", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "rm-test", "value")
 		RunKVSuccess(t, "rm", "rm-test")
 
@@ -109,10 +114,8 @@ func TestDeleteCommand(t *testing.T) {
 }
 
 func TestDeleteMultipleKeys(t *testing.T) {
-	cleanup := SetupTestDB(t)
-	defer cleanup()
-
 	t.Run("delete multiple keys successfully", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "d1", "value1")
 		RunKVSuccess(t, "set", "d2", "value2")
 		RunKVSuccess(t, "set", "d3", "value3")
@@ -137,6 +140,7 @@ func TestDeleteMultipleKeys(t *testing.T) {
 	})
 
 	t.Run("delete multiple keys with prune", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "p1", "value1")
 		RunKVSuccess(t, "set", "p2", "value2")
 		RunKVSuccess(t, "set", "p3", "value3")
@@ -160,10 +164,6 @@ func TestDeleteMultipleKeys(t *testing.T) {
 		}
 	})
 
-	// Setup keys for transaction rollback tests
-	RunKVSuccess(t, "set", "a", "value-a")
-	RunKVSuccess(t, "set", "b", "value-b")
-
 	testCases := []struct {
 		name string
 		keys []string
@@ -175,6 +175,11 @@ func TestDeleteMultipleKeys(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			// Setup keys for transaction rollback tests
+			SetupTestDB(t)
+			RunKVSuccess(t, "set", "a", "value-a")
+			RunKVSuccess(t, "set", "b", "value-b")
+
 			args := append([]string{"delete"}, tc.keys...)
 			output := RunKVFailure(t, args...)
 			if !strings.Contains(output, "does not exist") {

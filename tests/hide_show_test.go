@@ -6,10 +6,8 @@ import (
 )
 
 func TestHideCommand(t *testing.T) {
-	cleanup := SetupTestDB(t)
-	defer cleanup()
-
 	t.Run("hide plain text key", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "visible", "secret")
 		RunKVSuccess(t, "hide", "visible")
 
@@ -27,6 +25,7 @@ func TestHideCommand(t *testing.T) {
 	})
 
 	t.Run("hide already hidden key succeeds", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "hidden", "data")
 		RunKVSuccess(t, "hide", "hidden")
 		// Should be idempotent - no error
@@ -39,6 +38,7 @@ func TestHideCommand(t *testing.T) {
 	})
 
 	t.Run("hide non-existent key fails", func(t *testing.T) {
+		SetupTestDB(t)
 		output := RunKVFailure(t, "hide", "non-existent")
 		if !strings.Contains(output, "does not exist") {
 			t.Errorf("Expected 'does not exist' error, got: %s", output)
@@ -46,6 +46,7 @@ func TestHideCommand(t *testing.T) {
 	})
 
 	t.Run("hide with prefix", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "secrets.api", "key1")
 		RunKVSuccess(t, "set", "secrets.db", "key2")
 		RunKVSuccess(t, "set", "public.data", "data")
@@ -67,6 +68,7 @@ func TestHideCommand(t *testing.T) {
 	})
 
 	t.Run("hide with -p shorthand", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "temp.a", "val1")
 		RunKVSuccess(t, "set", "temp.b", "val2")
 
@@ -81,10 +83,8 @@ func TestHideCommand(t *testing.T) {
 }
 
 func TestShowCommand(t *testing.T) {
-	cleanup := SetupTestDB(t)
-	defer cleanup()
-
 	t.Run("show hidden key", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "hidden", "data")
 		RunKVSuccess(t, "hide", "hidden")
 		RunKVSuccess(t, "show", "hidden")
@@ -102,6 +102,7 @@ func TestShowCommand(t *testing.T) {
 	})
 
 	t.Run("show already visible key succeeds", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "visible", "data")
 		// Should be idempotent - no error
 		RunKVSuccess(t, "show", "visible")
@@ -113,6 +114,7 @@ func TestShowCommand(t *testing.T) {
 	})
 
 	t.Run("show non-existent key fails", func(t *testing.T) {
+		SetupTestDB(t)
 		output := RunKVFailure(t, "show", "non-existent")
 		if !strings.Contains(output, "does not exist") {
 			t.Errorf("Expected 'does not exist' error, got: %s", output)
@@ -120,6 +122,7 @@ func TestShowCommand(t *testing.T) {
 	})
 
 	t.Run("show with prefix", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "hidden.a", "val1")
 		RunKVSuccess(t, "set", "hidden.b", "val2")
 		RunKVSuccess(t, "hide", "hidden", "--prefix")
@@ -133,6 +136,7 @@ func TestShowCommand(t *testing.T) {
 	})
 
 	t.Run("show with -p shorthand", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "test.a", "val1")
 		RunKVSuccess(t, "set", "test.b", "val2")
 		RunKVSuccess(t, "hide", "test", "-p")
@@ -147,10 +151,8 @@ func TestShowCommand(t *testing.T) {
 }
 
 func TestHiddenAndLockedCombination(t *testing.T) {
-	cleanup := SetupTestDB(t)
-	defer cleanup()
-
 	t.Run("lock a hidden key", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "key", "secret")
 		RunKVSuccess(t, "hide", "key")
 		RunKVSuccess(t, "lock", "key", "--password", "pass")
@@ -166,6 +168,7 @@ func TestHiddenAndLockedCombination(t *testing.T) {
 	})
 
 	t.Run("hide a locked key", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "key2", "secret", "--password", "pass")
 		RunKVSuccess(t, "hide", "key2")
 
@@ -180,6 +183,7 @@ func TestHiddenAndLockedCombination(t *testing.T) {
 	})
 
 	t.Run("unlock preserves hidden state", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "key3", "secret", "--password", "pass")
 		RunKVSuccess(t, "hide", "key3")
 		RunKVSuccess(t, "unlock", "key3", "--password", "pass")
@@ -195,6 +199,7 @@ func TestHiddenAndLockedCombination(t *testing.T) {
 	})
 
 	t.Run("lock preserves hidden state", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "key4", "secret")
 		RunKVSuccess(t, "hide", "key4")
 		RunKVSuccess(t, "lock", "key4", "--password", "pass")
@@ -208,6 +213,7 @@ func TestHiddenAndLockedCombination(t *testing.T) {
 	})
 
 	t.Run("set preserves hidden state", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "key5", "val1")
 		RunKVSuccess(t, "hide", "key5")
 		RunKVSuccess(t, "set", "key5", "val2")
@@ -227,10 +233,8 @@ func TestHiddenAndLockedCombination(t *testing.T) {
 }
 
 func TestHiddenInHistory(t *testing.T) {
-	cleanup := SetupTestDB(t)
-	defer cleanup()
-
 	t.Run("history shows hidden entries", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "key", "val1")
 		RunKVSuccess(t, "hide", "key")
 		RunKVSuccess(t, "set", "key", "val2")
@@ -242,6 +246,7 @@ func TestHiddenInHistory(t *testing.T) {
 	})
 
 	t.Run("history respects locked precedence", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "key2", "val1", "--password", "pass")
 		RunKVSuccess(t, "hide", "key2")
 
@@ -255,6 +260,7 @@ func TestHiddenInHistory(t *testing.T) {
 	})
 
 	t.Run("history shows hidden after unlock", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "key3", "val1", "--password", "pass")
 		RunKVSuccess(t, "hide", "key3")
 		RunKVSuccess(t, "unlock", "key3", "--password", "pass")
@@ -270,10 +276,8 @@ func TestHiddenInHistory(t *testing.T) {
 }
 
 func TestHiddenInJSON(t *testing.T) {
-	cleanup := SetupTestDB(t)
-	defer cleanup()
-
 	t.Run("JSON output includes isHidden field", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "hidden-key", "value")
 		RunKVSuccess(t, "hide", "hidden-key")
 
@@ -287,6 +291,7 @@ func TestHiddenInJSON(t *testing.T) {
 	})
 
 	t.Run("JSON output shows isHidden false for visible keys", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "visible-key", "value")
 
 		output := RunKVSuccess(t, "list", "visible-key", "--output", "json")
@@ -298,10 +303,8 @@ func TestHiddenInJSON(t *testing.T) {
 }
 
 func TestHideMultipleKeys(t *testing.T) {
-	cleanup := SetupTestDB(t)
-	defer cleanup()
-
 	t.Run("hide multiple keys successfully", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "key1", "value1")
 		RunKVSuccess(t, "set", "key2", "value2")
 		RunKVSuccess(t, "set", "key3", "value3")
@@ -325,10 +328,6 @@ func TestHideMultipleKeys(t *testing.T) {
 		}
 	})
 
-	// Setup keys for transaction rollback tests
-	RunKVSuccess(t, "set", "a", "value-a")
-	RunKVSuccess(t, "set", "b", "value-b")
-
 	testCases := []struct {
 		name string
 		keys []string
@@ -340,6 +339,11 @@ func TestHideMultipleKeys(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			// Setup keys for transaction rollback tests
+			SetupTestDB(t)
+			RunKVSuccess(t, "set", "a", "value-a")
+			RunKVSuccess(t, "set", "b", "value-b")
+
 			args := append([]string{"hide"}, tc.keys...)
 			output := RunKVFailure(t, args...)
 			if !strings.Contains(output, "does not exist") {
@@ -361,10 +365,8 @@ func TestHideMultipleKeys(t *testing.T) {
 }
 
 func TestShowMultipleKeys(t *testing.T) {
-	cleanup := SetupTestDB(t)
-	defer cleanup()
-
 	t.Run("show multiple keys successfully", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "h1", "secret1")
 		RunKVSuccess(t, "set", "h2", "secret2")
 		RunKVSuccess(t, "set", "h3", "secret3")
@@ -391,12 +393,6 @@ func TestShowMultipleKeys(t *testing.T) {
 		}
 	})
 
-	// Setup hidden keys for transaction rollback tests
-	RunKVSuccess(t, "set", "a", "value-a")
-	RunKVSuccess(t, "set", "b", "value-b")
-	RunKVSuccess(t, "hide", "a")
-	RunKVSuccess(t, "hide", "b")
-
 	testCases := []struct {
 		name string
 		keys []string
@@ -408,6 +404,13 @@ func TestShowMultipleKeys(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			// Setup hidden keys for transaction rollback tests
+			SetupTestDB(t)
+			RunKVSuccess(t, "set", "a", "value-a")
+			RunKVSuccess(t, "set", "b", "value-b")
+			RunKVSuccess(t, "hide", "a")
+			RunKVSuccess(t, "hide", "b")
+
 			args := append([]string{"show"}, tc.keys...)
 			output := RunKVFailure(t, args...)
 			if !strings.Contains(output, "does not exist") {

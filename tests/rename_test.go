@@ -6,10 +6,8 @@ import (
 )
 
 func TestRenameCommand(t *testing.T) {
-	cleanup := SetupTestDB(t)
-	defer cleanup()
-
 	t.Run("basic rename", func(t *testing.T) {
+		SetupTestDB(t)
 		// Create a key
 		RunKVSuccess(t, "set", "old-key", "test value")
 
@@ -30,6 +28,7 @@ func TestRenameCommand(t *testing.T) {
 	})
 
 	t.Run("rename preserves history", func(t *testing.T) {
+		SetupTestDB(t)
 		// Create a key with multiple values
 		RunKVSuccess(t, "set", "history-key", "value1")
 		RunKVSuccess(t, "set", "history-key", "value2")
@@ -52,6 +51,7 @@ func TestRenameCommand(t *testing.T) {
 	})
 
 	t.Run("rename preserves encryption", func(t *testing.T) {
+		SetupTestDB(t)
 		// Create encrypted key
 		RunKVSuccess(t, "set", "encrypted-key", "secret", "--password", "mypass")
 
@@ -72,6 +72,7 @@ func TestRenameCommand(t *testing.T) {
 	})
 
 	t.Run("rename preserves TTL", func(t *testing.T) {
+		SetupTestDB(t)
 		// Create key with TTL
 		RunKVSuccess(t, "set", "ttl-key", "temp", "--expires-after", "1h")
 
@@ -86,6 +87,7 @@ func TestRenameCommand(t *testing.T) {
 	})
 
 	t.Run("rename non-existent key fails", func(t *testing.T) {
+		SetupTestDB(t)
 		output := RunKVFailure(t, "rename", "non-existent", "new-name")
 		if !strings.Contains(output, "does not exist") {
 			t.Errorf("Expected 'does not exist' error, got: %s", output)
@@ -93,6 +95,7 @@ func TestRenameCommand(t *testing.T) {
 	})
 
 	t.Run("rename to existing key fails", func(t *testing.T) {
+		SetupTestDB(t)
 		// Create two keys
 		RunKVSuccess(t, "set", "key1", "value1")
 		RunKVSuccess(t, "set", "key2", "value2")

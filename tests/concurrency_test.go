@@ -10,10 +10,8 @@ import (
 )
 
 func TestConcurrency(t *testing.T) {
-	cleanup := SetupTestDB(t)
-	defer cleanup()
-
 	t.Run("concurrent calls succeed", func(t *testing.T) {
+		SetupTestDB(t)
 		var wg sync.WaitGroup
 		runnersCount := 10
 
@@ -39,6 +37,7 @@ func TestConcurrency(t *testing.T) {
 	})
 
 	t.Run("Pipe get to set", func(t *testing.T) {
+		SetupTestDB(t)
 		sourceKey, distKey := "source-key", "dist-key"
 		value := "some-value"
 

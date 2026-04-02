@@ -6,10 +6,8 @@ import (
 )
 
 func TestHistoryListCommand(t *testing.T) {
-	cleanup := SetupTestDB(t)
-	defer cleanup()
-
 	t.Run("list history for key", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "versioned", "v1")
 		RunKVSuccess(t, "set", "versioned", "v2")
 		RunKVSuccess(t, "set", "versioned", "v3")
@@ -27,6 +25,7 @@ func TestHistoryListCommand(t *testing.T) {
 	})
 
 	t.Run("list history shows current value marker", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "key", "old")
 		RunKVSuccess(t, "set", "key", "current")
 
@@ -38,6 +37,7 @@ func TestHistoryListCommand(t *testing.T) {
 	})
 
 	t.Run("list history for non-existent key", func(t *testing.T) {
+		SetupTestDB(t)
 		output := RunKVFailure(t, "history", "list", "non-existent")
 		if !strings.Contains(output, "No history") && !strings.Contains(output, "does not exist") {
 			t.Errorf("Expected no history error, got: %s", output)
@@ -45,6 +45,7 @@ func TestHistoryListCommand(t *testing.T) {
 	})
 
 	t.Run("history includes deleted values", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "deleted-key", "value")
 		RunKVSuccess(t, "delete", "deleted-key")
 
@@ -56,10 +57,8 @@ func TestHistoryListCommand(t *testing.T) {
 }
 
 func TestHistoryRevertCommand(t *testing.T) {
-	cleanup := SetupTestDB(t)
-	defer cleanup()
-
 	t.Run("revert to previous value", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "key", "old")
 		RunKVSuccess(t, "set", "key", "new")
 		RunKVSuccess(t, "history", "revert", "key")
@@ -71,6 +70,7 @@ func TestHistoryRevertCommand(t *testing.T) {
 	})
 
 	t.Run("revert multiple steps", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "key", "v1")
 		RunKVSuccess(t, "set", "key", "v2")
 		RunKVSuccess(t, "set", "key", "v3")
@@ -85,6 +85,7 @@ func TestHistoryRevertCommand(t *testing.T) {
 	})
 
 	t.Run("revert non-existent key fails", func(t *testing.T) {
+		SetupTestDB(t)
 		output := RunKVFailure(t, "history", "revert", "non-existent")
 		if !strings.Contains(output, "does not exist") && !strings.Contains(output, "No history") && !strings.Contains(output, "panic") && !strings.Contains(output, "no rows") {
 			t.Errorf("Expected error for non-existent key, got: %s", output)
@@ -92,6 +93,7 @@ func TestHistoryRevertCommand(t *testing.T) {
 	})
 
 	t.Run("revert creates new history entry", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "key", "v1")
 		RunKVSuccess(t, "set", "key", "v2")
 		RunKVSuccess(t, "history", "revert", "key")
@@ -106,10 +108,8 @@ func TestHistoryRevertCommand(t *testing.T) {
 }
 
 func TestHistoryPruneCommand(t *testing.T) {
-	cleanup := SetupTestDB(t)
-	defer cleanup()
-
 	t.Run("prune history for single key", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "key", "v1")
 		RunKVSuccess(t, "set", "key", "v2")
 		RunKVSuccess(t, "set", "key", "v3")
@@ -130,6 +130,7 @@ func TestHistoryPruneCommand(t *testing.T) {
 	})
 
 	t.Run("prune history with prefix", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "set", "temp.a", "v1")
 		RunKVSuccess(t, "set", "temp.a", "v2")
 		RunKVSuccess(t, "set", "temp.b", "v1")
@@ -150,22 +151,22 @@ func TestHistoryPruneCommand(t *testing.T) {
 	})
 
 	t.Run("prune non-existent key succeeds silently", func(t *testing.T) {
+		SetupTestDB(t)
 		// Prune on non-existent key doesn't fail, it just does nothing
 		RunKVSuccess(t, "history", "prune", "non-existent")
 	})
 }
 
 func TestHistorySelectCommand(t *testing.T) {
-	cleanup := SetupTestDB(t)
-	defer cleanup()
-
+	// Note: history select is interactive, so we'll just test that the command exists
+	// and handles basic error cases
 	t.Run("select command exists", func(t *testing.T) {
+		SetupTestDB(t)
 		RunKVSuccess(t, "history", "select", "--help")
 	})
 
-	// Note: history select is interactive, so we'll just test that the command exists
-	// and handles basic error cases
 	t.Run("select on non-existent key fails", func(t *testing.T) {
+		SetupTestDB(t)
 		output := RunKVFailure(t, "history", "select", "non-existent")
 		if !strings.Contains(output, "does not exist") && !strings.Contains(output, "No history") && !strings.Contains(output, "panic") && !strings.Contains(output, "no rows") {
 			t.Errorf("Expected error for non-existent key, got: %s", output)
