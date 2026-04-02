@@ -87,6 +87,19 @@ func TestCopyCommand(t *testing.T) {
 		}
 	})
 
+	t.Run("copy preserves hidden state", func(t *testing.T) {
+		SetupTestDB(t)
+		RunKVSuccess(t, "set", "hidden-src", "secret")
+		RunKVSuccess(t, "hide", "hidden-src")
+
+		RunKVSuccess(t, "copy", "hidden-src", "hidden-dst")
+
+		output := RunKVSuccess(t, "list", "hidden-dst")
+		if !strings.Contains(output, "[Hidden]") {
+			t.Error("Copied key should be hidden")
+		}
+	})
+
 	t.Run("copy non-existent key fails", func(t *testing.T) {
 		SetupTestDB(t)
 		output := RunKVFailure(t, "copy", "non-existent", "dest")

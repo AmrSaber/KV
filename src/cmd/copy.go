@@ -46,6 +46,9 @@ If the destination key already exists, it will be updated (creating a new histor
 
 			// Copy to destination (without TTL)
 			services.SetValue(tx, toKey, fromItem.Value, nil, fromItem.IsLocked)
+			if fromItem.IsHidden {
+				services.HideKey(tx, toKey)
+			}
 		})
 	},
 }
