@@ -1,0 +1,16 @@
+[tools]
+go = "1"
+
+[tasks.test]
+description = "Run tests"
+run = "go test ./..."
+
+[tasks.lint]
+description = "Lint code"
+run = '''
+go vet ./...
+golangci-lint run ./...
+'''
+
+[settings]
+quiet = true
