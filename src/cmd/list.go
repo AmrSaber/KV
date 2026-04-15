@@ -79,7 +79,12 @@ Locked values are displayed as [Locked] in table view.`,
 		})
 
 		if len(items) == 0 {
-			common.Stderr.Println("No saved items. Use `kv set` to add one.")
+			if listFlags.deleted {
+				common.Stderr.Println("No deleted items.")
+			} else {
+				common.Stderr.Println("No saved items. Use `kv set` to add one.")
+			}
+
 			return
 		}
 
