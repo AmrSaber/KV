@@ -78,6 +78,11 @@ Locked values are displayed as [Locked] in table view.`,
 			items = services.ListItems(tx, prefix, matchType)
 		})
 
+		if len(items) == 0 {
+			common.Stderr.Println("No saved items. Use `kv set` to add one.")
+			return
+		}
+
 		// Sort items by key
 		sort.Slice(items, func(i, j int) bool {
 			comp := strings.Compare(items[i].Key, items[j].Key)
