@@ -10,10 +10,12 @@ Unlike traditional databases, KV is designed for simplicity and speed. No server
 
 **Inspired by [Charm's Skate](https://github.com/charmbracelet/skate)**, KV extends the personal key-value store concept with encryption, version control, TTL management, and enhanced security features.
 
+![KV demo](static/demo.gif)
+
 ### KV vs Skate
 
 | Feature                      | Skate | KV                |
-| ---------------------------- | ----- | ----------------- |
+| ---------------------------- | :---: | :---------------: |
 | Basic Key-Value Storage      | ✅    | ✅                |
 | Multiple Databases           | ✅    | ✅ (via prefixes) |
 | Binary Data                  | ✅    | ✅                |
