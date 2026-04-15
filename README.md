@@ -112,25 +112,27 @@ go install github.com/AmrSaber/kv@latest
 
 > **Note:** Package manager installations (Homebrew, Snap, Scoop, AUR) automatically include shell completion. If you installed via `go install`, use the following manual completion setup.
 
-KV provides intelligent auto-completion for commands, flags, and most importantly, **relevant keys** for each command context.
+KV provides intelligent auto-completion for commands, flags, and most importantly, **relevant keys** for each command context. Key completions use **substring matching** — type any part of a key name, to narrow down suggestions.
 
-**Bash:**
+**Auto-detect:**
 
 ```bash
-echo 'eval "$(kv completion bash)"' >> ~/.bashrc
+echo 'eval "$(kv completion)"' >> ~/.bashrc   # or ~/.zshrc
 source ~/.bashrc
 ```
 
-**Zsh:**
+**Explicit shell:**
 
 ```bash
+# Bash
+echo 'eval "$(kv completion bash)"' >> ~/.bashrc
+source ~/.bashrc
+
+# Zsh
 echo 'eval "$(kv completion zsh)"' >> ~/.zshrc
 source ~/.zshrc
-```
 
-**Fish:**
-
-```bash
+# Fish
 echo 'kv completion fish | source' >> ~/.config/fish/config.fish
 source ~/.config/fish/config.fish
 ```
