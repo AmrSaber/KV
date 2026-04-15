@@ -209,3 +209,24 @@ func TestListCommand(t *testing.T) {
 		}
 	})
 }
+
+func TestListCompletions(t *testing.T) {
+	t.Run("completions match substring in the middle of a key", func(t *testing.T) {
+		SetupTestDB(t)
+		// Cover substring match from the middle vs prefix-only and unrelated keys
+		RunKVSuccess(t, "set", "app.db.host", "localhost")
+		RunKVSuccess(t, "set", "app.db.port", "5432")
+		RunKVSuccess(t, "set", "app.name", "myapp")
+
+		output := RunKVSuccess(t, "__complete", "list", "db")
+		if !strings.Contains(output, "app.db.host") {
+			t.Error("Should complete app.db.host")
+		}
+		if !strings.Contains(output, "app.db.port") {
+			t.Error("Should complete app.db.port")
+		}
+		if strings.Contains(output, "app.name") {
+			t.Error("Should not complete app.name")
+		}
+	})
+}

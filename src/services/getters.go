@@ -81,6 +81,7 @@ func ListItems(tx *sql.Tx, prefix string, matchType MatchType) []KVItem {
 
 	rows, err := tx.Query(query, prefix)
 	common.FailOn(err)
+	defer func() { _ = rows.Close() }()
 
 	return parseKVItems(rows)
 }
@@ -91,6 +92,38 @@ func ListKeys(tx *sql.Tx, prefix string, matchType MatchType) []string {
 	keys := make([]string, 0, len(items))
 	for _, item := range items {
 		keys = append(keys, item.Key)
+	}
+
+	return keys
+}
+
+// SearchKeys matches any key containing part as a substring, for use in completions
+func SearchKeys(tx *sql.Tx, part string, matchType MatchType) []string {
+	query := `
+		SELECT key
+		FROM store
+		WHERE key LIKE '%' || ? || '%' AND is_latest = 1
+	`
+	switch matchType {
+	case MatchExisting:
+		query += " AND value != ''"
+	case MatchDeleted:
+		query += " AND value = ''"
+	case MatchAll:
+		// Do nothing
+	default:
+		panic(fmt.Sprintf("Match type %v is not supported", matchType))
+	}
+
+	rows, err := tx.Query(query, part)
+	common.FailOn(err)
+	defer func() { _ = rows.Close() }()
+
+	var keys []string
+	for rows.Next() {
+		var key string
+		common.FailOn(rows.Scan(&key))
+		keys = append(keys, key)
 	}
 
 	return keys

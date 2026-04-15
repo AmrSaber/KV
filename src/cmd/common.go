@@ -10,7 +10,7 @@ import (
 func completeKeyArg(toComplete string, matchType services.MatchType) ([]cobra.Completion, cobra.ShellCompDirective) {
 	var matchingKeys []string
 	services.RunInTransaction(func(tx *sql.Tx) {
-		matchingKeys = services.ListKeys(tx, toComplete, matchType)
+		matchingKeys = services.SearchKeys(tx, toComplete, matchType)
 	})
 
 	return []cobra.Completion(matchingKeys), cobra.ShellCompDirectiveNoFileComp
