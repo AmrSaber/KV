@@ -53,7 +53,7 @@ func TestListCommand(t *testing.T) {
 	t.Run("list shows locked keys", func(t *testing.T) {
 		SetupTestDB(t)
 		RunKVSuccess(t, "set", "plain", "data")
-		RunKVSuccess(t, "set", "encrypted", "secret", "--password", "pass")
+		RunKVSuccess(t, "set", "encrypted", "secret", "--password=pass")
 
 		output := RunKVSuccess(t, "list")
 		if !strings.Contains(output, "plain") {

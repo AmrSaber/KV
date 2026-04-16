@@ -8,8 +8,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var getFlags = struct{ password string }{}
-
 // getCmd represents the get command
 var getCmd = &cobra.Command{
 	Use:   "get <key>",
@@ -21,7 +19,10 @@ If the key is encrypted, provide the password using --password flag.`,
   kv get api-key
 
   # Get an encrypted value
-  kv get github-token --password "mypass"
+  kv get github-token --password=mypass
+
+  # Get an encrypted value, enter password interactively
+  kv get github-token --password
 
   # Use in a shell script
   curl -H "Authorization: Bearer $(kv get api-key)" https://api.example.com`,
@@ -49,14 +50,20 @@ If the key is encrypted, provide the password using --password flag.`,
 			return // To shut up the compiler
 		}
 
-		if item.IsLocked && getFlags.password == "" {
+		if item.IsLocked && !cmd.Flags().Changed("password") {
 			common.Fail("Key is locked, please pass the password with --password flag")
 		}
 
+		var password string
+		passwordFlag := cmd.Flags().Lookup("password")
+		if passwordFlag.Changed {
+			password = readPassword(cmd, false)
+		}
+
 		value := item.Value
-		if getFlags.password != "" {
+		if password != "" {
 			var err error
-			value, err = common.Decrypt(value, getFlags.password)
+			value, err = common.Decrypt(value, password)
 			if err != nil {
 				common.Fail("Wrong password")
 			}
@@ -69,5 +76,6 @@ If the key is encrypted, provide the password using --password flag.`,
 func init() {
 	rootCmd.AddCommand(getCmd)
 
-	getCmd.Flags().StringVarP(&getFlags.password, "password", "p", "", "Password to decrypt value if it's encrypted")
+	getCmd.Flags().StringP("password", "p", "", "Password to decrypt value if it's encrypted")
+	getCmd.Flags().Lookup("password").NoOptDefVal = passwordPromptSentinel
 }

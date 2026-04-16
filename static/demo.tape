@@ -75,7 +75,14 @@ Type "# Encrypt sensitive values"
 Enter
 Sleep 800ms
 
-Type `kv set github-token ghp_secret123 --password "$(cat /tmp/kv-demo-pass)"`
+# bare --password triggers interactive prompt (confirms twice for writes)
+Type "kv set github-token ghp_secret123 --password"
+Enter
+Sleep 500ms
+Type "mypass"
+Enter
+Sleep 300ms
+Type "mypass"
 Enter
 Sleep 1.5s
 
@@ -85,7 +92,18 @@ Sleep 3s
 
 Enter
 
-Type `kv get github-token --password "$(cat /tmp/kv-demo-pass)"`
+# get from file (scripting-friendly path)
+Type `kv get github-token --password="$(cat /tmp/kv-demo-pass)"`
+Enter
+Sleep 2s
+
+Enter
+
+# get interactively (bare --password, prompts once for reads)
+Type "kv get github-token --password"
+Enter
+Sleep 500ms
+Type "mypass"
 Enter
 Sleep 2s
 

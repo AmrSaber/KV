@@ -165,7 +165,7 @@ kv list
 kv set temp-token "xyz789" --expires-after 1h
 
 # Encrypt sensitive data with a password
-kv set github-token "ghp_secret" --password "mypass"
+kv set github-token "ghp_secret" --password=mypass
 ```
 
 ## Core Capabilities
@@ -240,15 +240,14 @@ kv delete cached-data --prune
 > **Security Note:** KV uses AES-256-GCM encryption with PBKDF2 key derivation (10,000 iterations). Passwords are never stored—they're only used to encrypt/decrypt your data. If you lose a password, the encrypted data cannot be recovered. Keep your passwords safe!
 
 ```bash
-# Store an encrypted value directly
-kv set github-token "ghp_secret123" --password "secure123"
+# Store an encrypted value — enter password interactively (recommended)
+kv set github-token "ghp_secret123" --password
 
-# Retrieve encrypted value
-kv get github-token --password "secure123"
-# Output: ghp_secret123
+# Retrieve encrypted value interactively
+kv get github-token --password
 
 # Lock an existing plain-text value
-kv lock api-key --password "mypass"
+kv lock api-key --password
 
 # List shows locked values as [Locked]
 kv list
@@ -261,24 +260,23 @@ kv list
 # └──────────────┴──────────┴─────────────────────┘
 
 # Unlock a locked value back to plain text
-kv unlock api-key --password "mypass"
+kv unlock api-key --password
 
 # Lock multiple keys at once
-kv lock config --prefix --password "mypass"
+kv lock config --prefix --password
 ```
 
-**Warning:** Passing passwords directly on the command line (e.g., `--password "mypass"`) will save them in your shell history, making them visible to anyone with access to your terminal history file. For better security, use environment variables or command substitution:
+Using bare `--password` prompts for the password interactively with hidden input, keeping it out of your shell history. For write operations (`set`, `lock`), the prompt asks twice to confirm. For scripting, you can pass the password inline using `=` syntax:
 
 ```bash
-# Using an environment variable
-kv set api-key "secret" --password "$KV_PASSWORD"
-
 # Using command substitution (e.g., from a password manager)
-kv get api-key --password "$(pass show kv/master)"
+kv get api-key --password="$(pass show kv/master)"
 
 # Or read from a file
-kv lock sensitive-data --password "$(cat ~/.kv-password)"
+kv lock sensitive-data --password="$(cat ~/.kv-password)"
 ```
+
+> **Note:** Because of the way `--password` flag is treated, when passing a value to `--password`, always use `--password=value` (with `=`). Using a space (`--password value`) will not work — the value will be treated as a positional argument.
 
 ### Managing Value Visibility (Hide/Show)
 
@@ -419,17 +417,17 @@ kv list --output yaml
 # Operate on multiple keys at once
 kv delete old-key temp-data cache-value
 kv hide api-key db-password auth-token
-kv lock secret1 secret2 secret3 --password "mypass"
+kv lock secret1 secret2 secret3 --password=mypass
 kv expire session1 session2 session3 --after 1h
 
 # Or use prefix matching for batch operations
 kv delete cache --prefix
 kv hide secrets --prefix
-kv lock config --prefix --password "mypass"
-kv unlock secrets --prefix --password "mypass"
+kv lock config --prefix --password=mypass
+kv unlock secrets --prefix --password=mypass
 
 # Unlock all keys at once
-kv unlock --all --password "mypass"
+kv unlock --all --password=mypass
 
 # Note: Multi-key operations are transactional — if any key fails,
 # none of the changes are applied (all-or-nothing behavior)
@@ -595,7 +593,7 @@ Use KV in your automation scripts:
 kv set last-build "$(date)" --expires-after 24h
 
 # Retrieve API key for deployment
-API_KEY=$(kv get deploy-key --password "$MASTER_PASS")
+API_KEY=$(kv get deploy-key --password="$MASTER_PASS")
 curl -H "Authorization: Bearer $API_KEY" https://api.example.com/deploy
 ```
 

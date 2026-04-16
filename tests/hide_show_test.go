@@ -155,7 +155,7 @@ func TestHiddenAndLockedCombination(t *testing.T) {
 		SetupTestDB(t)
 		RunKVSuccess(t, "set", "key", "secret")
 		RunKVSuccess(t, "hide", "key")
-		RunKVSuccess(t, "lock", "key", "--password", "pass")
+		RunKVSuccess(t, "lock", "key", "--password=pass")
 
 		// Should show [Locked] (takes precedence over [Hidden])
 		output := RunKVSuccess(t, "list", "key")
@@ -169,7 +169,7 @@ func TestHiddenAndLockedCombination(t *testing.T) {
 
 	t.Run("hide a locked key", func(t *testing.T) {
 		SetupTestDB(t)
-		RunKVSuccess(t, "set", "key2", "secret", "--password", "pass")
+		RunKVSuccess(t, "set", "key2", "secret", "--password=pass")
 		RunKVSuccess(t, "hide", "key2")
 
 		// Should show [Locked] (takes precedence)
@@ -184,9 +184,9 @@ func TestHiddenAndLockedCombination(t *testing.T) {
 
 	t.Run("unlock preserves hidden state", func(t *testing.T) {
 		SetupTestDB(t)
-		RunKVSuccess(t, "set", "key3", "secret", "--password", "pass")
+		RunKVSuccess(t, "set", "key3", "secret", "--password=pass")
 		RunKVSuccess(t, "hide", "key3")
-		RunKVSuccess(t, "unlock", "key3", "--password", "pass")
+		RunKVSuccess(t, "unlock", "key3", "--password=pass")
 
 		// Should show [Hidden] now (not locked anymore)
 		output := RunKVSuccess(t, "list", "key3")
@@ -202,8 +202,8 @@ func TestHiddenAndLockedCombination(t *testing.T) {
 		SetupTestDB(t)
 		RunKVSuccess(t, "set", "key4", "secret")
 		RunKVSuccess(t, "hide", "key4")
-		RunKVSuccess(t, "lock", "key4", "--password", "pass")
-		RunKVSuccess(t, "unlock", "key4", "--password", "pass")
+		RunKVSuccess(t, "lock", "key4", "--password=pass")
+		RunKVSuccess(t, "unlock", "key4", "--password=pass")
 
 		// Should show [Hidden] (hidden state preserved through lock/unlock)
 		output := RunKVSuccess(t, "list", "key4")
@@ -247,7 +247,7 @@ func TestHiddenInHistory(t *testing.T) {
 
 	t.Run("history respects locked precedence", func(t *testing.T) {
 		SetupTestDB(t)
-		RunKVSuccess(t, "set", "key2", "val1", "--password", "pass")
+		RunKVSuccess(t, "set", "key2", "val1", "--password=pass")
 		RunKVSuccess(t, "hide", "key2")
 
 		output := RunKVSuccess(t, "history", "list", "key2")
@@ -261,9 +261,9 @@ func TestHiddenInHistory(t *testing.T) {
 
 	t.Run("history shows hidden after unlock", func(t *testing.T) {
 		SetupTestDB(t)
-		RunKVSuccess(t, "set", "key3", "val1", "--password", "pass")
+		RunKVSuccess(t, "set", "key3", "val1", "--password=pass")
 		RunKVSuccess(t, "hide", "key3")
-		RunKVSuccess(t, "unlock", "key3", "--password", "pass")
+		RunKVSuccess(t, "unlock", "key3", "--password=pass")
 
 		output := RunKVSuccess(t, "history", "list", "key3")
 		if strings.Contains(output, "[Locked]") {

@@ -25,6 +25,7 @@ func RunKV(t *testing.T, args ...string) (string, error) {
 	return strings.TrimSpace(string(output)), err
 }
 
+
 func RunKVSuccess(t *testing.T, args ...string) string {
 	t.Helper()
 	output, err := RunKV(t, args...)

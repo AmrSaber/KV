@@ -13,7 +13,7 @@ func TestBackupCommand(t *testing.T) {
 	t.Run("backup to default location", func(t *testing.T) {
 		SetupTestDB(t)
 		RunKVSuccess(t, "set", "key1", "value1")
-		RunKVSuccess(t, "set", "key2", "value2", "--password", "pass")
+		RunKVSuccess(t, "set", "key2", "value2", "--password=pass")
 		RunKVSuccess(t, "set", "key3", "value3")
 		RunKVSuccess(t, "hide", "key3")
 
@@ -35,7 +35,7 @@ func TestBackupCommand(t *testing.T) {
 	t.Run("backup to file", func(t *testing.T) {
 		SetupTestDB(t)
 		RunKVSuccess(t, "set", "key1", "value1")
-		RunKVSuccess(t, "set", "key2", "value2", "--password", "pass")
+		RunKVSuccess(t, "set", "key2", "value2", "--password=pass")
 		RunKVSuccess(t, "set", "key3", "value3")
 		RunKVSuccess(t, "hide", "key3")
 
@@ -64,7 +64,7 @@ func TestBackupCommand(t *testing.T) {
 	t.Run("backup to stdout", func(t *testing.T) {
 		SetupTestDB(t)
 		RunKVSuccess(t, "set", "key1", "value1")
-		RunKVSuccess(t, "set", "key2", "value2", "--password", "pass")
+		RunKVSuccess(t, "set", "key2", "value2", "--password=pass")
 		RunKVSuccess(t, "set", "key3", "value3")
 		RunKVSuccess(t, "hide", "key3")
 
@@ -85,7 +85,7 @@ func TestBackupCommand(t *testing.T) {
 func TestRestoreCommand(t *testing.T) {
 	seedDB := func() {
 		RunKVSuccess(t, "set", "original1", "value1")
-		RunKVSuccess(t, "set", "original2", "value2", "--password", "pass")
+		RunKVSuccess(t, "set", "original2", "value2", "--password=pass")
 		RunKVSuccess(t, "set", "original3", "value3", "--expires-after", "1h")
 		RunKVSuccess(t, "hide", "original3")
 		RunKVSuccess(t, "set", "original4", "value4")
@@ -98,7 +98,7 @@ func TestRestoreCommand(t *testing.T) {
 			t.Error("original2 should be locked")
 		}
 
-		output = RunKVSuccess(t, "get", "original2", "--password", "pass")
+		output = RunKVSuccess(t, "get", "original2", "--password=pass")
 		if output != "value2" {
 			t.Errorf("Expected 'value2', got: %s", output)
 		}

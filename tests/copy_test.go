@@ -48,7 +48,7 @@ func TestCopyCommand(t *testing.T) {
 	t.Run("copy preserves encryption", func(t *testing.T) {
 		SetupTestDB(t)
 		// Create encrypted key
-		RunKVSuccess(t, "set", "encrypted-src", "secret data", "--password", "testpass")
+		RunKVSuccess(t, "set", "encrypted-src", "secret data", "--password=testpass")
 
 		// Copy it
 		RunKVSuccess(t, "copy", "encrypted-src", "encrypted-dst")
@@ -60,7 +60,7 @@ func TestCopyCommand(t *testing.T) {
 		}
 
 		// Should decrypt with same password
-		output = RunKVSuccess(t, "get", "encrypted-dst", "--password", "testpass")
+		output = RunKVSuccess(t, "get", "encrypted-dst", "--password=testpass")
 		if output != "secret data" {
 			t.Errorf("Expected 'secret data', got: %s", output)
 		}

@@ -53,7 +53,7 @@ func TestRenameCommand(t *testing.T) {
 	t.Run("rename preserves encryption", func(t *testing.T) {
 		SetupTestDB(t)
 		// Create encrypted key
-		RunKVSuccess(t, "set", "encrypted-key", "secret", "--password", "mypass")
+		RunKVSuccess(t, "set", "encrypted-key", "secret", "--password=mypass")
 
 		// Rename it
 		RunKVSuccess(t, "rename", "encrypted-key", "renamed-encrypted")
@@ -65,7 +65,7 @@ func TestRenameCommand(t *testing.T) {
 		}
 
 		// Should decrypt with same password
-		output = RunKVSuccess(t, "get", "renamed-encrypted", "--password", "mypass")
+		output = RunKVSuccess(t, "get", "renamed-encrypted", "--password=mypass")
 		if output != "secret" {
 			t.Errorf("Expected 'secret', got: %s", output)
 		}

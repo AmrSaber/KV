@@ -26,8 +26,8 @@ func TestSetCommand(t *testing.T) {
 
 	t.Run("set with encryption", func(t *testing.T) {
 		SetupTestDB(t)
-		RunKVSuccess(t, "set", "secret", "sensitive data", "--password", "mypass")
-		output := RunKVSuccess(t, "get", "secret", "--password", "mypass")
+		RunKVSuccess(t, "set", "secret", "sensitive data", "--password=mypass")
+		output := RunKVSuccess(t, "get", "secret", "--password=mypass")
 		if output != "sensitive data" {
 			t.Errorf("Expected 'sensitive data', got: %s", output)
 		}
@@ -81,8 +81,8 @@ func TestGetCommand(t *testing.T) {
 
 	t.Run("get encrypted key with wrong password fails", func(t *testing.T) {
 		SetupTestDB(t)
-		RunKVSuccess(t, "set", "encrypted", "secret", "--password", "correct")
-		output := RunKVFailure(t, "get", "encrypted", "--password", "wrong")
+		RunKVSuccess(t, "set", "encrypted", "secret", "--password=correct")
+		output := RunKVFailure(t, "get", "encrypted", "--password=wrong")
 		if !strings.Contains(output, "Wrong password") {
 			t.Errorf("Expected 'Wrong password' error, got: %s", output)
 		}
@@ -90,7 +90,7 @@ func TestGetCommand(t *testing.T) {
 
 	t.Run("get encrypted key without password fails", func(t *testing.T) {
 		SetupTestDB(t)
-		RunKVSuccess(t, "set", "locked", "data", "--password", "pass")
+		RunKVSuccess(t, "set", "locked", "data", "--password=pass")
 		output := RunKVFailure(t, "get", "locked")
 		if !strings.Contains(output, "locked") && !strings.Contains(output, "password") {
 			t.Errorf("Expected locked/password error, got: %s", output)

@@ -9,9 +9,8 @@ import (
 )
 
 var unlockFlags = struct {
-	prefix   bool
-	all      bool
-	password string
+	prefix bool
+	all    bool
 }{}
 
 // unlockCmd represents the unlock command
@@ -23,16 +22,19 @@ var unlockCmd = &cobra.Command{
 
 Note: This removes the latest record from history and replaces it with a plain-text one.`,
 	Example: `  # Unlock a single key
-  kv unlock api-key --password "mypass"
+  kv unlock api-key --password=mypass
+
+  # Unlock a single key, enter password interactively
+  kv unlock api-key --password
 
   # Unlock multiple keys
-  kv unlock api-key db-password secret-token --password "mypass"
+  kv unlock api-key db-password secret-token --password=mypass
 
   # Unlock all keys with a prefix
-  kv unlock secrets --prefix --password "mypass"
+  kv unlock secrets --prefix --password=mypass
 
   # Unlock all keys in the store
-  kv unlock --all --password "mypass"`,
+  kv unlock --all --password=mypass`,
 	GroupID: "security",
 	Args:    cobra.ArbitraryArgs,
 
@@ -45,6 +47,11 @@ Note: This removes the latest record from history and replaces it with a plain-t
 	},
 
 	Run: func(cmd *cobra.Command, args []string) {
+		password := readPassword(cmd, false)
+		if password == "" {
+			common.Fail("Password cannot be empty")
+		}
+
 		if unlockFlags.all {
 			if len(args) > 0 {
 				common.Fail("Cannot have arguments with --all")
@@ -53,7 +60,7 @@ Note: This removes the latest record from history and replaces it with a plain-t
 			services.RunInTransaction(func(tx *sql.Tx) {
 				items := services.ListItems(tx, "", services.MatchExisting)
 				for _, item := range items {
-					err := services.UnlockKey(tx, item.Key, unlockFlags.password)
+					err := services.UnlockKey(tx, item.Key, password)
 					if err != nil {
 						common.Fail("Wrong password for key %q", item.Key)
 					}
@@ -75,7 +82,7 @@ Note: This removes the latest record from history and replaces it with a plain-t
 			services.RunInTransaction(func(tx *sql.Tx) {
 				items := services.ListItems(tx, key, services.MatchExisting)
 				for _, item := range items {
-					err := services.UnlockKey(tx, item.Key, unlockFlags.password)
+					err := services.UnlockKey(tx, item.Key, password)
 					if err != nil {
 						common.Fail("Wrong password for key %q", item.Key)
 					}
@@ -92,7 +99,7 @@ Note: This removes the latest record from history and replaces it with a plain-t
 
 		services.RunInTransaction(func(tx *sql.Tx) {
 			for _, key := range args {
-				err := services.UnlockKey(tx, key, unlockFlags.password)
+				err := services.UnlockKey(tx, key, password)
 				if err != nil {
 					common.Fail("Wrong password")
 				}
@@ -104,9 +111,8 @@ Note: This removes the latest record from history and replaces it with a plain-t
 func init() {
 	rootCmd.AddCommand(unlockCmd)
 
-	unlockCmd.Flags().StringVarP(&unlockFlags.password, "password", "p", "", "Encryption password")
-	err := unlockCmd.MarkFlagRequired("password")
-	common.FailOn(err)
+	unlockCmd.Flags().StringP("password", "p", "", "Encryption password")
+	unlockCmd.Flags().Lookup("password").NoOptDefVal = passwordPromptSentinel
 
 	unlockCmd.Flags().BoolVar(&unlockFlags.all, "all", false, "Unlock all keys")
 	unlockCmd.Flags().BoolVar(&unlockFlags.prefix, "prefix", false, "Unlock all keys with given prefix")

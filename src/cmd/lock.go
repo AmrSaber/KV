@@ -9,9 +9,8 @@ import (
 )
 
 var lockFlags = struct {
-	prefix   bool
-	all      bool
-	password string
+	prefix bool
+	all    bool
 }{}
 
 // lockCmd represents the lock command
@@ -24,16 +23,19 @@ var lockCmd = &cobra.Command{
 Note: This removes the latest record from history and replaces it with an encrypted one.
 If plain-text values exist in older history records, consider using 'kv history prune' to remove them.`,
 	Example: `  # Lock a single key
-  kv lock api-key --password "mypass"
+  kv lock api-key --password=mypass
+
+  # Lock a single key, enter password interactively
+  kv lock api-key --password
 
   # Lock multiple keys
-  kv lock api-key db-password secret-token --password "mypass"
+  kv lock api-key db-password secret-token --password=mypass
 
   # Lock all keys with a prefix
-  kv lock secrets --prefix --password "mypass"
+  kv lock secrets --prefix --password=mypass
 
   # Lock all keys in the store
-  kv lock --all --password "mypass"`,
+  kv lock --all --password=mypass`,
 	GroupID: "security",
 	Args:    cobra.ArbitraryArgs,
 
@@ -46,6 +48,11 @@ If plain-text values exist in older history records, consider using 'kv history 
 	},
 
 	Run: func(cmd *cobra.Command, args []string) {
+		password := readPassword(cmd, true)
+		if password == "" {
+			common.Fail("Password cannot be empty")
+		}
+
 		if lockFlags.all {
 			if len(args) > 0 {
 				common.Fail("Cannot have arguments with --all")
@@ -54,7 +61,7 @@ If plain-text values exist in older history records, consider using 'kv history 
 			services.RunInTransaction(func(tx *sql.Tx) {
 				items := services.ListItems(tx, "", services.MatchExisting)
 				for _, item := range items {
-					services.LockKey(tx, item.Key, lockFlags.password)
+					services.LockKey(tx, item.Key, password)
 				}
 			})
 
@@ -73,7 +80,7 @@ If plain-text values exist in older history records, consider using 'kv history 
 			services.RunInTransaction(func(tx *sql.Tx) {
 				items := services.ListItems(tx, key, services.MatchExisting)
 				for _, item := range items {
-					services.LockKey(tx, item.Key, lockFlags.password)
+					services.LockKey(tx, item.Key, password)
 				}
 			})
 
@@ -87,7 +94,7 @@ If plain-text values exist in older history records, consider using 'kv history 
 
 		services.RunInTransaction(func(tx *sql.Tx) {
 			for _, key := range args {
-				services.LockKey(tx, key, lockFlags.password)
+				services.LockKey(tx, key, password)
 			}
 		})
 	},
@@ -96,9 +103,8 @@ If plain-text values exist in older history records, consider using 'kv history 
 func init() {
 	rootCmd.AddCommand(lockCmd)
 
-	lockCmd.Flags().StringVarP(&lockFlags.password, "password", "p", "", "Encryption password")
-	err := lockCmd.MarkFlagRequired("password")
-	common.FailOn(err)
+	lockCmd.Flags().StringP("password", "p", "", "Encryption password")
+	lockCmd.Flags().Lookup("password").NoOptDefVal = passwordPromptSentinel
 
 	lockCmd.Flags().BoolVar(&lockFlags.all, "all", false, "Lock all keys")
 	lockCmd.Flags().BoolVar(&lockFlags.prefix, "prefix", false, "Lock all keys with given prefix")

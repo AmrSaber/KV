@@ -14,7 +14,6 @@ import (
 
 var setFlags = struct {
 	expiresAfter time.Duration
-	password     string
 	hidden       bool
 }{}
 
@@ -36,7 +35,10 @@ Providing a negative duration expires the key immediately.`,
   kv set session-token "abc123" --expires-after 1h
 
   # Store encrypted value with password protection
-  kv set github-token "ghp_secret" --password "mypass"
+  kv set github-token "ghp_secret" --password=mypass
+
+  # Store encrypted value, enter password interactively
+  kv set github-token "ghp_secret" --password
 
   # Store multi-line value from stdin
   echo "line 1\nline 2" | kv set my-config
@@ -78,14 +80,20 @@ Providing a negative duration expires the key immediately.`,
 			common.Fail("No value provided")
 		}
 
-		if setFlags.password != "" {
+		var password string
+		passwordFlag := cmd.Flags().Lookup("password")
+		if passwordFlag.Changed {
+			password = readPassword(cmd, true)
+		}
+
+		if password != "" {
 			var err error
-			value, err = common.Encrypt(value, setFlags.password)
+			value, err = common.Encrypt(value, password)
 			common.FailOn(err)
 		}
 
 		services.RunInTransaction(func(tx *sql.Tx) {
-			services.SetValue(tx, key, value, expiresAt, setFlags.password != "")
+			services.SetValue(tx, key, value, expiresAt, password != "")
 			if setFlags.hidden {
 				services.HideKey(tx, key)
 			}
@@ -97,6 +105,7 @@ func init() {
 	rootCmd.AddCommand(setCmd)
 
 	setCmd.Flags().DurationVar(&setFlags.expiresAfter, "expires-after", 0, "Expires this value after given duration.")
-	setCmd.Flags().StringVarP(&setFlags.password, "password", "p", "", "Password to lock this value")
+	setCmd.Flags().StringP("password", "p", "", "Password to lock this value")
+	setCmd.Flags().Lookup("password").NoOptDefVal = passwordPromptSentinel
 	setCmd.Flags().BoolVar(&setFlags.hidden, "hidden", false, "Mark key as hidden")
 }
