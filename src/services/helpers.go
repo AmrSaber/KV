@@ -12,7 +12,7 @@ func RunInTransaction(fn func(tx *sql.Tx)) {
 	db, err := common.GetDB()
 	common.FailOn(err)
 
-	tx, err := common.BeginTarnsaction(db)
+	tx, err := common.BeginTransaction(db)
 	common.FailOn(err)
 
 	defer func() { _ = tx.Rollback() }()

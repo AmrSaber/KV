@@ -9,8 +9,8 @@ import (
 
 func SetValue(tx *sql.Tx, key string, value string, expiresAt *time.Time, isLocked bool) {
 	// Skip write if attempting to write identical values
-	currentValue, currentExipry := GetValue(tx, key)
-	if common.EqualStringPtrs(currentValue, &value) && common.EqualTimePtrs(currentExipry, expiresAt) {
+	currentValue, currentExpiry := GetValue(tx, key)
+	if common.EqualStringPtrs(currentValue, &value) && common.EqualTimePtrs(currentExpiry, expiresAt) {
 		return
 	}
 

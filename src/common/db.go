@@ -63,7 +63,7 @@ func openDB() (*sql.DB, error) {
 	}
 
 	// Migrations transaction
-	tx, err := BeginTarnsaction(db)
+	tx, err := BeginTransaction(db)
 	if err != nil {
 		return nil, err
 	}
