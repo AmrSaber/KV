@@ -45,7 +45,8 @@ func GetDB() (*sql.DB, error) {
 
 func openDB() (*sql.DB, error) {
 	dbPath := GetDBPath()
-	_ = os.MkdirAll(path.Dir(dbPath), os.ModeDir|os.ModePerm)
+	err := os.MkdirAll(path.Dir(dbPath), os.ModeDir|os.ModePerm)
+	FailOn(err)
 
 	db, err := sql.Open("sqlite", dbPath+"?_txlock=immediate")
 	if err != nil {

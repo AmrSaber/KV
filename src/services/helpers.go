@@ -28,9 +28,10 @@ func RunInTransaction(fn func(tx *sql.Tx)) {
 
 // cleanupDB clears expired values, deletes old history, and prunes old cleared values
 func cleanupDB(tx *sql.Tx) {
+	config := common.ReadConfig()
 	clearExpiredValues(tx)
-	deleteOldHistory(tx)
-	pruneOldClearedValues(tx)
+	deleteOldHistory(tx, config.HistoryLength)
+	pruneOldClearedValues(tx, config.PruneHistoryAfterDays)
 }
 
 func clearExpiredValues(tx *sql.Tx) {
@@ -54,9 +55,7 @@ func clearExpiredValues(tx *sql.Tx) {
 	}
 }
 
-func deleteOldHistory(tx *sql.Tx) {
-	config := common.ReadConfig()
-
+func deleteOldHistory(tx *sql.Tx, historyLength int) {
 	_, err := tx.Exec(`
 		DELETE FROM store
 		WHERE id IN (
@@ -69,14 +68,12 @@ func deleteOldHistory(tx *sql.Tx) {
 			WHERE rn > ?
 		)
 		`,
-		config.HistoryLength)
+		historyLength)
 
 	common.FailOn(err)
 }
 
-func pruneOldClearedValues(tx *sql.Tx) {
-	config := common.ReadConfig()
-
+func pruneOldClearedValues(tx *sql.Tx, pruneHistoryAfterDays int) {
 	rows, err := tx.Query(`
 		SELECT key
 		FROM store
@@ -85,7 +82,7 @@ func pruneOldClearedValues(tx *sql.Tx) {
 			value = '' AND
 			timestamp < datetime('now', '-' || ? || ' days')
 		`,
-		config.PruneHistoryAfterDays,
+		pruneHistoryAfterDays,
 	)
 	common.FailOn(err)
 

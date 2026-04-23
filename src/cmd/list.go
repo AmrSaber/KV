@@ -107,13 +107,9 @@ Locked values are displayed as [Locked] in table view.`,
 			}
 		}
 
-		hasExpires := false
+		hasExpires, hasLocked := false, false
 		for _, item := range items {
 			hasExpires = hasExpires || (item.ExpiresAt != nil)
-		}
-
-		hasLocked := false
-		for _, item := range items {
 			hasLocked = hasLocked || item.IsLocked
 		}
 
