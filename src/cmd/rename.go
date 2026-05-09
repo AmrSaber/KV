@@ -9,8 +9,9 @@ import (
 
 // renameCmd represents the rename command
 var renameCmd = &cobra.Command{
-	Use:   "rename <old-key> <new-key>",
-	Short: "Rename a key to a new name",
+	Use:     "rename <old-key> <new-key>",
+	Aliases: []string{"move", "mv"},
+	Short:   "Rename a key to a new name",
 	Long: `Rename a key by changing its name in the store across all history items.
 
 The rename operation preserves all history, encryption status, TTL, and other metadata.
