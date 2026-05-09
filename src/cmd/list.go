@@ -3,7 +3,6 @@ package cmd
 import (
 	"database/sql"
 	"encoding/json"
-	"os"
 	"sort"
 	"strings"
 	"time"
@@ -122,7 +121,7 @@ Locked values are displayed as [Locked] in table view.`,
 			common.Stdout.Println(string(output))
 		case "table":
 			t := table.NewWriter()
-			t.SetOutputMirror(os.Stdout)
+			t.SetOutputMirror(common.Stdout.Writer())
 
 			displayValues := !listFlags.noValues
 			displayLocked := hasLocked && listFlags.noValues
