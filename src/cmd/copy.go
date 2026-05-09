@@ -36,7 +36,7 @@ If the destination key already exists, it will be updated (creating a new histor
 		fromKey := args[0]
 		toKey := args[1]
 
-		services.RunInTransaction(func(tx *sql.Tx) {
+		services.RunInTransaction(common.GetConfig().CurrentDB, func(tx *sql.Tx) {
 			// Get the source item
 			fromItem := services.GetItem(tx, fromKey)
 			if fromItem == nil {

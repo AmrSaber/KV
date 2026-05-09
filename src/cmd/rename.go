@@ -3,6 +3,7 @@ package cmd
 import (
 	"database/sql"
 
+	"github.com/AmrSaber/kv/src/common"
 	"github.com/AmrSaber/kv/src/services"
 	"github.com/spf13/cobra"
 )
@@ -36,7 +37,7 @@ The old key name will no longer exist after the rename.`,
 		oldKey := args[0]
 		newKey := args[1]
 
-		services.RunInTransaction(func(tx *sql.Tx) {
+		services.RunInTransaction(common.GetConfig().CurrentDB, func(tx *sql.Tx) {
 			services.RenameKey(tx, oldKey, newKey)
 		})
 	},

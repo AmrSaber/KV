@@ -12,6 +12,10 @@ import (
 func TestConcurrency(t *testing.T) {
 	t.Run("concurrent calls succeed", func(t *testing.T) {
 		SetupTestDB(t)
+
+		// Warm up: create config/DB before concurrent access
+		RunKVSuccess(t, "set", "warmup", "warmup")
+
 		var wg sync.WaitGroup
 		runnersCount := 10
 

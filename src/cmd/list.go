@@ -73,7 +73,7 @@ Locked values are displayed as [Locked] in table view.`,
 
 		var items []services.KVItem
 
-		services.RunInTransaction(func(tx *sql.Tx) {
+		services.RunInTransaction(common.GetConfig().CurrentDB, func(tx *sql.Tx) {
 			items = services.ListItems(tx, prefix, matchType)
 		})
 
@@ -81,7 +81,7 @@ Locked values are displayed as [Locked] in table view.`,
 			if listFlags.deleted {
 				common.Stderr.Println("No deleted items.")
 			} else {
-				common.Stderr.Println("No saved items. Use `kv set` to add one.")
+				common.Stderr.Printf("No saved items in %q DB. Use `kv set` to add one.", common.GetConfig().CurrentDB)
 			}
 
 			return

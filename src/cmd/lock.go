@@ -58,7 +58,7 @@ If plain-text values exist in older history records, consider using 'kv history 
 				common.Fail("Cannot have arguments with --all")
 			}
 
-			services.RunInTransaction(func(tx *sql.Tx) {
+			services.RunInTransaction(common.GetConfig().CurrentDB, func(tx *sql.Tx) {
 				items := services.ListItems(tx, "", services.MatchExisting)
 				for _, item := range items {
 					services.LockKey(tx, item.Key, password)
@@ -77,7 +77,7 @@ If plain-text values exist in older history records, consider using 'kv history 
 			}
 
 			key := args[0]
-			services.RunInTransaction(func(tx *sql.Tx) {
+			services.RunInTransaction(common.GetConfig().CurrentDB, func(tx *sql.Tx) {
 				items := services.ListItems(tx, key, services.MatchExisting)
 				for _, item := range items {
 					services.LockKey(tx, item.Key, password)
@@ -92,7 +92,7 @@ If plain-text values exist in older history records, consider using 'kv history 
 			common.Fail("At least one key must be provided")
 		}
 
-		services.RunInTransaction(func(tx *sql.Tx) {
+		services.RunInTransaction(common.GetConfig().CurrentDB, func(tx *sql.Tx) {
 			for _, key := range args {
 				services.LockKey(tx, key, password)
 			}

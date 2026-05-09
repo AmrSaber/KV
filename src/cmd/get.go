@@ -41,7 +41,7 @@ If the key is encrypted, provide the password using --password flag.`,
 		key := args[0]
 		var item *services.KVItem
 
-		services.RunInTransaction(func(tx *sql.Tx) {
+		services.RunInTransaction(common.GetConfig().CurrentDB, func(tx *sql.Tx) {
 			item = services.GetItem(tx, key)
 		})
 

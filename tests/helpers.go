@@ -45,7 +45,7 @@ func RunKVFailure(t *testing.T, args ...string) string {
 }
 
 // SetupTestDB creates a temporary database for testing and registers cleanup via t.Cleanup.
-func SetupTestDB(t *testing.T) {
+func SetupTestDB(t *testing.T) string {
 	t.Helper()
 
 	// Create temporary directory for test database
@@ -54,12 +54,16 @@ func SetupTestDB(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Set XDG_DATA_HOME to use temp directory
-	// This affects go-application-paths package and it changes data location
+	// Set XDG_DATA_HOME and XDG_CONFIG_HOME to use temp directory
+	// This affects go-application-paths package and it changes data/config location
 	_ = os.Setenv("XDG_DATA_HOME", tmpDir)
+	_ = os.Setenv("XDG_CONFIG_HOME", tmpDir)
 
 	t.Cleanup(func() {
 		_ = os.Unsetenv("XDG_DATA_HOME")
+		_ = os.Unsetenv("XDG_CONFIG_HOME")
 		_ = os.RemoveAll(tmpDir)
 	})
+
+	return tmpDir
 }

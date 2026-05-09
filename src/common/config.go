@@ -2,38 +2,113 @@ package common
 
 import (
 	"os"
+	"path"
 
 	gap "github.com/muesli/go-app-paths"
 	"gopkg.in/yaml.v2"
 )
 
+const DefaultDBName = "default"
+
+var cachedConfig *Config
+
+type DBConfig struct{ Directory string }
+
 type Config struct {
 	PruneHistoryAfterDays int `json:"pruneHistoryAfterDays" yaml:"prune-history-after-days,omitempty"`
 	HistoryLength         int `json:"historyLength" yaml:"history-length,omitempty"`
+
+	DBs map[string]DBConfig `json:"dbs" yaml:"dbs"`
+
+	CurrentDB string `json:"-" yaml:"-"`
 }
 
-func (c Config) String() string {
-	output, err := yaml.Marshal(c)
+func (config Config) GetDBPath(name string) string {
+	dbDirectory := GetDataDirectory()
+	if dbConfig, ok := config.DBs[name]; ok {
+		dbDirectory = dbConfig.Directory
+	}
+
+	return path.Join(dbDirectory, name+".db")
+}
+
+func (config Config) GetCurrentDBPath() string {
+	return config.GetDBPath(config.CurrentDB)
+}
+
+// RegisterDB adds DB if it does not exist, otherwise it's a no-op
+func (config *Config) RegisterDB(name string) {
+	// Skip existing DBs
+	if _, ok := config.DBs[name]; ok {
+		return
+	}
+
+	config.DBs[name] = DBConfig{Directory: GetDataDirectory()}
+	config.write()
+}
+
+// Write config to storage
+// this does not edit the config, but it receives a pointer to guard its usage
+func (config *Config) write() {
+	err := os.WriteFile(GetConfigPath(), []byte(config.String()), 0o644)
+	FailOn(err)
+}
+
+func (config Config) String() string {
+	output, err := yaml.Marshal(config)
 	FailOn(err)
 
 	return string(output)
 }
 
-func ReadConfig() Config {
-	config := Config{
-		PruneHistoryAfterDays: 30,
-		HistoryLength:         15,
+func GetConfig() *Config {
+	if cachedConfig != nil {
+		return cachedConfig
 	}
 
 	configPath := GetConfigPath()
-	if configBytes, err := os.ReadFile(configPath); err == nil {
-		err = yaml.Unmarshal(configBytes, &config)
+	configBytes, err := os.ReadFile(configPath)
+
+	// If config file is not found, write the default config
+	if os.IsNotExist(err) {
+		cachedConfig = new(getDefaultConfig())
+		cachedConfig.write()
+	} else {
+		FailOn(err)
+
+		cachedConfig = &Config{}
+		err = yaml.Unmarshal(configBytes, cachedConfig)
 		if err != nil {
-			Warn("Invalid config YAML, ignoring...")
+			Fail("Invalid config YAML: %v", err)
 		}
 	}
 
-	return config
+	// Set current DB
+	if envDB, found := os.LookupEnv("KV_DB"); found {
+		cachedConfig.CurrentDB = envDB
+	} else {
+		cachedConfig.CurrentDB = DefaultDBName
+	}
+
+	return cachedConfig
+}
+
+func getDefaultConfig() Config {
+	return Config{
+		PruneHistoryAfterDays: 30,
+		HistoryLength:         15,
+
+		DBs: map[string]DBConfig{DefaultDBName: {Directory: GetDataDirectory()}},
+	}
+}
+
+func GetDataDirectory() string {
+	scope := gap.NewScope(gap.User, "kv")
+
+	dataDir, err := scope.DataPath("")
+	FailOn(err)
+
+	return dataDir
 }
 
 func GetConfigPath() string {

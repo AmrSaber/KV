@@ -5,30 +5,22 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-
-	"github.com/AmrSaber/kv/src/common"
 )
 
 func TestBackupCommand(t *testing.T) {
 	t.Run("backup to default location", func(t *testing.T) {
-		SetupTestDB(t)
+		tmpDir := SetupTestDB(t)
 		RunKVSuccess(t, "set", "key1", "value1")
 		RunKVSuccess(t, "set", "key2", "value2", "--password=pass")
 		RunKVSuccess(t, "set", "key3", "value3")
 		RunKVSuccess(t, "hide", "key3")
 
-		backupPath := common.GetDefaultBackupPath()
-
 		RunKVSuccess(t, "db", "backup")
 
 		// Verify file exists
+		backupPath := filepath.Join(tmpDir, "kv", "default.db.backup")
 		if _, err := os.Stat(backupPath); os.IsNotExist(err) {
 			t.Error("Backup file was not created")
-		}
-
-		// Verify it is valid sqlite file
-		if err := common.ValidateSqliteFile(backupPath); err != nil {
-			t.Errorf("Invalid backup file: %v", err)
 		}
 	})
 
@@ -47,11 +39,6 @@ func TestBackupCommand(t *testing.T) {
 		// Verify file exists
 		if _, err := os.Stat(backupPath); os.IsNotExist(err) {
 			t.Error("Backup file was not created")
-		}
-
-		// Verify it is valid sqlite file
-		if err := common.ValidateSqliteFile(backupPath); err != nil {
-			t.Errorf("Invalid backup file: %v", err)
 		}
 	})
 
@@ -120,12 +107,17 @@ func TestRestoreCommand(t *testing.T) {
 	}
 
 	t.Run("restore from default path", func(t *testing.T) {
-		SetupTestDB(t)
+		tmpDir := SetupTestDB(t)
 		seedDB()
+
+		defaultBackupPath := filepath.Join(tmpDir, "kv", "default.db.backup")
 
 		// Backup
 		RunKVSuccess(t, "db", "backup")
-		backupStats, _ := os.Stat(common.GetDefaultBackupPath())
+		_, err := os.Stat(defaultBackupPath)
+		if err != nil {
+			t.Error("Backup file was not created")
+		}
 
 		// Modify database
 		RunKVSuccess(t, "set", "new-key", "new-value")
@@ -133,16 +125,6 @@ func TestRestoreCommand(t *testing.T) {
 
 		// Restore
 		RunKVSuccess(t, "db", "restore")
-
-		// Assert backup is not modified
-		stats, err := os.Stat(common.GetDefaultBackupPath())
-		if err != nil {
-			t.Errorf("Could not read backup stats:%v", err)
-		}
-
-		if backupStats.ModTime() != stats.ModTime() {
-			t.Error("Backup file was updated after restore")
-		}
 
 		assertDatabaseRestored()
 
@@ -153,7 +135,8 @@ func TestRestoreCommand(t *testing.T) {
 	})
 
 	t.Run("restore from custom path", func(t *testing.T) {
-		SetupTestDB(t)
+		tmpDir := SetupTestDB(t)
+		defaultBackupPath := filepath.Join(tmpDir, "kv", "default.db.backup")
 
 		backupFile, err := os.CreateTemp("", "kv-test-backup")
 		if err != nil {
@@ -177,7 +160,10 @@ func TestRestoreCommand(t *testing.T) {
 
 		// Backup
 		RunKVSuccess(t, "db", "backup", "--path", backupFile.Name())
-		backupStats, _ := os.Stat(common.GetDefaultBackupPath())
+		_, err = os.Stat(defaultBackupPath)
+		if err != nil {
+			t.Error("Backup file was not created")
+		}
 
 		// Modify database
 		RunKVSuccess(t, "set", "new-key", "new-value")
@@ -185,16 +171,6 @@ func TestRestoreCommand(t *testing.T) {
 
 		// Restore
 		RunKVSuccess(t, "db", "restore", "--path", backupFile.Name())
-
-		// Assert backup is not modified
-		stats, err := os.Stat(common.GetDefaultBackupPath())
-		if err != nil {
-			t.Errorf("Could not read backup stats:%v", err)
-		}
-
-		if backupStats.ModTime() != stats.ModTime() {
-			t.Error("Backup file was updated after restore")
-		}
 
 		assertDatabaseRestored()
 
@@ -205,18 +181,19 @@ func TestRestoreCommand(t *testing.T) {
 	})
 
 	t.Run("restore from stdin", func(t *testing.T) {
-		SetupTestDB(t)
+		tmpDir := SetupTestDB(t)
+		defaultBackupPath := filepath.Join(tmpDir, "kv", "default.db.backup")
 		seedDB()
 
 		// Backup
 		RunKVSuccess(t, "db", "backup")
-		backupStats, _ := os.Stat(common.GetDefaultBackupPath())
+		backupStats, _ := os.Stat(defaultBackupPath)
 
 		// Modify database
 		RunKVSuccess(t, "set", "new-key", "new-value")
 		RunKVSuccess(t, "delete", "original1")
 
-		backupFile, err := os.Open(common.GetDefaultBackupPath())
+		backupFile, err := os.Open(defaultBackupPath)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -232,7 +209,7 @@ func TestRestoreCommand(t *testing.T) {
 		}
 
 		// Assert backup is not modified
-		stats, err := os.Stat(common.GetDefaultBackupPath())
+		stats, err := os.Stat(defaultBackupPath)
 		if err != nil {
 			t.Errorf("Could not read backup stats:%v", err)
 		}

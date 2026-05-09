@@ -92,7 +92,7 @@ Providing a negative duration expires the key immediately.`,
 			common.FailOn(err)
 		}
 
-		services.RunInTransaction(func(tx *sql.Tx) {
+		services.RunInTransaction(common.GetConfig().CurrentDB, func(tx *sql.Tx) {
 			services.SetValue(tx, key, value, expiresAt, password != "")
 			if setFlags.hidden {
 				services.HideKey(tx, key)

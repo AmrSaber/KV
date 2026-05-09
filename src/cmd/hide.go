@@ -56,7 +56,7 @@ Hidden values are still accessible via 'kv get' and can be shown again with 'kv 
 			}
 
 			key := args[0]
-			services.RunInTransaction(func(tx *sql.Tx) {
+			services.RunInTransaction(common.GetConfig().CurrentDB, func(tx *sql.Tx) {
 				items := services.ListItems(tx, key, services.MatchExisting)
 				for _, item := range items {
 					services.HideKey(tx, item.Key)
@@ -67,7 +67,7 @@ Hidden values are still accessible via 'kv get' and can be shown again with 'kv 
 		}
 
 		// Handle multiple keys - fail on first error
-		services.RunInTransaction(func(tx *sql.Tx) {
+		services.RunInTransaction(common.GetConfig().CurrentDB, func(tx *sql.Tx) {
 			for _, key := range args {
 				services.HideKey(tx, key)
 			}

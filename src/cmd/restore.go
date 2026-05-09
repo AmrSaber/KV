@@ -76,16 +76,16 @@ cat backup.db | kv db restore --stdin`,
 			_ = os.Remove(tempBackupFile.Name())
 		}()
 
-		err = common.BackupDB(tempBackupFile)
+		err = common.BackupDB(common.GetConfig().CurrentDB, tempBackupFile)
 		if err != nil {
 			common.Fail("Could not backup existing database: %v", err)
 		}
 
 		// Close database connection
-		common.CloseDB()
+		common.CloseDBs()
 
 		// Remove current database and remove WAL files
-		dbPath := common.GetDBPath()
+		dbPath := common.GetConfig().GetCurrentDBPath()
 		_ = os.Remove(dbPath)
 		_ = os.Remove(dbPath + "-wal")
 		_ = os.Remove(dbPath + "-shm")
@@ -101,7 +101,7 @@ cat backup.db | kv db restore --stdin`,
 		}
 
 		// Reopen database to make sure migrations succeed
-		_, err = common.GetDB()
+		_, err = common.GetDB(common.GetConfig().CurrentDB)
 		if err != nil {
 			// Restore backup
 			_ = os.Remove(dbPath)
@@ -117,7 +117,7 @@ cat backup.db | kv db restore --stdin`,
 func init() {
 	dbCmd.AddCommand(restoreCmd)
 
-	restoreCmd.Flags().StringVarP(&restoreFlags.Path, "path", "p", common.GetDefaultBackupPath(), "Existing backup path")
+	restoreCmd.Flags().StringVarP(&restoreFlags.Path, "path", "p", common.GetDefaultBackupPath(common.DefaultDBName), "Existing backup path")
 	restoreCmd.Flags().BoolVar(&restoreFlags.Stdin, "stdin", false, "Read from STDIN")
 
 	restoreCmd.MarkFlagsMutuallyExclusive("path", "stdin")

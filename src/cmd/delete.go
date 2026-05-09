@@ -51,7 +51,7 @@ By default, deletion is soft (keeps history). Use --prune to permanently delete 
 			}
 
 			key := args[0]
-			services.RunInTransaction(func(tx *sql.Tx) {
+			services.RunInTransaction(common.GetConfig().CurrentDB, func(tx *sql.Tx) {
 				keys := services.ListKeys(tx, key, services.MatchExisting)
 
 				for _, key := range keys {
@@ -67,7 +67,7 @@ By default, deletion is soft (keeps history). Use --prune to permanently delete 
 		}
 
 		// Handle multiple keys - fail on first error
-		services.RunInTransaction(func(tx *sql.Tx) {
+		services.RunInTransaction(common.GetConfig().CurrentDB, func(tx *sql.Tx) {
 			for _, key := range args {
 				value, _ := services.GetValue(tx, key)
 				if value == nil || *value == "" {

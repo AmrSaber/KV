@@ -49,7 +49,7 @@ kv db restore`,
 
 		defer func() { _ = backupWriter.Close() }()
 
-		err := common.BackupDB(backupWriter)
+		err := common.BackupDB(common.GetConfig().CurrentDB, backupWriter)
 		if err != nil {
 			common.Fail("Failed to create backup: %v", err)
 		}
@@ -63,7 +63,7 @@ kv db restore`,
 func init() {
 	dbCmd.AddCommand(backupCmd)
 
-	backupCmd.Flags().StringVarP(&backupFlags.Path, "path", "p", common.GetDefaultBackupPath(), "Backup path")
+	backupCmd.Flags().StringVarP(&backupFlags.Path, "path", "p", common.GetDefaultBackupPath(common.DefaultDBName), "Backup path")
 	backupCmd.Flags().BoolVar(&backupFlags.Stdout, "stdout", false, "Write backup into stdout")
 
 	backupCmd.MarkFlagsMutuallyExclusive("path", "stdout")

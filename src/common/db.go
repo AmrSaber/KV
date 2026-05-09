@@ -6,46 +6,41 @@ import (
 	"os"
 	"path"
 
-	gap "github.com/muesli/go-app-paths"
 	_ "modernc.org/sqlite"
 )
 
-var db *sql.DB
+var CachedDBs = make(map[string]*sql.DB)
 
 var pragmas = []string{
 	`PRAGMA journal_mode = WAL`,
 	`PRAGMA busy_timeout = 5000`,
 }
 
-func CloseDB() {
-	if db != nil {
-		_ = db.Close()
-		db = nil
+func CloseDBs() {
+	for name, db := range CachedDBs {
+		if db != nil {
+			_ = db.Close()
+			delete(CachedDBs, name)
+		}
 	}
 }
 
-func ClearDB() {
-	dbPath := path.Dir(GetDBPath())
-	err := os.RemoveAll(dbPath)
-	FailOn(err)
-}
-
-func GetDB() (*sql.DB, error) {
-	var err error
-
-	if db == nil {
-		db, err = openDB()
+func GetDB(name string) (*sql.DB, error) {
+	if CachedDBs[name] == nil {
+		db, err := openDB(name)
 		if err != nil {
 			return nil, err
 		}
+
+		CachedDBs[name] = db
 	}
 
-	return db, nil
+	return CachedDBs[name], nil
 }
 
-func openDB() (*sql.DB, error) {
-	dbPath := GetDBPath()
-	err := os.MkdirAll(path.Dir(dbPath), os.ModeDir|os.ModePerm)
+func openDB(name string) (*sql.DB, error) {
+	dbPath := GetConfig().GetDBPath(name)
+	err := os.MkdirAll(path.Dir(dbPath), 0o755)
 	FailOn(err)
 
 	db, err := sql.Open("sqlite", dbPath+"?_txlock=immediate")
@@ -82,15 +77,6 @@ func openDB() (*sql.DB, error) {
 	return db, nil
 }
 
-func GetDBPath() string {
-	scope := gap.NewScope(gap.User, "kv")
-
-	dbPath, err := scope.DataPath("kv.db")
-	FailOn(err)
-
-	return dbPath
-}
-
 func ValidateSqliteFile(path string) error {
 	testDB, err := sql.Open("sqlite", path+"?mode=ro")
 	if err != nil {
@@ -103,13 +89,12 @@ func ValidateSqliteFile(path string) error {
 	return testDB.Ping()
 }
 
-func GetDefaultBackupPath() string {
-	destPath := GetDBPath()
-	return destPath + ".backup"
+func GetDefaultBackupPath(name string) string {
+	return GetConfig().GetDBPath(name) + ".backup"
 }
 
-func BackupDB(writer io.Writer) error {
-	db, err := GetDB()
+func BackupDB(name string, writer io.Writer) error {
+	db, err := GetDB(name)
 	if err != nil {
 		return err
 	}
@@ -121,9 +106,9 @@ func BackupDB(writer io.Writer) error {
 	}
 
 	// Close database connection
-	CloseDB()
+	CloseDBs()
 
-	dbFile, err := os.Open(GetDBPath())
+	dbFile, err := os.Open(GetConfig().GetDBPath(name))
 	if err != nil {
 		return err
 	}

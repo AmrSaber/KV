@@ -6,7 +6,7 @@ vhs = "latest"
 
 [tasks.test]
 description = "Run tests"
-run = "go test ./..."
+run = "go test ./... -count=1"
 
 [tasks.lint]
 description = "Lint code"

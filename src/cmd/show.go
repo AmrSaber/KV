@@ -53,7 +53,7 @@ var showCmd = &cobra.Command{
 			}
 
 			key := args[0]
-			services.RunInTransaction(func(tx *sql.Tx) {
+			services.RunInTransaction(common.GetConfig().CurrentDB, func(tx *sql.Tx) {
 				items := services.ListItems(tx, key, services.MatchExisting)
 				for _, item := range items {
 					services.ShowKey(tx, item.Key)
@@ -64,7 +64,7 @@ var showCmd = &cobra.Command{
 		}
 
 		// Handle multiple keys - fail on first error
-		services.RunInTransaction(func(tx *sql.Tx) {
+		services.RunInTransaction(common.GetConfig().CurrentDB, func(tx *sql.Tx) {
 			for _, key := range args {
 				services.ShowKey(tx, key)
 			}

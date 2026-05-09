@@ -8,8 +8,8 @@ import (
 )
 
 // RunInTransaction automatically cleans up DB then runs given function, all inside a transaction.
-func RunInTransaction(fn func(tx *sql.Tx)) {
-	db, err := common.GetDB()
+func RunInTransaction(name string, fn func(tx *sql.Tx)) {
+	db, err := common.GetDB(name)
 	common.FailOn(err)
 
 	tx, err := common.BeginTransaction(db)
@@ -28,7 +28,7 @@ func RunInTransaction(fn func(tx *sql.Tx)) {
 
 // cleanupDB clears expired values, deletes old history, and prunes old cleared values
 func cleanupDB(tx *sql.Tx) {
-	config := common.ReadConfig()
+	config := common.GetConfig()
 	clearExpiredValues(tx)
 	deleteOldHistory(tx, config.HistoryLength)
 	pruneOldClearedValues(tx, config.PruneHistoryAfterDays)
@@ -74,7 +74,8 @@ func deleteOldHistory(tx *sql.Tx, historyLength int) {
 }
 
 func pruneOldClearedValues(tx *sql.Tx, pruneHistoryAfterDays int) {
-	rows, err := tx.Query(`
+	rows, err := tx.Query(
+		`
 		SELECT key
 		FROM store
 		WHERE

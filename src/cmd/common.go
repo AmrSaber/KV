@@ -20,7 +20,7 @@ const passwordPromptSentinel = "\x00"
 
 func completeKeyArg(toComplete string, matchType services.MatchType) ([]cobra.Completion, cobra.ShellCompDirective) {
 	var matchingKeys []string
-	services.RunInTransaction(func(tx *sql.Tx) {
+	services.RunInTransaction(common.GetConfig().CurrentDB, func(tx *sql.Tx) {
 		matchingKeys = services.SearchKeys(tx, toComplete, matchType)
 	})
 

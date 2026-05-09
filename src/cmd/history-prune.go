@@ -54,7 +54,7 @@ If a deleted key is targeted for pruning, it will be permanently deleted.`,
 			common.Fail("Cannot have an argument with --all")
 		}
 
-		services.RunInTransaction(func(tx *sql.Tx) {
+		services.RunInTransaction(common.GetConfig().CurrentDB, func(tx *sql.Tx) {
 			if historyPruneFlags.all || historyPruneFlags.prefix {
 				services.ClearAllKeysHistory(tx, key)
 				return

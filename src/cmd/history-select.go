@@ -41,7 +41,7 @@ This provides a user-friendly way to browse and choose from previous values.`,
 		key := args[0]
 
 		var selectedItem services.KVItem
-		services.RunInTransaction(func(tx *sql.Tx) {
+		services.RunInTransaction(common.GetConfig().CurrentDB, func(tx *sql.Tx) {
 			items := services.ListKeyHistory(tx, key)
 			slices.Reverse(items)
 

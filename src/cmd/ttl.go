@@ -49,7 +49,7 @@ Use --seconds to get remaining time in seconds (useful for scripts).`,
 		var value *string
 		var expiresAt *time.Time
 
-		services.RunInTransaction(func(tx *sql.Tx) {
+		services.RunInTransaction(common.GetConfig().CurrentDB, func(tx *sql.Tx) {
 			value, expiresAt = services.GetValue(tx, key)
 		})
 

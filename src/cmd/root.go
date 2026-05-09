@@ -2,13 +2,18 @@
 package cmd
 
 import (
+	"maps"
 	"os"
+	"slices"
 
 	"github.com/AmrSaber/kv/src/common"
 	"github.com/spf13/cobra"
 )
 
-var rootFlags = struct{ quiet bool }{}
+var rootFlags = struct {
+	quiet bool
+	db    string
+}{}
 
 var rootCmd = &cobra.Command{
 	Use:   "kv",
@@ -20,6 +25,12 @@ Features include AES-256 encryption, automatic expiration, complete history trac
 and multiple output formats.`,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		common.Quiet(rootFlags.quiet)
+
+		// --db flag takes precedence over KV_DB env variable and default DB
+		dbFlag := cmd.Flag("db")
+		if dbFlag.Changed {
+			common.GetConfig().CurrentDB = dbFlag.Value.String()
+		}
 	},
 }
 
@@ -36,10 +47,17 @@ func getVersion() string {
 func Execute() {
 	// Set version after it's been potentially injected in main.go
 	rootCmd.Version = getVersion()
+	defer common.CloseDBs()
 
 	err := rootCmd.Execute()
 	if err != nil {
+		common.CloseDBs()
 		os.Exit(1)
+	}
+
+	config := common.GetConfig()
+	for name := range common.CachedDBs {
+		config.RegisterDB(name)
 	}
 }
 
@@ -51,4 +69,10 @@ func init() {
 	)
 
 	rootCmd.PersistentFlags().BoolVarP(&rootFlags.quiet, "quiet", "q", false, "Do not print any output")
+	rootCmd.PersistentFlags().StringVar(&rootFlags.db, "db", common.DefaultDBName, "Database name")
+
+	_ = rootCmd.RegisterFlagCompletionFunc(
+		"db",
+		cobra.FixedCompletions(slices.Collect(maps.Keys(common.GetConfig().DBs)), cobra.ShellCompDirectiveDefault),
+	)
 }

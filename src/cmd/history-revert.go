@@ -49,7 +49,7 @@ Calling revert multiple times without other changes will toggle between the curr
 
 		var item services.KVItem
 
-		services.RunInTransaction(func(tx *sql.Tx) {
+		services.RunInTransaction(common.GetConfig().CurrentDB, func(tx *sql.Tx) {
 			item = services.GetHistoryItem(tx, key, historyRevertFlags.steps)
 			services.SetValue(tx, key, item.Value, nil, item.IsLocked)
 		})

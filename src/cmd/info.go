@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"encoding/json"
-	"path/filepath"
 
 	"github.com/AmrSaber/kv/src/common"
 	"github.com/spf13/cobra"
@@ -20,20 +19,22 @@ It just displays the path where a backup would be if there were one.`,
 
 	Args: cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
-		type Info struct {
+		config := *common.GetConfig()
+
+		info := struct {
 			DataDir    string `json:"dataDir" yaml:"data-dir"`
 			BackupPath string `json:"backupPath" yaml:"backup-path"`
 			ConfigPath string `json:"configPath" yaml:"config-path"`
+			CurrentDB  string `json:"currentDB" yaml:"current-db"`
 
 			Config common.Config `json:"config" yaml:"config"`
-		}
-
-		info := Info{
-			DataDir:    filepath.Dir(common.GetDBPath()),
-			BackupPath: common.GetDefaultBackupPath(),
+		}{
+			DataDir:    common.GetDataDirectory(),
+			BackupPath: common.GetDefaultBackupPath(config.CurrentDB),
 			ConfigPath: common.GetConfigPath(),
 
-			Config: common.ReadConfig(),
+			Config:    config,
+			CurrentDB: config.CurrentDB,
 		}
 
 		switch infoFlags.output {

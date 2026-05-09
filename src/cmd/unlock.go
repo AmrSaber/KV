@@ -57,7 +57,7 @@ Note: This removes the latest record from history and replaces it with a plain-t
 				common.Fail("Cannot have arguments with --all")
 			}
 
-			services.RunInTransaction(func(tx *sql.Tx) {
+			services.RunInTransaction(common.GetConfig().CurrentDB, func(tx *sql.Tx) {
 				items := services.ListItems(tx, "", services.MatchExisting)
 				for _, item := range items {
 					err := services.UnlockKey(tx, item.Key, password)
@@ -79,7 +79,7 @@ Note: This removes the latest record from history and replaces it with a plain-t
 			}
 
 			key := args[0]
-			services.RunInTransaction(func(tx *sql.Tx) {
+			services.RunInTransaction(common.GetConfig().CurrentDB, func(tx *sql.Tx) {
 				items := services.ListItems(tx, key, services.MatchExisting)
 				for _, item := range items {
 					err := services.UnlockKey(tx, item.Key, password)
@@ -97,7 +97,7 @@ Note: This removes the latest record from history and replaces it with a plain-t
 			common.Fail("At least one key must be provided")
 		}
 
-		services.RunInTransaction(func(tx *sql.Tx) {
+		services.RunInTransaction(common.GetConfig().CurrentDB, func(tx *sql.Tx) {
 			for _, key := range args {
 				err := services.UnlockKey(tx, key, password)
 				if err != nil {

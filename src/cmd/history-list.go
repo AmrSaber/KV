@@ -55,7 +55,7 @@ Higher indices represent older values.`,
 
 		var kvItems []services.KVItem
 
-		services.RunInTransaction(func(tx *sql.Tx) {
+		services.RunInTransaction(common.GetConfig().CurrentDB, func(tx *sql.Tx) {
 			kvItems = services.ListKeyHistory(tx, key)
 		})
 

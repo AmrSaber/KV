@@ -1,6 +1,6 @@
 module github.com/AmrSaber/kv
 
-go 1.26.1
+go 1.26.3
 
 require (
 	github.com/fatih/color v1.18.0
