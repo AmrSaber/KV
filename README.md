@@ -50,7 +50,6 @@ Unlike traditional databases, KV is designed for simplicity and speed. No server
   - [Output Formats](#output-formats)
   - [Batch Operations & Multiple Keys](#batch-operations--multiple-keys)
   - [Backup & Restore](#backup--restore)
-  - [Utility Commands](#utility-commands)
 - [Configuration](#configuration)
 - [Data Storage](#data-storage)
 - [Tips & Tricks](#tips--tricks)
@@ -494,17 +493,6 @@ kv db backup --path ~/kv-backups/backup-$(date +%Y-%m-%d).db
 - Restore validates the backup is a valid database before proceeding
 - If restore fails, the original database is automatically recovered from the temporary backup
 - See `kv info` for default backup location
-
-### Utility Commands
-
-```bash
-# Clear all data (keeps configuration)
-kv implode
-# Warning: This permanently deletes all keys and history
-
-# Generate shell completion (see Installation section for setup)
-kv completion bash > /etc/bash_completion.d/kv
-```
 
 ---
 
