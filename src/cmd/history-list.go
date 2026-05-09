@@ -3,7 +3,6 @@ package cmd
 import (
 	"database/sql"
 	"encoding/json"
-	"os"
 	"slices"
 	"time"
 
@@ -115,7 +114,7 @@ Higher indices represent older values.`,
 			common.Stdout.Println(string(output))
 		case "table":
 			t := table.NewWriter()
-			t.SetOutputMirror(os.Stdout)
+			t.SetOutputMirror(common.Stdout.Writer())
 
 			displayValues := !historyListFlags.noValues
 			displayLocked := hasLocked && historyListFlags.noValues
