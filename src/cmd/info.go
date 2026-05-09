@@ -23,6 +23,7 @@ It just displays the path where a backup would be if there were one.`,
 		type Info struct {
 			DataDir    string `json:"dataDir" yaml:"data-dir"`
 			BackupPath string `json:"backupPath" yaml:"backup-path"`
+			ConfigPath string `json:"configPath" yaml:"config-path"`
 
 			Config common.Config `json:"config" yaml:"config"`
 		}
@@ -30,7 +31,9 @@ It just displays the path where a backup would be if there were one.`,
 		info := Info{
 			DataDir:    filepath.Dir(common.GetDBPath()),
 			BackupPath: common.GetDefaultBackupPath(),
-			Config:     common.ReadConfig(),
+			ConfigPath: common.GetConfigPath(),
+
+			Config: common.ReadConfig(),
 		}
 
 		switch infoFlags.output {

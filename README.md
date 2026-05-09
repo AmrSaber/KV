@@ -519,11 +519,7 @@ All commands have comprehensive help text built into the CLI.
 
 ## Configuration
 
-KV stores its configuration in a YAML file at your system's standard config location:
-
-- **Linux**: `~/.config/kv/config.yaml`
-- **macOS**: `~/Library/Application Support/kv/config.yaml`
-- **Windows**: `%APPDATA%\kv\config.yaml`
+KV stores its configuration in a YAML file at your system's standard config. See config location using `kv info`
 
 ### Available Settings
 
