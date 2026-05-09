@@ -59,6 +59,9 @@ Unlike traditional databases, KV is designed for simplicity and speed. No server
 
 ## Installation
 
+> If you're trying to build from code, `main` branch can contain some in-development code.
+Instead, use tags (e.g. v0.4.0, v0.5.1) to get stable releases.
+
 Choose the installation method that works best for your platform:
 
 ### MacOS
