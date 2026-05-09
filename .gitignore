@@ -3,3 +3,6 @@ kv
 
 # Generated completions
 completions
+
+# Worktree
+.worktree
