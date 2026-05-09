@@ -6,3 +6,6 @@ completions
 
 # Worktree
 .worktree
+
+# Mise
+mise.local.toml
