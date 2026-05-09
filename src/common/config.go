@@ -25,7 +25,7 @@ func ReadConfig() Config {
 		HistoryLength:         15,
 	}
 
-	configPath := getConfigPath()
+	configPath := GetConfigPath()
 	if configBytes, err := os.ReadFile(configPath); err == nil {
 		err = yaml.Unmarshal(configBytes, &config)
 		if err != nil {
@@ -36,10 +36,11 @@ func ReadConfig() Config {
 	return config
 }
 
-func getConfigPath() string {
-	scope := gap.NewScope(gap.User, "kv")
+func GetConfigPath() string {
+	scope := gap.NewScope(gap.User, "")
 
-	configPath, err := scope.ConfigPath("config.yaml")
+	// e.g. /home/some-user/.config/kv.yaml on linux
+	configPath, err := scope.ConfigPath("kv.yaml")
 	FailOn(err)
 
 	return configPath
