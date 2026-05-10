@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"io"
 	"os"
 
@@ -110,7 +109,7 @@ cat backup.db | kv db restore --stdin`,
 			common.Fail("Failed to restore database: %v", err)
 		}
 
-		fmt.Println("Database restored from backup successfully")
+		common.Stdout.Println("Database restored from backup successfully")
 	},
 }
 

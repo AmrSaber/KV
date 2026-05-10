@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/AmrSaber/kv/src/common"
@@ -55,7 +54,7 @@ kv db restore`,
 		}
 
 		if !backupFlags.Stdout {
-			fmt.Println("Backup created successfully")
+			common.Stdout.Println("Backup created successfully")
 		}
 	},
 }

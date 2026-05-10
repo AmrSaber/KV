@@ -47,6 +47,33 @@ func (config *Config) RegisterDB(name string) {
 	config.write()
 }
 
+func (config *Config) SetDBDirectory(db string, directory string) {
+	Assert(db != DefaultDBName, "Cannot update directory for default DB")
+
+	dbConfig := config.DBs[db]
+	dbConfig.Directory = directory
+	config.DBs[db] = dbConfig
+
+	config.write()
+}
+
+func (config *Config) RenameDB(db string, newName string) {
+	Assert(db != DefaultDBName, "Cannot rename default DB")
+
+	if _, ok := config.DBs[db]; !ok {
+		Fail("%q DB does not exist", db)
+	}
+
+	if _, ok := config.DBs[newName]; ok {
+		Fail("%q DB already exists", db)
+	}
+
+	config.DBs[newName] = config.DBs[db]
+	delete(config.DBs, db)
+
+	config.write()
+}
+
 // Write config to storage
 // this does not edit the config, but it receives a pointer to guard its usage
 func (config *Config) write() {

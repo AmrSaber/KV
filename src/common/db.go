@@ -123,3 +123,13 @@ func BackupDB(name string, writer io.Writer) error {
 
 	return nil
 }
+
+func BackupDBInPlace(name string) {
+	backupPath := GetDefaultBackupPath(name)
+	backupWriter, err := os.Create(backupPath)
+	FailOn(err)
+
+	err = BackupDB(name, backupWriter)
+	_ = backupWriter.Close()
+	FailOn(err)
+}
