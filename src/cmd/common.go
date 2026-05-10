@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/AmrSaber/kv/src/common"
 	"github.com/AmrSaber/kv/src/services"
@@ -19,11 +20,35 @@ import (
 const passwordPromptSentinel = "\x00"
 
 func completeKeyArg(toComplete string, matchType services.MatchType) ([]cobra.Completion, cobra.ShellCompDirective) {
-	// TODO: consider multiple DBs in autocompletion
+	config := common.GetConfig()
+
+	// If key has @ auto-complete DB name instead of key
+	if key, db, found := strings.Cut(toComplete, "@"); found {
+		var matchingDBs []string
+		for registeredDB := range config.DBs {
+			if strings.Contains(registeredDB, db) {
+				matchingDBs = append(matchingDBs, key+"@"+registeredDB)
+			}
+		}
+
+		return []cobra.Completion(matchingDBs), cobra.ShellCompDirectiveNoFileComp
+	}
+
+	// Otherwise, match keys
 	var matchingKeys []string
-	services.RunInTransaction(common.GetConfig().CurrentDB, func(tx *sql.Tx) {
-		matchingKeys = services.SearchKeys(tx, toComplete, matchType)
-	})
+
+	for db := range config.DBs {
+		services.RunInTransaction(db, func(tx *sql.Tx) {
+			matches := services.SearchKeys(tx, toComplete, matchType)
+			if db != config.CurrentDB {
+				for i := range matches {
+					matches[i] += "@" + db
+				}
+			}
+
+			matchingKeys = append(matchingKeys, matches...)
+		})
+	}
 
 	return []cobra.Completion(matchingKeys), cobra.ShellCompDirectiveNoFileComp
 }
