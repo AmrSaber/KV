@@ -2,7 +2,8 @@
 package common
 
 import (
-	"os"
+	"fmt"
+	"strings"
 	"time"
 )
 
@@ -13,11 +14,13 @@ func FailOn(err error) {
 }
 
 func Fail(message string, args ...any) {
-	if message != "" {
-		Stderr.Printf(red(message)+"\n", args...)
-	}
+	panic(fmt.Sprintf(message, args...))
+}
 
-	os.Exit(1)
+func Assert(cond bool, message string, args ...any) {
+	if !cond {
+		Fail(message, args...)
+	}
 }
 
 func EqualTimePtrs(t1, t2 *time.Time) bool {
@@ -51,4 +54,30 @@ func EqualStringPtrs(s1, s2 *string) bool {
 	}
 
 	return *s1 == *s2
+}
+
+// ParseKey parses the key and returns key and database parts
+func ParseKey(key string) (string, string) {
+	parts := strings.Split(key, "@")
+	Assert(len(parts) <= 2, "Unable to parse key %q with more than one '@' symbol", key)
+
+	if len(parts) < 2 {
+		parts = append(parts, GetConfig().CurrentDB)
+	}
+
+	key, db := parts[0], parts[1]
+	Assert(key != "", "Key must not be an empty string")
+
+	return key, db
+}
+
+func ParseKeys(keys []string) map[string][]string {
+	mappedKeys := make(map[string][]string)
+
+	for _, key := range keys {
+		key, db := ParseKey(key)
+		mappedKeys[db] = append(mappedKeys[db], key)
+	}
+
+	return mappedKeys
 }

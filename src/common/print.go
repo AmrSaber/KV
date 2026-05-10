@@ -13,8 +13,8 @@ var (
 )
 
 var (
-	yellow = color.New(color.FgYellow).SprintFunc()
-	red    = color.New(color.FgRed).SprintFunc()
+	Yellow = color.New(color.FgYellow).SprintFunc()
+	Red    = color.New(color.FgRed).SprintFunc()
 )
 
 func Quiet(enable bool) {
@@ -29,5 +29,5 @@ func Quiet(enable bool) {
 }
 
 func Warn(msg string) {
-	Stderr.Println(yellow(msg))
+	Stderr.Println(Yellow(msg))
 }

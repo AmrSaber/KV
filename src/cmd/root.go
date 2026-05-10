@@ -47,17 +47,21 @@ func getVersion() string {
 func Execute() {
 	// Set version after it's been potentially injected in main.go
 	rootCmd.Version = getVersion()
-	defer common.CloseDBs()
+	defer func() {
+		for name := range common.CachedDBs {
+			common.GetConfig().RegisterDB(name)
+		}
 
-	err := rootCmd.Execute()
-	if err != nil {
 		common.CloseDBs()
-		os.Exit(1)
-	}
 
-	config := common.GetConfig()
-	for name := range common.CachedDBs {
-		config.RegisterDB(name)
+		if err := recover(); err != nil {
+			common.Stderr.Println(common.Red(err))
+			os.Exit(1)
+		}
+	}()
+
+	if err := rootCmd.Execute(); err != nil {
+		panic(err)
 	}
 }
 
