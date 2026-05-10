@@ -5,8 +5,8 @@
   - [x] Prohibit 'kv' DB name
 - DB Operations
   - [x] `kv db list`
-  - [ ] `kv db set directory <db> <directory>`
-  - [ ] `kv db set name <old> <new>`
+  - [x] `kv db set directory <db> <directory>`
+  - [x] `kv db set name <old> <new>`
 - Migration
   - [ ] Migrate 'kv' DB -> 'default'
   - [ ] Migrate keys with '@'->':' in the name
