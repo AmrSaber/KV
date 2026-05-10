@@ -1,0 +1,8 @@
+[tasks.sync]
+description = "Commit everything, pull, then push"
+run = '''
+git add .
+git commit -m 'Update docs'
+git pull
+git push
+'''

@@ -32,8 +32,8 @@ kv db set directory some-db /some/path/for/db/
 # Rename DB
 # Old DB must exist in configs
 # Backup old DB then rename file, leave backup as-is
-kv db rename <old> <new>
-kv db rename some-db other-db
+kv db set name <old> <new>
+kv db set name some-db other-db
 
 # Moving keys between DBs
 # Through rename
