@@ -47,14 +47,14 @@ Note: This removes the latest record from history and replaces it with a plain-t
 	},
 
 	Run: func(cmd *cobra.Command, args []string) {
-		password := readPassword(cmd, false)
-		if password == "" {
-			common.Fail("Password cannot be empty")
-		}
-
 		if unlockFlags.all {
 			if len(args) > 0 {
 				common.Fail("Cannot have arguments with --all")
+			}
+
+			password := readPassword(cmd, false)
+			if password == "" {
+				common.Fail("Password cannot be empty")
 			}
 
 			services.RunInTransaction(common.GetConfig().CurrentDB, func(tx *sql.Tx) {
@@ -76,6 +76,11 @@ Note: This removes the latest record from history and replaces it with a plain-t
 			}
 			if len(args) > 1 {
 				common.Fail("Cannot use --prefix with multiple keys")
+			}
+
+			password := readPassword(cmd, false)
+			if password == "" {
+				common.Fail("Password cannot be empty")
 			}
 
 			key := args[0]

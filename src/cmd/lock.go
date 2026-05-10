@@ -48,14 +48,14 @@ If plain-text values exist in older history records, consider using 'kv history 
 	},
 
 	Run: func(cmd *cobra.Command, args []string) {
-		password := readPassword(cmd, true)
-		if password == "" {
-			common.Fail("Password cannot be empty")
-		}
-
 		if lockFlags.all {
 			if len(args) > 0 {
 				common.Fail("Cannot have arguments with --all")
+			}
+
+			password := readPassword(cmd, true)
+			if password == "" {
+				common.Fail("Password cannot be empty")
 			}
 
 			services.RunInTransaction(common.GetConfig().CurrentDB, func(tx *sql.Tx) {
@@ -76,6 +76,11 @@ If plain-text values exist in older history records, consider using 'kv history 
 				common.Fail("Cannot use --prefix with multiple keys")
 			}
 
+			password := readPassword(cmd, true)
+			if password == "" {
+				common.Fail("Password cannot be empty")
+			}
+
 			key := args[0]
 			services.RunInTransaction(common.GetConfig().CurrentDB, func(tx *sql.Tx) {
 				items := services.ListItems(tx, key, services.MatchExisting)
@@ -90,6 +95,11 @@ If plain-text values exist in older history records, consider using 'kv history 
 		// Handle multiple keys - fail on first error
 		if len(args) == 0 {
 			common.Fail("At least one key must be provided")
+		}
+
+		password := readPassword(cmd, true)
+		if password == "" {
+			common.Fail("Password cannot be empty")
 		}
 
 		services.RunInTransaction(common.GetConfig().CurrentDB, func(tx *sql.Tx) {
