@@ -16,7 +16,9 @@ var copyCmd = &cobra.Command{
 
 The copy operation copies the current value and encryption status from the source key.
 TTL is not copied - the destination key will have no expiration unless you set it separately.
-If the destination key already exists, it will be updated (creating a new history entry).`,
+If the destination key already exists, it will be updated (creating a new history entry).
+
+As syntactic sugar, <to-key> can take the form '@db-name' which will preserve the same key name.`,
 	Example: `  # Copy a key
   kv copy api-key api-key-backup
 
@@ -33,23 +35,49 @@ If the destination key already exists, it will be updated (creating a new histor
 		return nil, cobra.ShellCompDirectiveNoFileComp
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		fromKey := args[0]
-		toKey := args[1]
+		fromKey, fromDB := common.ParseKey(args[0])
 
-		services.RunInTransaction(common.GetConfig().CurrentDB, func(tx *sql.Tx) {
+		if args[1][0] == '@' {
+			args[1] = fromKey + args[1]
+		}
+		toKey, toDB := common.ParseKey(args[1])
+
+		if fromDB == toDB {
+			services.RunInTransaction(fromDB, func(tx *sql.Tx) {
+				// Get the source item
+				fromItem := services.GetItem(tx, fromKey)
+				if fromItem == nil {
+					common.Fail("Key %q does not exist", fromKey)
+					panic("Unreachable") // To suppress compiler warnings
+				}
+
+				// Copy to destination (without TTL)
+				services.SetValue(tx, toKey, fromItem.Value, nil, fromItem.IsLocked)
+				if fromItem.IsHidden {
+					services.HideKey(tx, toKey)
+				}
+			})
+		} else {
+			common.PrintCrossDBWarning()
+
 			// Get the source item
-			fromItem := services.GetItem(tx, fromKey)
-			if fromItem == nil {
-				common.Fail("Key %q does not exist", fromKey)
-				panic("Unreachable") // To suppress compiler warnings
-			}
+			var fromItem *services.KVItem
+			services.RunInTransaction(fromDB, func(tx *sql.Tx) {
+				fromItem = services.GetItem(tx, fromKey)
+				if fromItem == nil {
+					common.Fail("Key %q does not exist", fromKey)
+					panic("Unreachable") // To suppress compiler warnings
+				}
+			})
 
 			// Copy to destination (without TTL)
-			services.SetValue(tx, toKey, fromItem.Value, nil, fromItem.IsLocked)
-			if fromItem.IsHidden {
-				services.HideKey(tx, toKey)
-			}
-		})
+			services.RunInTransaction(toDB, func(tx *sql.Tx) {
+				services.SetValue(tx, toKey, fromItem.Value, nil, fromItem.IsLocked)
+				if fromItem.IsHidden {
+					services.HideKey(tx, toKey)
+				}
+			})
+		}
 	},
 }
 

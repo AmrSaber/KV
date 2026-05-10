@@ -2,6 +2,10 @@ package services
 
 import (
 	"database/sql"
+	"fmt"
+	"maps"
+	"slices"
+	"strings"
 	"time"
 
 	"github.com/AmrSaber/kv/src/common"
@@ -35,6 +39,7 @@ func SetValue(tx *sql.Tx, key string, value string, expiresAt *time.Time, isLock
 	common.FailOn(err)
 }
 
+// PruneKey removes all rows with that key from the DB
 func PruneKey(tx *sql.Tx, key string) {
 	_, err := tx.Exec("DELETE FROM store WHERE key = ?", key)
 	common.FailOn(err)
@@ -164,4 +169,26 @@ func RenameKey(tx *sql.Tx, oldKey string, newKey string) {
 	// Rename the key across all history items
 	_, err := tx.Exec("UPDATE store SET key = ? WHERE key = ?", newKey, oldKey)
 	common.FailOn(err)
+}
+
+func InsertRawRows(tx *sql.Tx, rows []map[string]any) {
+	for _, row := range rows {
+		columns := slices.Collect(maps.Keys(row))
+
+		values := make([]any, len(columns))
+		queryValues := make([]string, len(columns))
+		for i := range columns {
+			values[i] = row[columns[i]]
+			queryValues[i] = "?"
+		}
+
+		query := fmt.Sprintf(
+			"INSERT INTO store (%s) VALUES (%s)",
+			strings.Join(columns, ", "),
+			strings.Join(queryValues, ", "),
+		)
+
+		_, err := tx.Exec(query, values...)
+		common.FailOn(err)
+	}
 }

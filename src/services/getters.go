@@ -35,7 +35,8 @@ func GetItem(tx *sql.Tx, key string) *KVItem {
 	var item KVItem
 	var expiresAt sql.NullTime
 
-	err := tx.QueryRow(`
+	err := tx.QueryRow(
+		`
 		SELECT value, timestamp, is_locked, is_hidden, expires_at
 		FROM store
 		WHERE key = ? AND is_latest = 1 AND value != ''`,
@@ -130,7 +131,8 @@ func SearchKeys(tx *sql.Tx, part string, matchType MatchType) []string {
 }
 
 func ListKeyHistory(tx *sql.Tx, key string) []KVItem {
-	rows, err := tx.Query(`
+	rows, err := tx.Query(
+		`
 		SELECT key, value, expires_at, timestamp, is_locked, is_hidden
 		FROM store
 		WHERE key = ?
@@ -144,7 +146,8 @@ func ListKeyHistory(tx *sql.Tx, key string) []KVItem {
 
 func GetHistoryItem(tx *sql.Tx, key string, steps int) KVItem {
 	var item KVItem
-	err := tx.QueryRow(`
+	err := tx.QueryRow(
+		`
 		SELECT key, value, timestamp, is_locked, is_hidden
 		FROM store
 		WHERE key = ?
@@ -169,6 +172,34 @@ func parseKVItems(rows *sql.Rows) []KVItem {
 
 		if expiresAt.Valid {
 			item.ExpiresAt = &expiresAt.Time
+		}
+
+		items = append(items, item)
+	}
+
+	return items
+}
+
+func ScanRawKeyRows(tx *sql.Tx, key string) []map[string]any {
+	rows, err := tx.Query("SELECT * FROM store WHERE key = ?", key)
+	common.FailOn(err)
+
+	items := make([]map[string]any, 0)
+	for rows.Next() {
+		columns, _ := rows.Columns()
+
+		values := make([]any, len(columns))
+		references := make([]any, len(columns))
+		for i := range columns {
+			references[i] = &values[i]
+		}
+
+		err := rows.Scan(references...)
+		common.FailOn(err)
+
+		item := make(map[string]any)
+		for i, col := range columns {
+			item[col] = values[i]
 		}
 
 		items = append(items, item)

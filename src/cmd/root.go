@@ -55,13 +55,16 @@ func Execute() {
 		common.CloseDBs()
 
 		if err := recover(); err != nil {
-			common.Stderr.Println(common.Red(err))
+			if err != 0 {
+				common.Stderr.Println(common.Red(err))
+			}
+
 			os.Exit(1)
 		}
 	}()
 
 	if err := rootCmd.Execute(); err != nil {
-		panic(err)
+		panic(0)
 	}
 }
 

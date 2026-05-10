@@ -50,8 +50,8 @@ By default, deletion is soft (keeps history). Use --prune to permanently delete 
 				common.Fail("Cannot use --prefix with multiple keys")
 			}
 
-			key := args[0]
-			services.RunInTransaction(common.GetConfig().CurrentDB, func(tx *sql.Tx) {
+			key, db := common.ParseKey(args[0])
+			services.RunInTransaction(db, func(tx *sql.Tx) {
 				keys := services.ListKeys(tx, key, services.MatchExisting)
 
 				for _, key := range keys {
@@ -67,20 +67,22 @@ By default, deletion is soft (keeps history). Use --prune to permanently delete 
 		}
 
 		// Handle multiple keys - fail on first error
-		services.RunInTransaction(common.GetConfig().CurrentDB, func(tx *sql.Tx) {
-			for _, key := range args {
-				value, _ := services.GetValue(tx, key)
-				if value == nil || *value == "" {
-					common.Fail("Key %q does not exist", key)
-				}
+		for db, keys := range common.ParseKeys(args) {
+			services.RunInTransaction(db, func(tx *sql.Tx) {
+				for _, key := range keys {
+					value, _ := services.GetValue(tx, key)
+					if value == nil || *value == "" {
+						common.Fail("Key %q does not exist", key)
+					}
 
-				services.SetValue(tx, key, "", nil, false)
+					services.SetValue(tx, key, "", nil, false)
 
-				if deleteFlags.prune {
-					services.PruneKey(tx, key)
+					if deleteFlags.prune {
+						services.PruneKey(tx, key)
+					}
 				}
-			}
-		})
+			})
+		}
 	},
 }
 

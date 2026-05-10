@@ -39,23 +39,28 @@ If a deleted key is targeted for pruning, it will be permanently deleted.`,
 	},
 
 	Run: func(cmd *cobra.Command, args []string) {
-		var key string
-		if !historyPruneFlags.all {
-			if len(args) == 0 {
-				if historyPruneFlags.prefix {
-					common.Fail("Prefix must be provided")
-				} else {
-					common.Fail("Key must be provided")
-				}
+		if historyPruneFlags.all {
+			if len(args) > 0 {
+				common.Fail("Cannot have an argument with --all")
 			}
 
-			key = args[0]
-		} else if len(args) > 0 {
-			common.Fail("Cannot have an argument with --all")
+			services.RunInTransaction(common.GetConfig().CurrentDB, func(tx *sql.Tx) {
+				services.ClearAllKeysHistory(tx, "")
+			})
+			return
 		}
 
-		services.RunInTransaction(common.GetConfig().CurrentDB, func(tx *sql.Tx) {
-			if historyPruneFlags.all || historyPruneFlags.prefix {
+		if len(args) == 0 {
+			if historyPruneFlags.prefix {
+				common.Fail("Prefix must be provided")
+			} else {
+				common.Fail("Key must be provided")
+			}
+		}
+
+		key, db := common.ParseKey(args[0])
+		services.RunInTransaction(db, func(tx *sql.Tx) {
+			if historyPruneFlags.prefix {
 				services.ClearAllKeysHistory(tx, key)
 				return
 			}

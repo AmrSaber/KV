@@ -83,8 +83,8 @@ Note: This removes the latest record from history and replaces it with a plain-t
 				common.Fail("Password cannot be empty")
 			}
 
-			key := args[0]
-			services.RunInTransaction(common.GetConfig().CurrentDB, func(tx *sql.Tx) {
+			key, db := common.ParseKey(args[0])
+			services.RunInTransaction(db, func(tx *sql.Tx) {
 				items := services.ListItems(tx, key, services.MatchExisting)
 				for _, item := range items {
 					err := services.UnlockKey(tx, item.Key, password)
@@ -102,14 +102,21 @@ Note: This removes the latest record from history and replaces it with a plain-t
 			common.Fail("At least one key must be provided")
 		}
 
-		services.RunInTransaction(common.GetConfig().CurrentDB, func(tx *sql.Tx) {
-			for _, key := range args {
-				err := services.UnlockKey(tx, key, password)
-				if err != nil {
-					common.Fail("Wrong password")
+		password := readPassword(cmd, false)
+		if password == "" {
+			common.Fail("Password cannot be empty")
+		}
+
+		for db, keys := range common.ParseKeys(args) {
+			services.RunInTransaction(db, func(tx *sql.Tx) {
+				for _, key := range keys {
+					err := services.UnlockKey(tx, key, password)
+					if err != nil {
+						common.Fail("Wrong password")
+					}
 				}
-			}
-		})
+			})
+		}
 	},
 }
 

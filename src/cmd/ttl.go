@@ -44,12 +44,12 @@ Use --seconds to get remaining time in seconds (useful for scripts).`,
 		return completeKeyArg(toComplete, services.MatchExisting)
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		key := args[0]
+		key, db := common.ParseKey(args[0])
 
 		var value *string
 		var expiresAt *time.Time
 
-		services.RunInTransaction(common.GetConfig().CurrentDB, func(tx *sql.Tx) {
+		services.RunInTransaction(db, func(tx *sql.Tx) {
 			value, expiresAt = services.GetValue(tx, key)
 		})
 

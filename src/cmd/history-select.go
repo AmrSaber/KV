@@ -38,10 +38,10 @@ This provides a user-friendly way to browse and choose from previous values.`,
 	},
 
 	Run: func(cmd *cobra.Command, args []string) {
-		key := args[0]
+		key, db := common.ParseKey(args[0])
 
 		var selectedItem services.KVItem
-		services.RunInTransaction(common.GetConfig().CurrentDB, func(tx *sql.Tx) {
+		services.RunInTransaction(db, func(tx *sql.Tx) {
 			items := services.ListKeyHistory(tx, key)
 			slices.Reverse(items)
 

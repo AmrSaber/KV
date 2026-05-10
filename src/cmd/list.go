@@ -60,9 +60,11 @@ Locked values are displayed as [Locked] in table view.`,
 		return completeKeyArg(toComplete, services.MatchExisting)
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		var prefix string
+		var prefix, db string
 		if len(args) > 0 {
-			prefix = args[0]
+			prefix, db = common.ParseKey(args[0])
+		} else {
+			db = common.GetConfig().CurrentDB
 		}
 
 		matchType := services.MatchExisting
@@ -73,7 +75,7 @@ Locked values are displayed as [Locked] in table view.`,
 
 		var items []services.KVItem
 
-		services.RunInTransaction(common.GetConfig().CurrentDB, func(tx *sql.Tx) {
+		services.RunInTransaction(db, func(tx *sql.Tx) {
 			items = services.ListItems(tx, prefix, matchType)
 		})
 

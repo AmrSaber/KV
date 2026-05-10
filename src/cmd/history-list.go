@@ -51,11 +51,11 @@ Higher indices represent older values.`,
 	},
 
 	Run: func(cmd *cobra.Command, args []string) {
-		key := args[0]
+		key, db := common.ParseKey(args[0])
 
 		var kvItems []services.KVItem
 
-		services.RunInTransaction(common.GetConfig().CurrentDB, func(tx *sql.Tx) {
+		services.RunInTransaction(db, func(tx *sql.Tx) {
 			kvItems = services.ListKeyHistory(tx, key)
 		})
 

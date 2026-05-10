@@ -43,21 +43,23 @@ Providing a negative duration expires the key immediately.`,
 		return completeKeyArg(toComplete, services.MatchExisting)
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		services.RunInTransaction(common.GetConfig().CurrentDB, func(tx *sql.Tx) {
-			for _, key := range args {
-				item := services.GetItem(tx, key)
-				if item == nil {
-					common.Fail("Key %q does not exist", key)
-				}
+		for db, keys := range common.ParseKeys(args) {
+			services.RunInTransaction(db, func(tx *sql.Tx) {
+				for _, key := range keys {
+					item := services.GetItem(tx, key)
+					if item == nil {
+						common.Fail("Key %q does not exist", key)
+					}
 
-				if expireFlags.never {
-					services.SetValue(tx, key, item.Value, nil, item.IsLocked)
-				} else {
-					expiresAt := time.Now().Add(expireFlags.after)
-					services.SetValue(tx, key, item.Value, &expiresAt, item.IsLocked)
+					if expireFlags.never {
+						services.SetValue(tx, key, item.Value, nil, item.IsLocked)
+					} else {
+						expiresAt := time.Now().Add(expireFlags.after)
+						services.SetValue(tx, key, item.Value, &expiresAt, item.IsLocked)
+					}
 				}
-			}
-		})
+			})
+		}
 	},
 }
 

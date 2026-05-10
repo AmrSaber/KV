@@ -81,8 +81,8 @@ If plain-text values exist in older history records, consider using 'kv history 
 				common.Fail("Password cannot be empty")
 			}
 
-			key := args[0]
-			services.RunInTransaction(common.GetConfig().CurrentDB, func(tx *sql.Tx) {
+			key, db := common.ParseKey(args[0])
+			services.RunInTransaction(db, func(tx *sql.Tx) {
 				items := services.ListItems(tx, key, services.MatchExisting)
 				for _, item := range items {
 					services.LockKey(tx, item.Key, password)
@@ -102,11 +102,13 @@ If plain-text values exist in older history records, consider using 'kv history 
 			common.Fail("Password cannot be empty")
 		}
 
-		services.RunInTransaction(common.GetConfig().CurrentDB, func(tx *sql.Tx) {
-			for _, key := range args {
-				services.LockKey(tx, key, password)
-			}
-		})
+		for db, keys := range common.ParseKeys(args) {
+			services.RunInTransaction(db, func(tx *sql.Tx) {
+				for _, key := range keys {
+					services.LockKey(tx, key, password)
+				}
+			})
+		}
 	},
 }
 

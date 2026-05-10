@@ -57,7 +57,7 @@ Providing a negative duration expires the key immediately.`,
 	},
 
 	Run: func(cmd *cobra.Command, args []string) {
-		key := args[0]
+		key, db := common.ParseKey(args[0])
 		value := ""
 		if len(args) == 2 {
 			value = args[1]
@@ -92,7 +92,7 @@ Providing a negative duration expires the key immediately.`,
 			common.FailOn(err)
 		}
 
-		services.RunInTransaction(common.GetConfig().CurrentDB, func(tx *sql.Tx) {
+		services.RunInTransaction(db, func(tx *sql.Tx) {
 			services.SetValue(tx, key, value, expiresAt, password != "")
 			if setFlags.hidden {
 				services.HideKey(tx, key)

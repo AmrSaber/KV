@@ -16,7 +16,10 @@ var renameCmd = &cobra.Command{
 	Long: `Rename a key by changing its name in the store across all history items.
 
 The rename operation preserves all history, encryption status, TTL, and other metadata.
-The old key name will no longer exist after the rename.`,
+The old key name will no longer exist after the rename.
+
+Moving keys across DBs will move the whole history to the new DB under the new name in the new DB.
+As syntactic sugar, <new-key> can take the form '@db-name' which will preserve the same key name.`,
 	Example: `  # Rename a key
   kv rename old-api-key new-api-key
 
@@ -34,12 +37,46 @@ The old key name will no longer exist after the rename.`,
 		return nil, cobra.ShellCompDirectiveNoFileComp
 	},
 	Run: func(cmd *cobra.Command, args []string) {
-		oldKey := args[0]
-		newKey := args[1]
+		oldKey, oldDB := common.ParseKey(args[0])
 
-		services.RunInTransaction(common.GetConfig().CurrentDB, func(tx *sql.Tx) {
-			services.RenameKey(tx, oldKey, newKey)
-		})
+		if args[1][0] == '@' {
+			args[1] = oldKey + args[1]
+		}
+		newKey, newDB := common.ParseKey(args[1])
+
+		if oldDB == newDB {
+			services.RunInTransaction(oldDB, func(tx *sql.Tx) {
+				services.RenameKey(tx, oldKey, newKey)
+			})
+		} else {
+			common.PrintCrossDBWarning()
+
+			var items []map[string]any
+			services.RunInTransaction(oldDB, func(tx *sql.Tx) {
+				items = services.ScanRawKeyRows(tx, oldKey)
+			})
+
+			// Rename and delete IDs
+			for i := range items {
+				items[i]["key"] = newKey
+				delete(items[i], "id")
+			}
+
+			services.RunInTransaction(newDB, func(tx *sql.Tx) {
+				// Check if key already exists
+				newItem := services.GetItem(tx, newKey)
+				if newItem != nil {
+					common.Fail("Key %q already exists", newKey)
+				}
+
+				// Insert new rows
+				services.InsertRawRows(tx, items)
+			})
+
+			services.RunInTransaction(oldDB, func(tx *sql.Tx) {
+				services.PruneKey(tx, oldKey)
+			})
+		}
 	},
 }
 

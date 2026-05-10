@@ -19,6 +19,7 @@ import (
 const passwordPromptSentinel = "\x00"
 
 func completeKeyArg(toComplete string, matchType services.MatchType) ([]cobra.Completion, cobra.ShellCompDirective) {
+	// TODO: consider multiple DBs in autocompletion
 	var matchingKeys []string
 	services.RunInTransaction(common.GetConfig().CurrentDB, func(tx *sql.Tx) {
 		matchingKeys = services.SearchKeys(tx, toComplete, matchType)

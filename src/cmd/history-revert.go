@@ -41,7 +41,7 @@ Calling revert multiple times without other changes will toggle between the curr
 	},
 
 	Run: func(cmd *cobra.Command, args []string) {
-		key := args[0]
+		key, db := common.ParseKey(args[0])
 
 		if historyRevertFlags.steps < 1 {
 			common.Fail("steps must be greater than 0, got %v", historyRevertFlags.steps)
@@ -49,7 +49,7 @@ Calling revert multiple times without other changes will toggle between the curr
 
 		var item services.KVItem
 
-		services.RunInTransaction(common.GetConfig().CurrentDB, func(tx *sql.Tx) {
+		services.RunInTransaction(db, func(tx *sql.Tx) {
 			item = services.GetHistoryItem(tx, key, historyRevertFlags.steps)
 			services.SetValue(tx, key, item.Value, nil, item.IsLocked)
 		})

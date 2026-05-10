@@ -31,3 +31,7 @@ func Quiet(enable bool) {
 func Warn(msg string) {
 	Stderr.Println(Yellow(msg))
 }
+
+func PrintCrossDBWarning() {
+	Warn("Copying across DBs, transactional guarantees do not apply")
+}
