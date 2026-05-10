@@ -8,23 +8,28 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// renameCmd represents the rename command
-var renameCmd = &cobra.Command{
-	Use:     "rename <old-key> <new-key>",
-	Aliases: []string{"move", "mv"},
-	Short:   "Rename a key to a new name",
-	Long: `Rename a key by changing its name in the store across all history items.
+// moveCmd represents the move command
+var moveCmd = &cobra.Command{
+	Use:     "move <old-key> <new-key>",
+	Aliases: []string{"rename", "mv"},
+	Short:   "Move a key to a new name and potentially new DB",
+	Long: `Move a key to a new name. The key keeps all its history, encryption, TTL, and other metadata.
 
-The rename operation preserves all history, encryption status, TTL, and other metadata.
-The old key name will no longer exist after the rename.
+The old key name will no longer exist after the move.
 
-Moving keys across DBs will move the whole history to the new DB under the new name in the new DB.
-As syntactic sugar, <new-key> can take the form '@db-name' which will preserve the same key name.`,
-	Example: `  # Rename a key
-  kv rename old-api-key new-api-key
+Specify a DB on either key using key@db syntax.
+As syntactic sugar, <new-key> can take the form '@db-name' which will preserve the same key name.
 
-  # Rename preserves all properties including encryption
-  kv rename encrypted-secret new-secret-name`,
+Moving across DBs loses transactional guarantees — if the process crashes mid-operation, the key may exist in both DBs.
+Also, there might be race conditions with other processes operating on the same keys at the same time.`,
+	Example: `  # Move a key to a new name
+  kv move old-api-key new-api-key
+
+  # Move across DBs
+  kv move key@db1 key@db2
+
+  # Move while preserving the same key name
+  kv move key@db1 @db2`,
 	GroupID: "kv",
 	Args:    cobra.ExactArgs(2),
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]cobra.Completion, cobra.ShellCompDirective) {
@@ -46,7 +51,7 @@ As syntactic sugar, <new-key> can take the form '@db-name' which will preserve t
 
 		if oldDB == newDB {
 			services.RunInTransaction(oldDB, func(tx *sql.Tx) {
-				services.RenameKey(tx, oldKey, newKey)
+				services.MoveKey(tx, oldKey, newKey)
 			})
 		} else {
 			common.PrintCrossDBWarning()
@@ -56,7 +61,7 @@ As syntactic sugar, <new-key> can take the form '@db-name' which will preserve t
 				items = services.ScanRawKeyRows(tx, oldKey)
 			})
 
-			// Rename and delete IDs
+			// Rename key and delete IDs
 			for i := range items {
 				items[i]["key"] = newKey
 				delete(items[i], "id")
@@ -81,5 +86,5 @@ As syntactic sugar, <new-key> can take the form '@db-name' which will preserve t
 }
 
 func init() {
-	rootCmd.AddCommand(renameCmd)
+	rootCmd.AddCommand(moveCmd)
 }

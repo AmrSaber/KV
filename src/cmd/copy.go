@@ -11,16 +11,26 @@ import (
 // copyCmd represents the copy command
 var copyCmd = &cobra.Command{
 	Use:   "copy <from-key> <to-key>",
-	Short: "Copy a key's value to another key",
+	Short: "Copy a key's value to another key and potentially another DB",
 	Long: `Copy the value from one key to another key.
 
-The copy operation copies the current value and encryption status from the source key.
-TTL is not copied - the destination key will have no expiration unless you set it separately.
+The copy operation copies the current value, encryption status, and hidden state from the source key.
+TTL is not copied — the destination key will have no expiration unless you set it separately.
 If the destination key already exists, it will be updated (creating a new history entry).
 
-As syntactic sugar, <to-key> can take the form '@db-name' which will preserve the same key name.`,
+Specify a DB on either key using key@db syntax.
+As syntactic sugar, <to-key> can take the form '@db-name' which will preserve the same key name.
+
+Copying across DBs loses transactional guarantees — There might be race conditions with other processes
+operating on the same keys at the same time.`,
 	Example: `  # Copy a key
   kv copy api-key api-key-backup
+
+  # Copy across DBs
+  kv copy key@db1 key@db2
+
+  # Copy while preserving the same key name
+  kv copy key@db1 @db2
 
   # Copy preserves encryption but not TTL
   kv copy encrypted-key encrypted-copy`,

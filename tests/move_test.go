@@ -5,40 +5,31 @@ import (
 	"testing"
 )
 
-func TestRenameCommand(t *testing.T) {
-	t.Run("basic rename", func(t *testing.T) {
+func TestMoveCommand(t *testing.T) {
+	t.Run("basic move", func(t *testing.T) {
 		SetupTestDB(t)
-		// Create a key
 		RunKVSuccess(t, "set", "old-key", "test value")
+		RunKVSuccess(t, "move", "old-key", "new-key")
 
-		// Rename it
-		RunKVSuccess(t, "rename", "old-key", "new-key")
-
-		// Old key should not exist
 		output := RunKVFailure(t, "get", "old-key")
 		if !strings.Contains(output, "does not exist") {
 			t.Errorf("Expected 'does not exist' error, got: %s", output)
 		}
 
-		// New key should have the value
 		output = RunKVSuccess(t, "get", "new-key")
 		if output != "test value" {
 			t.Errorf("Expected 'test value', got: %s", output)
 		}
 	})
 
-	t.Run("rename preserves history", func(t *testing.T) {
+	t.Run("move preserves history", func(t *testing.T) {
 		SetupTestDB(t)
-		// Create a key with multiple values
 		RunKVSuccess(t, "set", "history-key", "value1")
 		RunKVSuccess(t, "set", "history-key", "value2")
 		RunKVSuccess(t, "set", "history-key", "value3")
+		RunKVSuccess(t, "move", "history-key", "moved-history-key")
 
-		// Rename it
-		RunKVSuccess(t, "rename", "history-key", "renamed-history-key")
-
-		// Check history is preserved
-		output := RunKVSuccess(t, "history", "list", "renamed-history-key")
+		output := RunKVSuccess(t, "history", "list", "moved-history-key")
 		if !strings.Contains(output, "value1") {
 			t.Error("History should contain value1")
 		}
@@ -50,58 +41,46 @@ func TestRenameCommand(t *testing.T) {
 		}
 	})
 
-	t.Run("rename preserves encryption", func(t *testing.T) {
+	t.Run("move preserves encryption", func(t *testing.T) {
 		SetupTestDB(t)
-		// Create encrypted key
 		RunKVSuccess(t, "set", "encrypted-key", "secret", "--password=mypass")
+		RunKVSuccess(t, "move", "encrypted-key", "moved-encrypted")
 
-		// Rename it
-		RunKVSuccess(t, "rename", "encrypted-key", "renamed-encrypted")
-
-		// Should be locked
-		output := RunKVSuccess(t, "list", "renamed-encrypted")
+		output := RunKVSuccess(t, "list", "moved-encrypted")
 		if !strings.Contains(output, "[Locked]") {
-			t.Error("Renamed key should be locked")
+			t.Error("Moved key should be locked")
 		}
 
-		// Should decrypt with same password
-		output = RunKVSuccess(t, "get", "renamed-encrypted", "--password=mypass")
+		output = RunKVSuccess(t, "get", "moved-encrypted", "--password=mypass")
 		if output != "secret" {
 			t.Errorf("Expected 'secret', got: %s", output)
 		}
 	})
 
-	t.Run("rename preserves TTL", func(t *testing.T) {
+	t.Run("move preserves TTL", func(t *testing.T) {
 		SetupTestDB(t)
-		// Create key with TTL
 		RunKVSuccess(t, "set", "ttl-key", "temp", "--expires-after", "1h")
+		RunKVSuccess(t, "move", "ttl-key", "moved-ttl")
 
-		// Rename it
-		RunKVSuccess(t, "rename", "ttl-key", "renamed-ttl")
-
-		// Should still have TTL
-		output := RunKVSuccess(t, "ttl", "renamed-ttl")
+		output := RunKVSuccess(t, "ttl", "moved-ttl")
 		if !strings.Contains(output, "expires at") {
-			t.Errorf("Renamed key should have TTL, got: %s", output)
+			t.Errorf("Moved key should have TTL, got: %s", output)
 		}
 	})
 
-	t.Run("rename non-existent key fails", func(t *testing.T) {
+	t.Run("move non-existent key fails", func(t *testing.T) {
 		SetupTestDB(t)
-		output := RunKVFailure(t, "rename", "non-existent", "new-name")
+		output := RunKVFailure(t, "move", "non-existent", "new-name")
 		if !strings.Contains(output, "does not exist") {
 			t.Errorf("Expected 'does not exist' error, got: %s", output)
 		}
 	})
 
-	t.Run("rename to existing key fails", func(t *testing.T) {
+	t.Run("move to existing key fails", func(t *testing.T) {
 		SetupTestDB(t)
-		// Create two keys
 		RunKVSuccess(t, "set", "key1", "value1")
 		RunKVSuccess(t, "set", "key2", "value2")
-
-		// Try to rename key1 to key2
-		output := RunKVFailure(t, "rename", "key1", "key2")
+		output := RunKVFailure(t, "move", "key1", "key2")
 		if !strings.Contains(output, "already exists") {
 			t.Errorf("Expected 'already exists' error, got: %s", output)
 		}

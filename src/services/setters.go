@@ -153,7 +153,7 @@ func ShowKey(tx *sql.Tx, key string) {
 	common.FailOn(err)
 }
 
-func RenameKey(tx *sql.Tx, oldKey string, newKey string) {
+func MoveKey(tx *sql.Tx, oldKey string, newKey string) {
 	// Check if old key exists
 	oldItem := GetItem(tx, oldKey)
 	if oldItem == nil {
@@ -166,7 +166,7 @@ func RenameKey(tx *sql.Tx, oldKey string, newKey string) {
 		common.Fail("Key %q already exists", newKey)
 	}
 
-	// Rename the key across all history items
+	// Move the key across all history items
 	_, err := tx.Exec("UPDATE store SET key = ? WHERE key = ?", newKey, oldKey)
 	common.FailOn(err)
 }
