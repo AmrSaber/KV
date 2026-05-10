@@ -15,6 +15,7 @@ var (
 var (
 	Yellow = color.New(color.FgYellow).SprintFunc()
 	Red    = color.New(color.FgRed).SprintFunc()
+	Blue   = color.New(color.FgBlue).SprintFunc()
 )
 
 func Quiet(enable bool) {

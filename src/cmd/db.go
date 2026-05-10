@@ -7,7 +7,7 @@ var dbCmd = &cobra.Command{
 	Use:   "db",
 	Short: "Database operations",
 	Long: `
-Operations related to kv's database.
+Operations related to kv's database(s).
 
 Note: These commands are not thread-safe. It's the responsibility of the caller to make sure no other commands run at the same time.
 	`,
