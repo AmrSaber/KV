@@ -84,11 +84,12 @@ func GetConfig() *Config {
 	}
 
 	// Set current DB
+	cachedConfig.CurrentDB = DefaultDBName
 	if envDB, found := os.LookupEnv("KV_DB"); found {
 		cachedConfig.CurrentDB = envDB
-	} else {
-		cachedConfig.CurrentDB = DefaultDBName
 	}
+
+	ValidateDBName(cachedConfig.CurrentDB)
 
 	return cachedConfig
 }

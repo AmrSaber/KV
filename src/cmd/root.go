@@ -29,7 +29,10 @@ and multiple output formats.`,
 		// --db flag takes precedence over KV_DB env variable and default DB
 		dbFlag := cmd.Flag("db")
 		if dbFlag.Changed {
-			common.GetConfig().CurrentDB = dbFlag.Value.String()
+			dbName := dbFlag.Value.String()
+			common.ValidateDBName(dbName)
+
+			common.GetConfig().CurrentDB = dbName
 		}
 	},
 }

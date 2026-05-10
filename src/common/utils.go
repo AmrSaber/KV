@@ -67,6 +67,7 @@ func ParseKey(key string) (string, string) {
 
 	key, db := parts[0], parts[1]
 	Assert(key != "", "Key must not be an empty string")
+	ValidateDBName(db)
 
 	return key, db
 }
