@@ -74,6 +74,18 @@ func (config *Config) RenameDB(db string, newName string) {
 	config.write()
 }
 
+func (config *Config) DeleteDB(db string) {
+	Assert(db != DefaultDBName, "Cannot delete default DB")
+
+	if _, ok := config.DBs[db]; !ok {
+		Fail("%q DB does not exist", db)
+	}
+
+	delete(config.DBs, db)
+
+	config.write()
+}
+
 // Write config to storage
 // this does not edit the config, but it receives a pointer to guard its usage
 func (config *Config) write() {
