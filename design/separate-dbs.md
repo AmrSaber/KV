@@ -52,15 +52,7 @@ kv copy some-key@other-db some-key
 ```
 
 ## Notes
-- Prohibit keys with '@' in the name
-  - Enforce in commands `set`, `copy`, `rename`
-  - Migrate existing keys with `@` -> replace `@` with `:`
 - Default DB name becomes `default` with migration if `kv` db exists:
   - Back up `kv` db, then rename db file to default, leaving the backup as-is
-- Prohibit the name `kv` for DB, enforce in:
-  - KV_DB env variable (in configs)
-  - `--db` flag (in root command)
-  - `@` syntax
-  - In `db rename` command
 - DB precedence order: `<key>@db`, `--db` flag, env variable, config's db
 - DB name and path in DB commands' docs needs to be updated

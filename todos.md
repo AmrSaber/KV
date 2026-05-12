@@ -7,11 +7,10 @@
   - [x] `kv db list`
   - [x] `kv db set directory <db> <directory>`
   - [x] `kv db set name <old> <new>`
-  - [ ] `kv db rm <db>` -- Cannot delete default DB
+  - [x] `kv db rm <db>` -- Cannot delete default DB
 - Migration
-  - [ ] Migrate 'kv' DB -> 'default'
-  - [ ] Migrate keys with '@'->':' in the name
+  - [x] Migrate 'kv' DB -> 'default'
+  - [x] Migrate keys with '@'->':' in the name
 - Docs
-  - [ ] Update readme
-  - [ ] DB name and path in DB commands' docs needs to be updated
-- Release
+  - [x] Update readme
+- [ ] Release
