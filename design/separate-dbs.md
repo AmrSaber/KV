@@ -35,6 +35,13 @@ kv db set directory some-db /some/path/for/db/
 kv db set name <old> <new>
 kv db set name some-db other-db
 
+# Delete DB
+# Cannot delete default DB
+# Backup old DB then rename file, leave backup as-is
+# Remove DB from data directory and from config
+kv db rm <db>
+kv db rm some-db
+
 # Moving keys between DBs
 # Through rename
 kv rename some-key some-key@other-db

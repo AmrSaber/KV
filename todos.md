@@ -7,6 +7,7 @@
   - [x] `kv db list`
   - [x] `kv db set directory <db> <directory>`
   - [x] `kv db set name <old> <new>`
+  - [ ] `kv db rm <db>` -- Cannot delete default DB
 - Migration
   - [ ] Migrate 'kv' DB -> 'default'
   - [ ] Migrate keys with '@'->':' in the name
