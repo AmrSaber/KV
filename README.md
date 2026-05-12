@@ -14,18 +14,18 @@ Unlike traditional databases, KV is designed for simplicity and speed. No server
 
 ### KV vs Skate
 
-| Feature                      | Skate | KV                |
-| ---------------------------- | :---: | :---------------: |
-| Basic Key-Value Storage      | ✅    | ✅                |
-| Multiple Databases           | ✅    | ✅ (via prefixes) |
-| Binary Data                  | ✅    | ✅                |
-| **AES-256 Encryption**       | ❌    | ✅                |
-| **Value Visibility Control** | ❌    | ✅                |
-| **Version History & Revert** | ❌    | ✅                |
-| **Auto-Expiration (TTL)**    | ❌    | ✅                |
-| **Soft Deletes**             | ❌    | ✅                |
-| **Multi-Key Operations**     | ❌    | ✅                |
-| **JSON/YAML Output**         | ❌    | ✅                |
+| Feature                      | Skate | KV  |
+| ---------------------------- | :---: | :-: |
+| Basic Key-Value Storage      |  ✅   | ✅  |
+| Multiple Databases           |  ✅   | ✅  |
+| Binary Data                  |  ✅   | ✅  |
+| **AES-256 Encryption**       |  ❌   | ✅  |
+| **Value Visibility Control** |  ❌   | ✅  |
+| **Version History & Revert** |  ❌   | ✅  |
+| **Auto-Expiration (TTL)**    |  ❌   | ✅  |
+| **Soft Deletes**             |  ❌   | ✅  |
+| **Multi-Key Operations**     |  ❌   | ✅  |
+| **JSON/YAML Output**         |  ❌   | ✅  |
 
 ## Why KV?
 
@@ -33,6 +33,7 @@ Unlike traditional databases, KV is designed for simplicity and speed. No server
 - **Secure**: Built-in AES-256-GCM encryption for sensitive data
 - **Smart Expiration**: Set TTLs on keys for automatic cleanup
 - **Version Control**: Complete history tracking with the ability to revert changes
+- **Multiple Databases**: Separate data into independent databases — each with its own file, directory, and key namespace
 - **Developer-Friendly**: JSON/YAML output, shell completion, and intuitive commands
 
 ## Table of Contents
@@ -49,6 +50,11 @@ Unlike traditional databases, KV is designed for simplicity and speed. No server
   - [Version Control & History](#version-control--history)
   - [Output Formats](#output-formats)
   - [Batch Operations & Multiple Keys](#batch-operations--multiple-keys)
+  - [Multiple Databases](#multiple-databases)
+    - [Selecting a Database](#selecting-a-database)
+    - [Key Parsing](#key-parsing)
+    - [Managing Databases](#managing-databases)
+    - [Cross-Database Copy & Move](#cross-database-copy--move)
   - [Backup & Restore](#backup--restore)
 - [Configuration](#configuration)
 - [Data Storage](#data-storage)
@@ -59,7 +65,7 @@ Unlike traditional databases, KV is designed for simplicity and speed. No server
 ## Installation
 
 > If you're trying to build from code, `main` branch can contain some in-development code.
-Instead, use tags (e.g. v0.4.0, v0.5.1) to get stable releases.
+> Instead, use tags (e.g. v0.4.0, v0.5.1) to get stable releases.
 
 Choose the installation method that works best for your platform:
 
@@ -187,6 +193,10 @@ Every change is versioned. Made a mistake? Revert to any previous value. Need to
 ### Flexible Output
 
 View data as beautiful terminal tables, machine-readable JSON, or structured YAML—whatever fits your workflow.
+
+### Multiple Databases
+
+Keep data organized across separate databases — each with its own file and configuration. Use the `--db` flag, `KV_DB` environment variable, or the `key@db` syntax to target any database. Create, rename, move, and delete databases through dedicated commands.
 
 ### Batch & Multi-Key Operations
 
@@ -435,6 +445,135 @@ kv unlock --all --password=mypass
 # none of the changes are applied (all-or-nothing behavior)
 ```
 
+### Multiple Databases
+
+KV supports multiple separate databases, each stored in its own SQLite file. By default, everything goes into the `default` database — no setup needed. When you need to keep data separate (work vs personal, projects, environments), use the `--db` flag, `KV_DB` environment variable, or `key@db` syntax.
+
+Databases are created automatically when first accessed — no explicit creation step required.
+
+#### Selecting a Database
+
+**`--db` flag** — Target any database for a single command:
+
+```bash
+kv --db work set api-key "sk-1234"
+kv --db work get api-key
+```
+
+**`KV_DB` environment variable** — Set a persistent default for your shell session:
+
+```bash
+export KV_DB=work
+kv set api-key "sk-1234"
+kv get api-key
+```
+
+**`key@db` syntax** — Target a database per-key, overriding `--db` and `KV_DB`:
+
+```bash
+kv set config@work "some-value"
+kv get config@work
+```
+
+The `@` shorthand keeps the same key name in another database:
+
+```bash
+kv copy config@work @personal   # copies 'config' from work to personal
+kv move config@work @personal   # moves 'config' from work to personal
+```
+
+#### Key Parsing
+
+When a key contains `@`, KV splits it into a key name and a database name (`key@db`). Resolution order:
+
+1. **`key@db`** — highest priority, targets the specified database
+2. **`--db` flag** — applied to all keys without an explicit `@db`
+3. **`KV_DB` env variable** — persistent default for the session
+4. **`default`** — fallback when nothing else is specified
+
+```bash
+# Resolution examples:
+kv set key1               # key1 in default
+kv --db work set key1     # key1 in work
+export KV_DB=personal
+kv set key1               # key1 in personal (via env)
+kv set key1@work          # key1 in work (explicit @ overrides env)
+kv --db work set key1@personal  # key1 in personal (@ overrides --db)
+```
+
+**Keys with literal `@`**: If you have keys that contain `@` (e.g. email addresses), set `KV_NO_PARSE_KEYS=1` to bypass key parsing. All keys are treated literally and `key@db` syntax is disabled.
+
+```bash
+export KV_NO_PARSE_KEYS=1
+kv set "user@example.com" "value"
+kv get "user@example.com"                     # treats the whole string as the key name
+```
+
+> **Note:** When `KV_NO_PARSE_KEYS` is set, only the `--db` flag and `KV_DB` env variable can be used to target databases.
+
+#### Managing Databases
+
+**List all registered databases** with their storage directories:
+
+```bash
+kv db ls
+# Output:
+# ┌─────────┬─────────────────────────────────┐
+# │ DB      │ DIRECTORY                       │
+# ├─────────┼─────────────────────────────────┤
+# │ default │ /home/user/.local/share/kv      │
+# │ work    │ /home/user/.local/share/kv      │
+# │ personal│ /home/user/personal-kv          │
+# └─────────┴─────────────────────────────────┘
+```
+
+Output formats: `--output json`, `--output yaml`.
+
+**Delete a database** (creates a backup first by default):
+
+```bash
+kv db rm work                     # backs up, then deletes
+kv db rm personal --prune         # delete without backup
+```
+
+> The `default` database cannot be deleted.
+
+**Rename a database:**
+
+```bash
+kv db set name work projects
+```
+
+**Change a database's storage directory:**
+
+```bash
+kv db set directory personal ~/notes/kv
+```
+
+> All DB management commands create a backup of the affected database before making changes.
+
+#### Cross-Database Copy & Move
+
+```bash
+# Copy a key to another database
+kv set api-key "sk-1234"
+kv copy api-key api-key@personal
+kv get api-key@personal
+# Output: sk-1234
+
+# Move a key between databases (same-DB move renames the key)
+kv move api-key@personal api-key@work
+
+# List keys in a specific database
+kv list @work
+```
+
+- **Copy** preserves encryption and hidden state. TTL is **not** preserved across databases.
+- **Move** preserves everything: value, encryption, hidden state, TTL, and full history.
+- Cross-database operations are not transactional — each database is handled independently.
+
+> **Warning:** When copying or moving across databases, transactional guarantees do not apply.
+
 ### Backup & Restore
 
 > **Note:** Backup creates a complete snapshot of your database including all keys, values, encryption, hidden state, TTL settings, and full history. Restore completely replaces your current database with the backup, creating a temporary backup of your current database first in case restoration fails.
@@ -510,7 +649,7 @@ All commands have comprehensive help text built into the CLI.
 
 ## Configuration
 
-KV stores its configuration in a YAML file at your system's standard config. See config location using `kv info`
+KV stores its configuration in a YAML file at your system's standard config location. See the path using `kv info`.
 
 ### Available Settings
 
@@ -520,17 +659,26 @@ prune-history-after-days: 30
 
 # Maximum history entries to maintain per key
 history-length: 15
+
+# Database definitions and their storage directories
+dbs:
+  default:
+    directory: /home/user/.local/share/kv
+  work:
+    directory: /home/user/.local/share/kv
+  personal:
+    directory: /home/user/personal-kv
 ```
 
-Both settings have sensible defaults.
+The `dbs` section is managed automatically — databases are registered when first accessed. You can also set a custom directory for any database (see `kv db set directory`). Both `prune-history-after-days` and `history-length` have sensible defaults.
 
 ---
 
 ## Data Storage
 
-Your key-value data is stored locally in a SQLite database. See DB location through `kv info`
+Each database is stored in its own SQLite file. By default, all databases live under your system's data directory. See the location through `kv info`. Custom directories can be set per database using `kv db set directory`.
 
-The database uses WAL (Write-Ahead Logging) mode for better performance and reliability. All data remains completely local—no network calls, no cloud sync, no telemetry.
+Databases use WAL (Write-Ahead Logging) mode for better performance and reliability. All data remains completely local — no network calls, no cloud sync, no telemetry.
 
 ---
 
