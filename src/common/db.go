@@ -43,6 +43,10 @@ func openDB(name string) (*sql.DB, error) {
 	err := os.MkdirAll(path.Dir(dbPath), 0o755)
 	FailOn(err)
 
+	if _, err = os.Stat(dbPath); os.IsNotExist(err) {
+		Warn("Creating %q DB", name)
+	}
+
 	db, err := sql.Open("sqlite", dbPath+"?_txlock=immediate")
 	if err != nil {
 		return nil, err
