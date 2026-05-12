@@ -1,16 +1,2 @@
-- [x] Add tests for cross-db operations
-- [x] Update key auto-completion
-- Constraints
-  ~~- [ ] Prohibit '@' in keys (`set`, `copy`, `move`)~~
-  - [x] Prohibit 'kv' DB name
-- DB Operations
-  - [x] `kv db list`
-  - [x] `kv db set directory <db> <directory>`
-  - [x] `kv db set name <old> <new>`
-  - [x] `kv db rm <db>` -- Cannot delete default DB
-- Migration
-  - [x] Migrate 'kv' DB -> 'default'
-  - [x] Migrate keys with '@'->':' in the name
-- Docs
-  - [x] Update readme
-- [ ] Release
+# TODOs
+
