@@ -12,7 +12,9 @@ const DefaultDBName = "default"
 
 var cachedConfig *Config
 
-type DBConfig struct{ Directory string }
+type DBConfig struct {
+	Directory string `json:"directory" yaml:"directory"`
+}
 
 type Config struct {
 	PruneHistoryAfterDays int `json:"pruneHistoryAfterDays" yaml:"prune-history-after-days,omitempty"`
@@ -108,10 +110,9 @@ func GetConfig() *Config {
 	configPath := GetConfigPath()
 	configBytes, err := os.ReadFile(configPath)
 
-	// If config file is not found, write the default config
+	// If config file is not found, use default config
 	if os.IsNotExist(err) {
 		cachedConfig = new(getDefaultConfig())
-		cachedConfig.write()
 	} else {
 		FailOn(err)
 
