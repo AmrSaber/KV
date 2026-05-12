@@ -12,6 +12,15 @@ var dbSetNameCmd = &cobra.Command{
 	Short: "Rename a database",
 	Long:  `Rename a database, backing up the old data first.`,
 	Args:  cobra.ExactArgs(2),
+
+	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]cobra.Completion, cobra.ShellCompDirective) {
+		if len(args) != 0 {
+			return nil, cobra.ShellCompDirectiveNoFileComp
+		}
+
+		return completeNonDefaultDBs(toComplete), cobra.ShellCompDirectiveNoFileComp
+	},
+
 	Run: func(cmd *cobra.Command, args []string) {
 		oldName := args[0]
 		newName := args[1]

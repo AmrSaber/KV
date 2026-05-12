@@ -19,6 +19,17 @@ import (
 // the value is silently treated as a positional argument. Users must use --password=mypass.
 const passwordPromptSentinel = "\x00"
 
+func completeNonDefaultDBs(toComplete string) []cobra.Completion {
+	var dbs []cobra.Completion
+	for name := range common.GetConfig().DBs {
+		if name != common.DefaultDBName && strings.Contains(name, toComplete) {
+			dbs = append(dbs, cobra.Completion(name))
+		}
+	}
+
+	return dbs
+}
+
 func completeKeyArg(toComplete string, matchType services.MatchType) ([]cobra.Completion, cobra.ShellCompDirective) {
 	config := common.GetConfig()
 

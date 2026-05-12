@@ -13,6 +13,15 @@ var dbSetDirectoryCmd = &cobra.Command{
 	Short: "Set database directory",
 	Long:  `Move a database to a new directory, backing up the old data first.`,
 	Args:  cobra.ExactArgs(2),
+
+	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]cobra.Completion, cobra.ShellCompDirective) {
+		if len(args) != 0 {
+			return nil, cobra.ShellCompDirectiveDefault
+		}
+
+		return completeNonDefaultDBs(toComplete), cobra.ShellCompDirectiveNoFileComp
+	},
+
 	Run: func(cmd *cobra.Command, args []string) {
 		db := args[0]
 		directory := args[1]
