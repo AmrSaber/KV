@@ -59,7 +59,7 @@ func Execute() {
 
 		if err := recover(); err != nil {
 			if err != 0 {
-				common.Stderr.Println(common.Red(err))
+				common.Stderr.Println(common.Red("%v", err))
 			}
 
 			os.Exit(1)

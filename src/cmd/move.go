@@ -56,9 +56,9 @@ Also, there might be race conditions with other processes operating on the same 
 		} else {
 			common.PrintCrossDBWarning()
 
-			var items []map[string]any
+			var items []services.RawRow
 			services.RunInTransaction(oldDB, func(tx *sql.Tx) {
-				items = services.ScanRawKeyRows(tx, oldKey)
+				items = services.ScanRawRows(tx, oldKey)
 			})
 
 			// Rename key and delete IDs

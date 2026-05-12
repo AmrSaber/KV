@@ -528,11 +528,7 @@ Both settings have sensible defaults.
 
 ## Data Storage
 
-Your key-value data is stored locally in a SQLite database at:
-
-- **Linux**: `~/.local/share/kv/kv.db`
-- **macOS**: `~/Library/Application Support/kv/kv.db`
-- **Windows**: `%LOCALAPPDATA%\kv\kv.db`
+Your key-value data is stored locally in a SQLite database. See DB location through `kv info`
 
 The database uses WAL (Write-Ahead Logging) mode for better performance and reliability. All data remains completely local—no network calls, no cloud sync, no telemetry.
 
@@ -575,7 +571,7 @@ kv get app.config | jq '.database'
 Use KV in your automation scripts:
 
 ```bash
-#!/bin/bash
+#!/usr/bin/env bash
 # Store build timestamp
 kv set last-build "$(date)" --expires-after 24h
 

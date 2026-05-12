@@ -132,4 +132,8 @@ func BackupDBInPlace(name string) {
 	err = BackupDB(name, backupWriter)
 	_ = backupWriter.Close()
 	FailOn(err)
+
+	dbPath := GetConfig().GetDBPath(name)
+	_ = os.Remove(dbPath + "-wal")
+	_ = os.Remove(dbPath + "-shm")
 }

@@ -95,3 +95,28 @@ func pruneOldClearedValues(tx *sql.Tx, pruneHistoryAfterDays int) {
 		PruneKey(tx, key)
 	}
 }
+
+func ParseRawRows(rows *sql.Rows) []RawRow {
+	items := make([]RawRow, 0)
+	for rows.Next() {
+		columns, _ := rows.Columns()
+
+		values := make([]any, len(columns))
+		references := make([]any, len(columns))
+		for i := range columns {
+			references[i] = &values[i]
+		}
+
+		err := rows.Scan(references...)
+		common.FailOn(err)
+
+		item := make(map[string]any)
+		for i, col := range columns {
+			item[col] = values[i]
+		}
+
+		items = append(items, item)
+	}
+
+	return items
+}

@@ -13,9 +13,10 @@ var (
 )
 
 var (
-	Yellow = color.New(color.FgYellow).SprintFunc()
-	Red    = color.New(color.FgRed).SprintFunc()
-	Blue   = color.New(color.FgBlue).SprintFunc()
+	Yellow = color.New(color.FgYellow).SprintfFunc()
+	Red    = color.New(color.FgRed).SprintfFunc()
+	Blue   = color.New(color.FgBlue).SprintfFunc()
+	Green  = color.New(color.FgGreen).SprintfFunc()
 )
 
 func Quiet(enable bool) {
@@ -29,8 +30,8 @@ func Quiet(enable bool) {
 	}
 }
 
-func Warn(msg string) {
-	Stderr.Println(Yellow(msg))
+func Warn(msg string, args ...any) {
+	Stderr.Println(Yellow(msg, args...))
 }
 
 func PrintCrossDBWarning() {

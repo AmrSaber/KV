@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var SupportedShells = []string{"bash", "zsh", "fish", "powershell"}
+var supportedShells = []string{"bash", "zsh", "fish", "powershell"}
 
 // completionCmd represents the completion command
 var completionCmd = &cobra.Command{
@@ -24,7 +24,7 @@ var completionCmd = &cobra.Command{
   eval "$(kv completion fish)"
   eval "$(kv completion powershell)"`,
 	DisableFlagsInUseLine: true,
-	ValidArgs:             SupportedShells,
+	ValidArgs:             supportedShells,
 	Args:                  cobra.MatchAll(cobra.MaximumNArgs(1), cobra.OnlyValidArgs),
 	Run: func(cmd *cobra.Command, args []string) {
 		var err error
@@ -53,7 +53,7 @@ var completionCmd = &cobra.Command{
 			if shell == "" {
 				common.Fail("error: could not detect shell, please pass it explicitly: kv completion <shell>")
 			} else {
-				common.Fail("error: unsupported shell %q, supported: %v", shell, strings.Join(SupportedShells, ", "))
+				common.Fail("error: unsupported shell %q, supported: %v", shell, strings.Join(supportedShells, ", "))
 			}
 		}
 

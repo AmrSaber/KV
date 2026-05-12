@@ -171,7 +171,7 @@ func MoveKey(tx *sql.Tx, oldKey string, newKey string) {
 	common.FailOn(err)
 }
 
-func InsertRawRows(tx *sql.Tx, rows []map[string]any) {
+func InsertRawRows(tx *sql.Tx, rows []RawRow) {
 	for _, row := range rows {
 		columns := slices.Collect(maps.Keys(row))
 

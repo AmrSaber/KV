@@ -6,6 +6,8 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+type RawRow map[string]any
+
 type KVItem struct {
 	Key       string     `json:"key,omitempty" yaml:"key,omitempty"`
 	Value     string     `json:"value,omitempty" yaml:"value,omitempty"`

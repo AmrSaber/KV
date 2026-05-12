@@ -2,7 +2,12 @@ package common
 
 import (
 	"database/sql"
-	"strconv"
+)
+
+const (
+	MetadataKeyMigrationIndex       = "migration_index"
+	MetadataKeyDBMigrated           = "kv_db_migrated"
+	MetadataKeyKeysWarningDisplayed = "keys_warning_displayed"
 )
 
 var migrations = []string{
@@ -17,40 +22,44 @@ var migrations = []string{
 		expires_at DATETIME DEFAULT NULL
 	);
 	`,
+
 	// Ensure only one latest record per key
 	`CREATE UNIQUE INDEX IF NOT EXISTS idx_store_unique_latest_key ON store(key) WHERE is_latest = 1;`,
+
 	// Index for listing operations with prefix matching
 	`CREATE INDEX IF NOT EXISTS idx_store_latest_key_value ON store(key, is_latest, value);`,
+
 	// Index for TTL cleanup queries
 	`CREATE INDEX IF NOT EXISTS idx_store_latest_expire ON store(is_latest, expires_at);`,
+
 	// Index for history queries ordered by timestamp
 	`CREATE INDEX IF NOT EXISTS idx_store_key_timestamp ON store(key, timestamp);`,
+
 	// Index for history queries ordered by id (more efficient than timestamp)
 	`CREATE INDEX IF NOT EXISTS idx_store_key_id ON store(key, id);`,
+
 	// Add is_hidden column (replaces previous hack)
 	`ALTER TABLE store ADD COLUMN is_hidden INTEGER NOT NULL DEFAULT 0`,
 }
 
 func runMigrations(tx *sql.Tx) {
-	latestMigration := len(migrations) - 1
-
-	// Ensure metadata table exists
+	// Create metadata table if it's not created
 	ensureMetadataTable(tx)
 
 	// Get migration index
 	currentIndex, found := getMigrationIndex(tx)
 
 	if !found {
-		// Case 1: No migration index - run all migrations
-		executeMigrations(tx, 0, latestMigration)
-		setMigrationIndex(tx, latestMigration)
+		// No migration index - run all migrations
+		executeMigrations(tx, 0)
+		updateMigrationIndex(tx)
 		return
 	}
 
-	// Case 2: Migration index exists - run only new migrations
-	if currentIndex < latestMigration {
-		executeMigrations(tx, currentIndex+1, latestMigration)
-		setMigrationIndex(tx, latestMigration)
+	// Migration index exists - run only new migrations
+	if currentIndex < len(migrations)-1 {
+		executeMigrations(tx, currentIndex+1)
+		updateMigrationIndex(tx)
 	}
 }
 
@@ -65,36 +74,44 @@ func ensureMetadataTable(tx *sql.Tx) {
 	FailOn(err)
 }
 
-func executeMigrations(tx *sql.Tx, start, end int) {
-	for i := start; i <= end; i++ {
-		_, err := tx.Exec(migrations[i])
+func executeMigrations(tx *sql.Tx, start int) {
+	for _, query := range migrations[start:] {
+		_, err := tx.Exec(query)
 		FailOn(err)
 	}
 }
 
-func getMigrationIndex(tx *sql.Tx) (int, bool) {
-	var value string
-	err := tx.QueryRow(`
-		SELECT value FROM _kv_metadata WHERE key = 'migration_index'
-	`).Scan(&value)
+func ReadMetadata[T any](tx *sql.Tx, key string) (T, error) {
+	var value T
+	err := tx.QueryRow("SELECT value FROM _kv_metadata WHERE key = ?", key).Scan(&value)
+	if err != nil {
+		return value, err
+	}
 
+	return value, err
+}
+
+func WriteMetadata(tx *sql.Tx, key string, value any) error {
+	_, err := tx.Exec(`
+		INSERT INTO _kv_metadata (key, value)
+		VALUES (?, ?)
+		ON CONFLICT(key) DO UPDATE SET value = excluded.value
+	`, key, value)
+
+	return err
+}
+
+func getMigrationIndex(tx *sql.Tx) (int, bool) {
+	index, err := ReadMetadata[int](tx, MetadataKeyMigrationIndex)
 	if err == sql.ErrNoRows {
 		return -1, false
 	}
 
 	FailOn(err)
-
-	index, err := strconv.Atoi(value)
-	FailOn(err)
-
 	return index, true
 }
 
-func setMigrationIndex(tx *sql.Tx, index int) {
-	_, err := tx.Exec(`
-		INSERT INTO _kv_metadata (key, value)
-		VALUES ('migration_index', ?)
-		ON CONFLICT(key) DO UPDATE SET value = excluded.value
-	`, strconv.Itoa(index))
+func updateMigrationIndex(tx *sql.Tx) {
+	err := WriteMetadata(tx, MetadataKeyMigrationIndex, len(migrations)-1)
 	FailOn(err)
 }

@@ -9,7 +9,6 @@ import (
 
 	"github.com/AmrSaber/kv/src/common"
 	"github.com/AmrSaber/kv/src/services"
-	"github.com/fatih/color"
 	"github.com/jedib0t/go-pretty/table"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
@@ -152,31 +151,31 @@ Locked values are displayed as [Locked] in table view.`,
 					expiresAt = item.ExpiresAt.Local().Format(time.DateTime)
 				}
 
-				row := []any{color.New(color.FgBlue).Sprint(item.Key)}
+				row := []any{common.Blue(item.Key)}
 
 				if displayValues {
 					value := item.Value
 
 					// [Locked] takes precedence over [Hidden]
 					if item.IsLocked {
-						value = color.New(color.FgRed).Sprint("[Locked]")
+						value = common.Red("[Locked]")
 					} else if item.IsHidden && !listFlags.show {
-						value = color.New(color.FgRed).Sprint("[Hidden]")
+						value = common.Red("[Hidden]")
 					}
 
 					row = append(row, value)
 				}
 
-				row = append(row, color.New(color.FgGreen).Sprint(item.Timestamp.Local().Format(time.DateTime)))
+				row = append(row, common.Green(item.Timestamp.Local().Format(time.DateTime)))
 
 				if hasExpires {
-					row = append(row, color.New(color.FgGreen).Sprint(expiresAt))
+					row = append(row, common.Green(expiresAt))
 				}
 
 				if displayLocked {
 					isLocked := "-"
 					if item.IsLocked {
-						isLocked = color.New(color.FgYellow).Sprint("Yes")
+						isLocked = common.Yellow("Yes")
 					}
 
 					row = append(row, isLocked)

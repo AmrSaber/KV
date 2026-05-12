@@ -22,6 +22,17 @@ const passwordPromptSentinel = "\x00"
 func completeKeyArg(toComplete string, matchType services.MatchType) ([]cobra.Completion, cobra.ShellCompDirective) {
 	config := common.GetConfig()
 
+	if _, noParseKeys := os.LookupEnv("KV_NO_PARSE_KEYS"); noParseKeys {
+		// Match keys from current DB
+		var matchingKeys []string
+
+		services.RunInTransaction(config.CurrentDB, func(tx *sql.Tx) {
+			matchingKeys = services.SearchKeys(tx, toComplete, matchType)
+		})
+
+		return []cobra.Completion(matchingKeys), cobra.ShellCompDirectiveNoFileComp
+	}
+
 	// If key has @ auto-complete DB name instead of key
 	if key, db, found := strings.Cut(toComplete, "@"); found {
 		var matchingDBs []string
@@ -34,7 +45,7 @@ func completeKeyArg(toComplete string, matchType services.MatchType) ([]cobra.Co
 		return []cobra.Completion(matchingDBs), cobra.ShellCompDirectiveNoFileComp
 	}
 
-	// Otherwise, match keys
+	// Match keys
 	var matchingKeys []string
 
 	for db := range config.DBs {

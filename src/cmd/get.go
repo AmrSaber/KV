@@ -46,7 +46,7 @@ If the key is encrypted, provide the password using --password flag.`,
 		})
 
 		if item == nil {
-			common.Fail("Key %q does not exist", key)
+			common.Fail("Key %q does not exist in DB %q", key, db)
 			return // To shut up the compiler
 		}
 

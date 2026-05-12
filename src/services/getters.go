@@ -180,30 +180,10 @@ func parseKVItems(rows *sql.Rows) []KVItem {
 	return items
 }
 
-func ScanRawKeyRows(tx *sql.Tx, key string) []map[string]any {
+func ScanRawRows(tx *sql.Tx, key string) []RawRow {
 	rows, err := tx.Query("SELECT * FROM store WHERE key = ?", key)
 	common.FailOn(err)
+	defer func() { _ = rows.Close() }()
 
-	items := make([]map[string]any, 0)
-	for rows.Next() {
-		columns, _ := rows.Columns()
-
-		values := make([]any, len(columns))
-		references := make([]any, len(columns))
-		for i := range columns {
-			references[i] = &values[i]
-		}
-
-		err := rows.Scan(references...)
-		common.FailOn(err)
-
-		item := make(map[string]any)
-		for i, col := range columns {
-			item[col] = values[i]
-		}
-
-		items = append(items, item)
-	}
-
-	return items
+	return ParseRawRows(rows)
 }

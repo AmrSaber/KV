@@ -3,6 +3,7 @@ package common
 
 import (
 	"fmt"
+	"os"
 	"strings"
 	"time"
 )
@@ -58,11 +59,23 @@ func EqualStringPtrs(s1, s2 *string) bool {
 
 // ParseKey parses the key and returns key and database parts
 func ParseKey(key string) (string, string) {
+	if _, noParse := os.LookupEnv("KV_NO_PARSE_KEYS"); noParse {
+		return key, DefaultDBName
+	}
+
 	parts := strings.Split(key, "@")
 	Assert(len(parts) <= 2, "Unable to parse key %q with more than one '@' symbol", key)
 
+	currentDB := GetConfig().CurrentDB
+
+	// When there is no DB
 	if len(parts) < 2 {
-		parts = append(parts, GetConfig().CurrentDB)
+		parts = append(parts, currentDB)
+	}
+
+	// When DB is an empty string (e.g. "key@")
+	if parts[1] == "" {
+		parts[1] = currentDB
 	}
 
 	key, db := parts[0], parts[1]
