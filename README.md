@@ -157,18 +157,16 @@ Completions use substring matching and work across all -registered- databases �
 KV stores its configuration in a YAML file (see path via `kv info`). Config and data directories follow the XDG Base Directory Specification.
 
 ```yaml
-prune-history-after-days: 30 # how long to keep soft-deleted keys
-history-length: 15 # max history entries per key
-dbs:
-  default:
-    directory: /home/user/.local/share/kv
-  work:
-    directory: /home/user/.local/share/kv
+prune-history-after-days: 30                    # how long to keep soft-deleted keys - default: 30
+history-length: 15                              # max history entries per key - default: 15
+dbs:                                            # custom DBs - default: empty (configs for 'default' db cannot be updated)
+  work:                                         # DB name
+    directory: /home/user/.local/share/kv       # DB directory
   personal:
     directory: /home/user/personal-kv
 ```
 
-The `dbs` section is managed automatically — databases are registered when first accessed. Use `kv db set directory` to change a database's storage location.
+The `dbs` section is managed automatically — databases are registered when first accessed. Use `kv db set directory` to change a database's storage location. This handles creating a backup for the DB and moving it. For that reason, manually updating that section is highly discouraged.
 
 ## Data Storage
 
