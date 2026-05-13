@@ -17,10 +17,10 @@ type DBConfig struct {
 }
 
 type Config struct {
-	PruneHistoryAfterDays int `json:"pruneHistoryAfterDays" yaml:"prune-history-after-days,omitempty"`
-	HistoryLength         int `json:"historyLength" yaml:"history-length,omitempty"`
+	PruneHistoryAfterDays int `json:"pruneHistoryAfterDays,omitempty" yaml:"prune-history-after-days,omitempty"`
+	HistoryLength         int `json:"historyLength,omitempty" yaml:"history-length,omitempty"`
 
-	DBs map[string]DBConfig `json:"dbs" yaml:"dbs"`
+	DBs map[string]DBConfig `json:"dbs,omitempty" yaml:"dbs,omitempty"`
 
 	CurrentDB string `json:"-" yaml:"-"`
 }
@@ -89,10 +89,21 @@ func (config *Config) DeleteDB(db string) {
 }
 
 // Write config to storage
-// this does not edit the config, but it receives a pointer to guard its usage
 func (config *Config) write() {
+	originalDBs := config.DBs
+
+	// Clone DBs and remove the default DB
+	config.DBs = make(map[string]DBConfig)
+	for key, value := range originalDBs {
+		if key != DefaultDBName {
+			config.DBs[key] = value
+		}
+	}
+
 	err := os.WriteFile(GetConfigPath(), []byte(config.String()), 0o644)
 	FailOn(err)
+
+	config.DBs = originalDBs
 }
 
 func (config Config) String() string {
@@ -107,21 +118,21 @@ func GetConfig() *Config {
 		return cachedConfig
 	}
 
+	cachedConfig = new(getDefaultConfig())
+
 	configPath := GetConfigPath()
 	configBytes, err := os.ReadFile(configPath)
-
-	// If config file is not found, use default config
-	if os.IsNotExist(err) {
-		cachedConfig = new(getDefaultConfig())
-	} else {
+	if !os.IsNotExist(err) {
 		FailOn(err)
 
-		cachedConfig = &Config{}
 		err = yaml.Unmarshal(configBytes, cachedConfig)
 		if err != nil {
 			Fail("Invalid config YAML: %v", err)
 		}
 	}
+
+	// Inject default DB
+	cachedConfig.DBs[DefaultDBName] = DBConfig{Directory: GetDataDirectory()}
 
 	// Set current DB
 	cachedConfig.CurrentDB = DefaultDBName
@@ -139,7 +150,7 @@ func getDefaultConfig() Config {
 		PruneHistoryAfterDays: 30,
 		HistoryLength:         15,
 
-		DBs: map[string]DBConfig{DefaultDBName: {Directory: GetDataDirectory()}},
+		DBs: map[string]DBConfig{},
 	}
 }
 
