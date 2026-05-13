@@ -35,6 +35,17 @@ func RunKVSuccess(t *testing.T, args ...string) string {
 	return output
 }
 
+func RunKVSuccessStdout(t *testing.T, args ...string) string {
+	t.Helper()
+
+	cmd := RunKVCommand(t, args...)
+	output, err := cmd.Output()
+	if err != nil {
+		t.Fatalf("Command failed: kv %v\nError: %v", args, err)
+	}
+	return strings.TrimSpace(string(output))
+}
+
 func RunKVFailure(t *testing.T, args ...string) string {
 	t.Helper()
 	output, err := RunKV(t, args...)

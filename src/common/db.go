@@ -43,7 +43,7 @@ func openDB(name string) (*sql.DB, error) {
 	err := os.MkdirAll(path.Dir(dbPath), 0o755)
 	FailOn(err)
 
-	if _, err = os.Stat(dbPath); os.IsNotExist(err) {
+	if _, err = os.Stat(dbPath); os.IsNotExist(err) && name != DefaultDBName {
 		Warn("Creating %q DB", name)
 	}
 
