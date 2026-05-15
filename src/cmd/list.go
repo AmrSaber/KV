@@ -3,6 +3,8 @@ package cmd
 import (
 	"database/sql"
 	"encoding/json"
+	"maps"
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -18,6 +20,7 @@ var listFlags = struct {
 	deleted  bool
 	noValues bool
 	show     bool
+	all      bool
 
 	output string
 }{}
@@ -59,11 +62,13 @@ Locked values are displayed as [Locked] in table view.`,
 		return completeKeyArg(toComplete, services.MatchExisting)
 	},
 	Run: func(cmd *cobra.Command, args []string) {
+		config := common.GetConfig()
+
 		var prefix, db string
 		if len(args) > 0 {
 			prefix, db = common.ParseKey(args[0])
 		} else {
-			db = common.GetConfig().CurrentDB
+			db = config.CurrentDB
 		}
 
 		matchType := services.MatchExisting
@@ -72,17 +77,39 @@ Locked values are displayed as [Locked] in table view.`,
 			listFlags.noValues = true
 		}
 
-		var items []services.KVItem
+		type ListItem struct {
+			services.KVItem `yaml:",inline"`
+			DB              string `json:"db,omitempty" yaml:"db,omitempty"`
+		}
 
-		services.RunInTransaction(db, func(tx *sql.Tx) {
-			items = services.ListItems(tx, prefix, matchType)
-		})
+		items := make([]ListItem, 0)
+		dbs := []string{db}
+
+		if listFlags.all {
+			dbs = slices.Collect(maps.Keys(config.DBs))
+		}
+
+		for _, db := range dbs {
+			services.RunInTransaction(db, func(tx *sql.Tx) {
+				dbItems := services.ListItems(tx, prefix, matchType)
+				listItems := make([]ListItem, len(dbItems))
+
+				for i, dbItem := range dbItems {
+					listItems[i] = ListItem{KVItem: dbItem}
+					if listFlags.all {
+						listItems[i].DB = db
+					}
+				}
+
+				items = append(items, listItems...)
+			})
+		}
 
 		if len(items) == 0 {
 			if listFlags.deleted {
 				common.Stderr.Println("No deleted items.")
 			} else {
-				common.Stderr.Printf("No saved items in %q DB. Use `kv set` to add one.", common.GetConfig().CurrentDB)
+				common.Stderr.Printf("No saved items in %q DB. Use `kv set` to add one.", config.CurrentDB)
 			}
 
 			return
@@ -90,7 +117,11 @@ Locked values are displayed as [Locked] in table view.`,
 
 		// Sort items by key
 		sort.Slice(items, func(i, j int) bool {
-			comp := strings.Compare(items[i].Key, items[j].Key)
+			comp := strings.Compare(items[i].DB, items[j].DB)
+			if comp == 0 {
+				return strings.Compare(items[i].Key, items[j].Key) < 0
+			}
+
 			return comp < 0
 		})
 
@@ -126,8 +157,13 @@ Locked values are displayed as [Locked] in table view.`,
 
 			displayValues := !listFlags.noValues
 			displayLocked := hasLocked && listFlags.noValues
+			displayDB := listFlags.all
 
 			header := []any{"Key"}
+
+			if displayDB {
+				header = append(header, "DB")
+			}
 
 			if displayValues {
 				header = append(header, "Value")
@@ -152,6 +188,10 @@ Locked values are displayed as [Locked] in table view.`,
 				}
 
 				row := []any{common.Blue(item.Key)}
+
+				if displayDB {
+					row = append(row, common.Green(item.DB))
+				}
 
 				if displayValues {
 					value := item.Value
@@ -198,6 +238,7 @@ func init() {
 	listCmd.Flags().BoolVarP(&listFlags.noValues, "no-values", "v", false, "Hide values")
 	listCmd.Flags().BoolVarP(&listFlags.deleted, "deleted", "d", false, "List deleted keys")
 	listCmd.Flags().BoolVarP(&listFlags.show, "show", "s", false, "Force-show all values")
+	listCmd.Flags().BoolVarP(&listFlags.all, "all", "a", false, "List values from all registered DBs")
 
 	listCmd.Flags().StringVarP(&listFlags.output, "output", "o", "table", "Print format, options: json, yaml, table")
 	_ = listCmd.RegisterFlagCompletionFunc(

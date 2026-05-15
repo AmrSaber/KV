@@ -208,6 +208,118 @@ func TestListCommand(t *testing.T) {
 			t.Error("Should not show values for deleted keys")
 		}
 	})
+
+	t.Run("list --all shows items from all DBs sorted by DB then key", func(t *testing.T) {
+		SetupTestDB(t)
+		RunKVSuccess(t, "set", "a@mydb", "val_a")
+		RunKVSuccess(t, "set", "z@mydb", "val_z")
+		RunKVSuccess(t, "set", "m_default", "val_m")
+		RunKVSuccess(t, "set", "a_default", "val_a")
+
+		output := RunKVSuccess(t, "list", "--all", "--output", "json")
+
+		var items []map[string]any
+		if err := json.Unmarshal([]byte(output), &items); err != nil {
+			t.Fatalf("Output is not valid JSON: %v", err)
+		}
+
+		if len(items) != 4 {
+			t.Fatalf("Expected 4 items, got %d", len(items))
+		}
+
+		// Verify sorting: DB first, then key
+		for _, item := range items {
+			if _, ok := item["db"]; !ok {
+				t.Errorf("Item %v should have 'db' field when --all is set", item["key"])
+			}
+		}
+
+		expected := []struct{ db, key string }{
+			{"default", "a_default"},
+			{"default", "m_default"},
+			{"mydb", "a"},
+			{"mydb", "z"},
+		}
+		for i, exp := range expected {
+			if items[i]["db"] != exp.db {
+				t.Errorf("Item %d: expected db %q, got %v", i, exp.db, items[i]["db"])
+			}
+			if items[i]["key"] != exp.key {
+				t.Errorf("Item %d: expected key %q, got %v", i, exp.key, items[i]["key"])
+			}
+		}
+	})
+
+	t.Run("list --all displays DB column in table view", func(t *testing.T) {
+		SetupTestDB(t)
+		RunKVSuccess(t, "set", "k1@mydb", "v1")
+		RunKVSuccess(t, "set", "k2", "v2")
+
+		output := RunKVSuccess(t, "list", "--all")
+
+		if !strings.Contains(output, "DB") {
+			t.Error("Should show DB column header")
+		}
+		if !strings.Contains(output, "mydb") {
+			t.Error("Should show mydb DB name")
+		}
+		if !strings.Contains(output, "default") {
+			t.Error("Should show default DB name")
+		}
+	})
+
+	t.Run("list --all with prefix filters across DBs", func(t *testing.T) {
+		SetupTestDB(t)
+		RunKVSuccess(t, "set", "app.host@mydb", "host")
+		RunKVSuccess(t, "set", "app.port@mydb", "port")
+		RunKVSuccess(t, "set", "other@mydb", "other")
+		RunKVSuccess(t, "set", "app.name", "name")
+
+		output := RunKVSuccess(t, "list", "--all", "app", "--output", "json")
+
+		var items []map[string]any
+		if err := json.Unmarshal([]byte(output), &items); err != nil {
+			t.Fatalf("Output is not valid JSON: %v", err)
+		}
+
+		if len(items) != 3 {
+			t.Fatalf("Expected 3 items, got %d", len(items))
+		}
+
+		for _, item := range items {
+			key, ok := item["key"].(string)
+			if !ok || !strings.HasPrefix(key, "app") {
+				t.Errorf("Expected key with 'app' prefix, got %v", item["key"])
+			}
+		}
+	})
+
+	t.Run("list --all --deleted shows deleted items from all DBs", func(t *testing.T) {
+		SetupTestDB(t)
+		RunKVSuccess(t, "set", "gone@mydb", "secret")
+		RunKVSuccess(t, "set", "stay@mydb", "visible")
+		RunKVSuccess(t, "set", "deleted_default", "deleted_val")
+		RunKVSuccess(t, "set", "active", "active_val")
+		RunKVSuccess(t, "delete", "gone@mydb")
+		RunKVSuccess(t, "delete", "deleted_default")
+
+		output := RunKVSuccess(t, "list", "--all", "--deleted", "--output", "json")
+
+		var items []map[string]any
+		if err := json.Unmarshal([]byte(output), &items); err != nil {
+			t.Fatalf("Output is not valid JSON: %v", err)
+		}
+
+		if len(items) != 2 {
+			t.Fatalf("Expected 2 deleted items, got %d", len(items))
+		}
+
+		for _, item := range items {
+			if _, hasValue := item["value"]; hasValue {
+				t.Errorf("Deleted item %v should not have a value", item["key"])
+			}
+		}
+	})
 }
 
 func TestListCompletions(t *testing.T) {
