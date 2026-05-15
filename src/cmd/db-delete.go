@@ -58,7 +58,7 @@ Use --prune to delete without backup, also removing any existing backups.`,
 
 		config.DeleteDB(db)
 
-		common.Stdout.Printf("Database %q deleted successfully\n", db)
+		common.Stderr.Printf("Database %q deleted successfully\n", db)
 	},
 }
 

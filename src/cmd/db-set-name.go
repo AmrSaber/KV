@@ -47,7 +47,7 @@ var dbSetNameCmd = &cobra.Command{
 
 		config.RenameDB(oldName, newName)
 
-		common.Stdout.Println("Database renamed successfully")
+		common.Stderr.Printf("Database %q renamed to %q successfully\n", oldName, newName)
 	},
 }
 

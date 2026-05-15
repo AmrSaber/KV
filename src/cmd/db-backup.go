@@ -58,7 +58,7 @@ kv db restore`,
 		}
 
 		if !backupFlags.Stdout {
-			common.Stdout.Printf("Created backup for %q DB at %q\n", currentDB, backupPath)
+			common.Stderr.Printf("Created backup for %q DB at %q\n", currentDB, backupPath)
 		}
 	},
 }

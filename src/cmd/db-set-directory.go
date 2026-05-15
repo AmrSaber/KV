@@ -49,7 +49,7 @@ var dbSetDirectoryCmd = &cobra.Command{
 		_ = os.Remove(oldPath + "-wal")
 		_ = os.Remove(oldPath + "-shm")
 
-		common.Stdout.Println("Database directory updated successfully")
+		common.Stderr.Println("Database directory updated successfully")
 	},
 }
 

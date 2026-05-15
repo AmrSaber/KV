@@ -113,7 +113,7 @@ cat backup.db | kv db restore --stdin`,
 			common.Fail("Failed to restore database: %v", err)
 		}
 
-		common.Stdout.Printf("Database %q restored from backup successfully\n", currentDB)
+		common.Stderr.Printf("Database %q restored from backup successfully\n", currentDB)
 	},
 }
 
