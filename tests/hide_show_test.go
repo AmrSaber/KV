@@ -12,7 +12,7 @@ func TestHideCommand(t *testing.T) {
 		RunKVSuccess(t, "hide", "visible")
 
 		// Should show as hidden in list
-		output := RunKVSuccess(t, "list", "visible")
+		output := RunKVSuccess(t, "list", "visible", "--values")
 		if !strings.Contains(output, "[Hidden]") {
 			t.Error("Key should show as [Hidden]")
 		}
@@ -31,7 +31,7 @@ func TestHideCommand(t *testing.T) {
 		// Should be idempotent - no error
 		RunKVSuccess(t, "hide", "hidden")
 
-		output := RunKVSuccess(t, "list", "hidden")
+		output := RunKVSuccess(t, "list", "hidden", "--values")
 		if !strings.Contains(output, "[Hidden]") {
 			t.Error("Key should still be hidden")
 		}
@@ -54,14 +54,14 @@ func TestHideCommand(t *testing.T) {
 		RunKVSuccess(t, "hide", "secrets", "--prefix")
 
 		// secrets.* should be hidden
-		output := RunKVSuccess(t, "list", "secrets")
+		output := RunKVSuccess(t, "list", "secrets", "--values")
 		occurrences := strings.Count(output, "[Hidden]")
 		if occurrences < 2 {
 			t.Errorf("Expected at least 2 hidden keys, found %d", occurrences)
 		}
 
 		// public.data should not be hidden
-		output = RunKVSuccess(t, "list", "public")
+		output = RunKVSuccess(t, "list", "public", "--values")
 		if strings.Contains(output, "[Hidden]") {
 			t.Error("public.data should not be hidden")
 		}
@@ -74,7 +74,7 @@ func TestHideCommand(t *testing.T) {
 
 		RunKVSuccess(t, "hide", "temp", "-p")
 
-		output := RunKVSuccess(t, "list", "temp")
+		output := RunKVSuccess(t, "list", "temp", "--values")
 		occurrences := strings.Count(output, "[Hidden]")
 		if occurrences < 2 {
 			t.Errorf("Expected at least 2 hidden keys, found %d", occurrences)
@@ -90,7 +90,7 @@ func TestShowCommand(t *testing.T) {
 		RunKVSuccess(t, "show", "hidden")
 
 		// Should not show as hidden
-		output := RunKVSuccess(t, "list", "hidden")
+		output := RunKVSuccess(t, "list", "hidden", "--values")
 		if strings.Contains(output, "[Hidden]") {
 			t.Error("Key should not be hidden after show")
 		}
@@ -107,7 +107,7 @@ func TestShowCommand(t *testing.T) {
 		// Should be idempotent - no error
 		RunKVSuccess(t, "show", "visible")
 
-		output := RunKVSuccess(t, "list", "visible")
+		output := RunKVSuccess(t, "list", "visible", "--values")
 		if strings.Contains(output, "[Hidden]") {
 			t.Error("Key should not be hidden")
 		}
@@ -129,7 +129,7 @@ func TestShowCommand(t *testing.T) {
 		RunKVSuccess(t, "show", "hidden", "--prefix")
 
 		// Both keys should be visible
-		output := RunKVSuccess(t, "list", "hidden")
+		output := RunKVSuccess(t, "list", "hidden", "--values")
 		if strings.Contains(output, "[Hidden]") {
 			t.Error("No keys should be hidden after show --prefix")
 		}
@@ -143,7 +143,7 @@ func TestShowCommand(t *testing.T) {
 		RunKVSuccess(t, "show", "test", "-p")
 
 		// Both keys should be visible
-		output := RunKVSuccess(t, "list", "test")
+		output := RunKVSuccess(t, "list", "test", "--values")
 		if strings.Contains(output, "[Hidden]") {
 			t.Error("No keys should be hidden after show -p")
 		}
@@ -158,7 +158,7 @@ func TestHiddenAndLockedCombination(t *testing.T) {
 		RunKVSuccess(t, "lock", "key", "--password=pass")
 
 		// Should show [Locked] (takes precedence over [Hidden])
-		output := RunKVSuccess(t, "list", "key")
+		output := RunKVSuccess(t, "list", "key", "--values")
 		if !strings.Contains(output, "[Locked]") {
 			t.Error("Should show [Locked]")
 		}
@@ -173,7 +173,7 @@ func TestHiddenAndLockedCombination(t *testing.T) {
 		RunKVSuccess(t, "hide", "key2")
 
 		// Should show [Locked] (takes precedence)
-		output := RunKVSuccess(t, "list", "key2")
+		output := RunKVSuccess(t, "list", "key2", "--values")
 		if !strings.Contains(output, "[Locked]") {
 			t.Error("Should show [Locked]")
 		}
@@ -189,7 +189,7 @@ func TestHiddenAndLockedCombination(t *testing.T) {
 		RunKVSuccess(t, "unlock", "key3", "--password=pass")
 
 		// Should show [Hidden] now (not locked anymore)
-		output := RunKVSuccess(t, "list", "key3")
+		output := RunKVSuccess(t, "list", "key3", "--values")
 		if strings.Contains(output, "[Locked]") {
 			t.Error("Should not be locked after unlock")
 		}
@@ -206,7 +206,7 @@ func TestHiddenAndLockedCombination(t *testing.T) {
 		RunKVSuccess(t, "unlock", "key4", "--password=pass")
 
 		// Should show [Hidden] (hidden state preserved through lock/unlock)
-		output := RunKVSuccess(t, "list", "key4")
+		output := RunKVSuccess(t, "list", "key4", "--values")
 		if !strings.Contains(output, "[Hidden]") {
 			t.Error("Should still be hidden after lock/unlock cycle")
 		}
@@ -219,7 +219,7 @@ func TestHiddenAndLockedCombination(t *testing.T) {
 		RunKVSuccess(t, "set", "key5", "val2")
 
 		// Should still be hidden
-		output := RunKVSuccess(t, "list", "key5")
+		output := RunKVSuccess(t, "list", "key5", "--values")
 		if !strings.Contains(output, "[Hidden]") {
 			t.Error("Should still be hidden after set")
 		}
@@ -281,7 +281,7 @@ func TestHiddenInJSON(t *testing.T) {
 		RunKVSuccess(t, "set", "hidden-key", "value")
 		RunKVSuccess(t, "hide", "hidden-key")
 
-		output := RunKVSuccess(t, "list", "hidden-key", "--output", "json")
+		output := RunKVSuccess(t, "list", "hidden-key", "--output", "json", "--values")
 		if !strings.Contains(output, `"isHidden"`) {
 			t.Error("JSON output should include isHidden field")
 		}
@@ -294,7 +294,7 @@ func TestHiddenInJSON(t *testing.T) {
 		SetupTestDB(t)
 		RunKVSuccess(t, "set", "visible-key", "value")
 
-		output := RunKVSuccess(t, "list", "visible-key", "--output", "json")
+		output := RunKVSuccess(t, "list", "visible-key", "--output", "json", "--values")
 		// With omitempty, false values might not appear, but value should be present
 		if !strings.Contains(output, `"value"`) {
 			t.Error("JSON output should include value for visible keys")
@@ -312,17 +312,17 @@ func TestHideMultipleKeys(t *testing.T) {
 		RunKVSuccess(t, "hide", "key1", "key2", "key3")
 
 		// All keys should be hidden
-		output := RunKVSuccess(t, "list", "key1")
+		output := RunKVSuccess(t, "list", "key1", "--values")
 		if !strings.Contains(output, "[Hidden]") {
 			t.Error("key1 should be hidden")
 		}
 
-		output = RunKVSuccess(t, "list", "key2")
+		output = RunKVSuccess(t, "list", "key2", "--values")
 		if !strings.Contains(output, "[Hidden]") {
 			t.Error("key2 should be hidden")
 		}
 
-		output = RunKVSuccess(t, "list", "key3")
+		output = RunKVSuccess(t, "list", "key3", "--values")
 		if !strings.Contains(output, "[Hidden]") {
 			t.Error("key3 should be hidden")
 		}
@@ -351,12 +351,12 @@ func TestHideMultipleKeys(t *testing.T) {
 			}
 
 			// Keys should not be hidden (transaction rollback)
-			output = RunKVSuccess(t, "list", "a")
+			output = RunKVSuccess(t, "list", "a", "--values")
 			if strings.Contains(output, "[Hidden]") {
 				t.Error("a should not be hidden due to transaction rollback")
 			}
 
-			output = RunKVSuccess(t, "list", "b")
+			output = RunKVSuccess(t, "list", "b", "--values")
 			if strings.Contains(output, "[Hidden]") {
 				t.Error("b should not be hidden due to transaction rollback")
 			}
@@ -377,17 +377,17 @@ func TestShowMultipleKeys(t *testing.T) {
 		RunKVSuccess(t, "show", "h1", "h2", "h3")
 
 		// All keys should be visible
-		output := RunKVSuccess(t, "list", "h1")
+		output := RunKVSuccess(t, "list", "h1", "--values")
 		if strings.Contains(output, "[Hidden]") {
 			t.Error("h1 should be visible")
 		}
 
-		output = RunKVSuccess(t, "list", "h2")
+		output = RunKVSuccess(t, "list", "h2", "--values")
 		if strings.Contains(output, "[Hidden]") {
 			t.Error("h2 should be visible")
 		}
 
-		output = RunKVSuccess(t, "list", "h3")
+		output = RunKVSuccess(t, "list", "h3", "--values")
 		if strings.Contains(output, "[Hidden]") {
 			t.Error("h3 should be visible")
 		}
@@ -418,12 +418,12 @@ func TestShowMultipleKeys(t *testing.T) {
 			}
 
 			// Keys should still be hidden (transaction rollback)
-			output = RunKVSuccess(t, "list", "a")
+			output = RunKVSuccess(t, "list", "a", "--values")
 			if !strings.Contains(output, "[Hidden]") {
 				t.Error("a should still be hidden due to transaction rollback")
 			}
 
-			output = RunKVSuccess(t, "list", "b")
+			output = RunKVSuccess(t, "list", "b", "--values")
 			if !strings.Contains(output, "[Hidden]") {
 				t.Error("b should still be hidden due to transaction rollback")
 			}

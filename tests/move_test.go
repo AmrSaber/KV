@@ -46,7 +46,7 @@ func TestMoveCommand(t *testing.T) {
 		RunKVSuccess(t, "set", "encrypted-key", "secret", "--password=mypass")
 		RunKVSuccess(t, "move", "encrypted-key", "moved-encrypted")
 
-		output := RunKVSuccess(t, "list", "moved-encrypted")
+		output := RunKVSuccess(t, "list", "moved-encrypted", "--values")
 		if !strings.Contains(output, "[Locked]") {
 			t.Error("Moved key should be locked")
 		}

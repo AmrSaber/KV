@@ -27,6 +27,32 @@ func TestListCommand(t *testing.T) {
 		}
 	})
 
+	t.Run("list hides values without --values flag", func(t *testing.T) {
+		SetupTestDB(t)
+		RunKVSuccess(t, "set", "key", "secret-value")
+
+		output := RunKVSuccess(t, "list")
+		if strings.Contains(output, "secret-value") {
+			t.Error("Should not show values without --values flag")
+		}
+		if !strings.Contains(output, "key") {
+			t.Error("Should show key names")
+		}
+	})
+
+	t.Run("list --values shows values", func(t *testing.T) {
+		SetupTestDB(t)
+		RunKVSuccess(t, "set", "key", "visible-value")
+
+		output := RunKVSuccess(t, "list", "--values")
+		if !strings.Contains(output, "visible-value") {
+			t.Error("Should show values with --values flag")
+		}
+		if !strings.Contains(output, "key") {
+			t.Error("Should show key names")
+		}
+	})
+
 	t.Run("list with prefix", func(t *testing.T) {
 		SetupTestDB(t)
 		// Cover matching, same-namespace, and unrelated keys to validate filtering boundaries
@@ -55,7 +81,7 @@ func TestListCommand(t *testing.T) {
 		RunKVSuccess(t, "set", "plain", "data")
 		RunKVSuccess(t, "set", "encrypted", "secret", "--password=pass")
 
-		output := RunKVSuccess(t, "list")
+		output := RunKVSuccess(t, "list", "--values")
 		if !strings.Contains(output, "plain") {
 			t.Error("Should contain plain key")
 		}
@@ -78,20 +104,7 @@ func TestListCommand(t *testing.T) {
 		}
 	})
 
-	t.Run("list with no-values flag", func(t *testing.T) {
-		SetupTestDB(t)
-		RunKVSuccess(t, "set", "key", "secret-value")
-
-		output := RunKVSuccess(t, "list", "--no-values")
-		if strings.Contains(output, "secret-value") {
-			t.Error("Should not show values with --no-values flag")
-		}
-		if !strings.Contains(output, "key") {
-			t.Error("Should show key names")
-		}
-	})
-
-	t.Run("list hides hidden values by default", func(t *testing.T) {
+	t.Run("list hides values by default", func(t *testing.T) {
 		SetupTestDB(t)
 		RunKVSuccess(t, "set", "secret", "hidden-value")
 		RunKVSuccess(t, "hide", "secret")
@@ -100,9 +113,6 @@ func TestListCommand(t *testing.T) {
 		if strings.Contains(output, "hidden-value") {
 			t.Error("Should not show value of hidden key")
 		}
-		if !strings.Contains(output, "[Hidden]") {
-			t.Error("Should show [Hidden] marker for hidden key")
-		}
 	})
 
 	t.Run("list --show reveals hidden values", func(t *testing.T) {
@@ -110,7 +120,7 @@ func TestListCommand(t *testing.T) {
 		RunKVSuccess(t, "set", "secret", "hidden-value")
 		RunKVSuccess(t, "hide", "secret")
 
-		output := RunKVSuccess(t, "list", "--show")
+		output := RunKVSuccess(t, "list", "--values", "--show")
 		if !strings.Contains(output, "hidden-value") {
 			t.Error("Should show value of hidden key with --show flag")
 		}
@@ -123,7 +133,7 @@ func TestListCommand(t *testing.T) {
 		SetupTestDB(t)
 		RunKVSuccess(t, "set", "json-key", "json-value")
 
-		output := RunKVSuccess(t, "list", "--output", "json")
+		output := RunKVSuccess(t, "list", "--output", "json", "--values")
 
 		// Validate well-formed JSON with correct schema
 		var items []map[string]any
@@ -150,7 +160,7 @@ func TestListCommand(t *testing.T) {
 		SetupTestDB(t)
 		RunKVSuccess(t, "set", "yaml-key", "yaml-value")
 
-		output := RunKVSuccess(t, "list", "--output", "yaml")
+		output := RunKVSuccess(t, "list", "--output", "yaml", "--values")
 
 		// Validate well-formed YAML with correct schema
 		var items []map[string]any

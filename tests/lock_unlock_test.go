@@ -12,7 +12,7 @@ func TestLockCommand(t *testing.T) {
 		RunKVSuccess(t, "lock", "plain", "--password=mypass")
 
 		// Should show as locked
-		output := RunKVSuccess(t, "list", "plain")
+		output := RunKVSuccess(t, "list", "plain", "--values")
 		if !strings.Contains(output, "[Locked]") {
 			t.Error("Key should be locked")
 		}
@@ -50,7 +50,7 @@ func TestLockCommand(t *testing.T) {
 		RunKVSuccess(t, "lock", "secrets", "--prefix", "--password=pass")
 
 		// secrets.* should be locked
-		output := RunKVSuccess(t, "list", "secrets")
+		output := RunKVSuccess(t, "list", "secrets", "--values")
 		if !strings.Contains(output, "[Locked]") {
 			t.Error("Keys with prefix should be locked")
 		}
@@ -72,7 +72,7 @@ func TestLockCommand(t *testing.T) {
 		RunKVSuccess(t, "lock", "--all", "--password=masterpass")
 
 		// All keys should be locked
-		output := RunKVSuccess(t, "list")
+		output := RunKVSuccess(t, "list", "--values")
 		occurrences := strings.Count(output, "[Locked]")
 		if occurrences < 2 {
 			t.Errorf("Expected at least 2 locked keys, found %d", occurrences)
@@ -93,7 +93,7 @@ func TestUnlockCommand(t *testing.T) {
 		}
 
 		// Should not show as locked
-		output = RunKVSuccess(t, "list", "encrypted")
+		output = RunKVSuccess(t, "list", "encrypted", "--values")
 		if strings.Contains(output, "[Locked]") {
 			t.Error("Key should not be locked after unlock")
 		}
@@ -156,7 +156,7 @@ func TestUnlockCommand(t *testing.T) {
 		RunKVSuccess(t, "unlock", "--all", "--password=pass")
 
 		// All keys should be unlocked
-		output := RunKVSuccess(t, "list")
+		output := RunKVSuccess(t, "list", "--values")
 		if strings.Contains(output, "[Locked]") {
 			t.Error("No keys should be locked after unlock --all")
 		}
@@ -173,17 +173,17 @@ func TestLockMultipleKeys(t *testing.T) {
 		RunKVSuccess(t, "lock", "lk1", "lk2", "lk3", "--password=mypass")
 
 		// All keys should be locked
-		output := RunKVSuccess(t, "list", "lk1")
+		output := RunKVSuccess(t, "list", "lk1", "--values")
 		if !strings.Contains(output, "[Locked]") {
 			t.Error("lk1 should be locked")
 		}
 
-		output = RunKVSuccess(t, "list", "lk2")
+		output = RunKVSuccess(t, "list", "lk2", "--values")
 		if !strings.Contains(output, "[Locked]") {
 			t.Error("lk2 should be locked")
 		}
 
-		output = RunKVSuccess(t, "list", "lk3")
+		output = RunKVSuccess(t, "list", "lk3", "--values")
 		if !strings.Contains(output, "[Locked]") {
 			t.Error("lk3 should be locked")
 		}
@@ -219,12 +219,12 @@ func TestLockMultipleKeys(t *testing.T) {
 			}
 
 			// Keys should not be locked (transaction rollback)
-			output = RunKVSuccess(t, "list", "a")
+			output = RunKVSuccess(t, "list", "a", "--values")
 			if strings.Contains(output, "[Locked]") {
 				t.Error("a should not be locked due to transaction rollback")
 			}
 
-			output = RunKVSuccess(t, "list", "b")
+			output = RunKVSuccess(t, "list", "b", "--values")
 			if strings.Contains(output, "[Locked]") {
 				t.Error("b should not be locked due to transaction rollback")
 			}
@@ -244,7 +244,7 @@ func TestLockMultipleKeys(t *testing.T) {
 		}
 
 		// lk6 should not be locked (transaction rollback)
-		output = RunKVSuccess(t, "list", "lk6")
+		output = RunKVSuccess(t, "list", "lk6", "--values")
 		if strings.Contains(output, "[Locked]") {
 			t.Error("lk6 should not be locked due to transaction rollback")
 		}
@@ -256,7 +256,7 @@ func TestLockMultipleKeys(t *testing.T) {
 		}
 
 		// lk8 should not be locked
-		output = RunKVSuccess(t, "list", "lk8")
+		output = RunKVSuccess(t, "list", "lk8", "--values")
 		if strings.Contains(output, "[Locked]") {
 			t.Error("lk8 should not be locked")
 		}
@@ -289,7 +289,7 @@ func TestUnlockMultipleKeys(t *testing.T) {
 		}
 
 		// Should not show as locked in list
-		output = RunKVSuccess(t, "list", "uk")
+		output = RunKVSuccess(t, "list", "uk", "--values")
 		if strings.Contains(output, "[Locked]") {
 			t.Error("No keys should show as locked")
 		}
@@ -319,12 +319,12 @@ func TestUnlockMultipleKeys(t *testing.T) {
 			}
 
 			// Keys should still be locked (transaction rollback)
-			output = RunKVSuccess(t, "list", "a")
+			output = RunKVSuccess(t, "list", "a", "--values")
 			if !strings.Contains(output, "[Locked]") {
 				t.Error("a should still be locked due to transaction rollback")
 			}
 
-			output = RunKVSuccess(t, "list", "b")
+			output = RunKVSuccess(t, "list", "b", "--values")
 			if !strings.Contains(output, "[Locked]") {
 				t.Error("b should still be locked due to transaction rollback")
 			}
@@ -344,13 +344,13 @@ func TestUnlockMultipleKeys(t *testing.T) {
 		}
 
 		// uk6 should still be locked (transaction rollback)
-		output = RunKVSuccess(t, "list", "uk6")
+		output = RunKVSuccess(t, "list", "uk6", "--values")
 		if !strings.Contains(output, "[Locked]") {
 			t.Error("uk6 should still be locked due to transaction rollback")
 		}
 
 		// uk8 should still be locked
-		output = RunKVSuccess(t, "list", "uk8")
+		output = RunKVSuccess(t, "list", "uk8", "--values")
 		if !strings.Contains(output, "[Locked]") {
 			t.Error("uk8 should still be locked")
 		}
@@ -369,17 +369,17 @@ func TestUnlockMultipleKeys(t *testing.T) {
 		}
 
 		// All keys should still be locked (transaction rollback)
-		output = RunKVSuccess(t, "list", "uk9")
+		output = RunKVSuccess(t, "list", "uk9", "--values")
 		if !strings.Contains(output, "[Locked]") {
 			t.Error("uk9 should still be locked due to transaction rollback")
 		}
 
-		output = RunKVSuccess(t, "list", "uk10")
+		output = RunKVSuccess(t, "list", "uk10", "--values")
 		if !strings.Contains(output, "[Locked]") {
 			t.Error("uk10 should still be locked")
 		}
 
-		output = RunKVSuccess(t, "list", "uk11")
+		output = RunKVSuccess(t, "list", "uk11", "--values")
 		if !strings.Contains(output, "[Locked]") {
 			t.Error("uk11 should still be locked due to transaction rollback")
 		}

@@ -54,7 +54,7 @@ func TestCopyCommand(t *testing.T) {
 		RunKVSuccess(t, "copy", "encrypted-src", "encrypted-dst")
 
 		// Destination should also be locked
-		output := RunKVSuccess(t, "list", "encrypted-dst")
+		output := RunKVSuccess(t, "list", "encrypted-dst", "--values")
 		if !strings.Contains(output, "[Locked]") {
 			t.Error("Copied key should be locked")
 		}
@@ -94,7 +94,7 @@ func TestCopyCommand(t *testing.T) {
 
 		RunKVSuccess(t, "copy", "hidden-src", "hidden-dst")
 
-		output := RunKVSuccess(t, "list", "hidden-dst")
+		output := RunKVSuccess(t, "list", "hidden-dst", "--values")
 		if !strings.Contains(output, "[Hidden]") {
 			t.Error("Copied key should be hidden")
 		}

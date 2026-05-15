@@ -42,7 +42,7 @@ func TestCopyCrossDB(t *testing.T) {
 		RunKVSuccess(t, "copy", "src@db1", "dst@db2")
 
 		// Lock preserves
-		listOut := RunKVSuccess(t, "list", "dst@db2")
+		listOut := RunKVSuccess(t, "list", "dst@db2", "--values")
 		if !strings.Contains(listOut, "[Locked]") {
 			t.Error("Lock state should be preserved")
 		}

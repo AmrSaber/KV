@@ -80,7 +80,7 @@ func TestRestoreCommand(t *testing.T) {
 	}
 
 	assertDatabaseRestored := func() {
-		output := RunKVSuccess(t, "list", "original2")
+		output := RunKVSuccess(t, "list", "original2", "--values")
 		if !strings.Contains(output, "[Locked]") {
 			t.Error("original2 should be locked")
 		}
@@ -90,7 +90,7 @@ func TestRestoreCommand(t *testing.T) {
 			t.Errorf("Expected 'value2', got: %s", output)
 		}
 
-		output = RunKVSuccess(t, "list", "original3")
+		output = RunKVSuccess(t, "list", "original3", "--values")
 		if !strings.Contains(output, "[Hidden]") {
 			t.Error("original3 should be hidden")
 		}

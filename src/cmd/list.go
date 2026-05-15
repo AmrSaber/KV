@@ -17,10 +17,10 @@ import (
 )
 
 var listFlags = struct {
-	deleted  bool
-	noValues bool
-	show     bool
-	all      bool
+	deleted bool
+	values  bool
+	show    bool
+	all     bool
 
 	output string
 }{}
@@ -74,7 +74,11 @@ Locked values are displayed as [Locked] in table view.`,
 		matchType := services.MatchExisting
 		if listFlags.deleted {
 			matchType = services.MatchDeleted
-			listFlags.noValues = true
+		}
+
+		dbs := []string{db}
+		if listFlags.all {
+			dbs = slices.Collect(maps.Keys(config.DBs))
 		}
 
 		type ListItem struct {
@@ -83,22 +87,27 @@ Locked values are displayed as [Locked] in table view.`,
 		}
 
 		items := make([]ListItem, 0)
-		dbs := []string{db}
-
-		if listFlags.all {
-			dbs = slices.Collect(maps.Keys(config.DBs))
-		}
-
 		for _, db := range dbs {
 			services.RunInTransaction(db, func(tx *sql.Tx) {
 				dbItems := services.ListItems(tx, prefix, matchType)
-				listItems := make([]ListItem, len(dbItems))
+				listItems := make([]ListItem, 0, len(dbItems))
 
-				for i, dbItem := range dbItems {
-					listItems[i] = ListItem{KVItem: dbItem}
+				for _, dbItem := range dbItems {
+					item := ListItem{KVItem: dbItem}
+
 					if listFlags.all {
-						listItems[i].DB = db
+						item.DB = db
 					}
+
+					// Remove the value if any of:
+					// - --value flag is not set
+					// - item is locked
+					// - item is hidden and --show flag is not set
+					if !listFlags.values || item.IsLocked || (item.IsHidden && !listFlags.show) {
+						item.Value = ""
+					}
+
+					listItems = append(listItems, item)
 				}
 
 				items = append(items, listItems...)
@@ -125,19 +134,6 @@ Locked values are displayed as [Locked] in table view.`,
 			return comp < 0
 		})
 
-		// Remove the value of locked or hidden items
-		for i, item := range items {
-			if item.IsLocked || (item.IsHidden && !listFlags.show) {
-				items[i].Value = ""
-			}
-		}
-
-		if listFlags.noValues {
-			for i := range items {
-				items[i].Value = ""
-			}
-		}
-
 		hasExpires, hasLocked := false, false
 		for _, item := range items {
 			hasExpires = hasExpires || (item.ExpiresAt != nil)
@@ -155,9 +151,9 @@ Locked values are displayed as [Locked] in table view.`,
 			t := table.NewWriter()
 			t.SetOutputMirror(common.Stdout.Writer())
 
-			displayValues := !listFlags.noValues
-			displayLocked := hasLocked && listFlags.noValues
 			displayDB := listFlags.all
+			displayValues := listFlags.values
+			displayLocked := hasLocked && !displayValues
 
 			header := []any{"Key"}
 
@@ -235,7 +231,7 @@ Locked values are displayed as [Locked] in table view.`,
 func init() {
 	rootCmd.AddCommand(listCmd)
 
-	listCmd.Flags().BoolVarP(&listFlags.noValues, "no-values", "v", false, "Hide values")
+	listCmd.Flags().BoolVarP(&listFlags.values, "values", "v", false, "Show values")
 	listCmd.Flags().BoolVarP(&listFlags.deleted, "deleted", "d", false, "List deleted keys")
 	listCmd.Flags().BoolVarP(&listFlags.show, "show", "s", false, "Force-show all values")
 	listCmd.Flags().BoolVarP(&listFlags.all, "all", "a", false, "List values from all registered DBs")
