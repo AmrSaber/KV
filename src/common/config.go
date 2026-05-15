@@ -25,6 +25,10 @@ type Config struct {
 	CurrentDB string `json:"-" yaml:"-"`
 }
 
+// GetDBPath gets the full path for the DB,
+// if DB is registeres: get it's registered use the registered directory
+// oterwise use XDG data directory.
+// DB path = {db-directory}/{db-name}.db
 func (config Config) GetDBPath(name string) string {
 	dbDirectory := GetDataDirectory()
 	if dbConfig, ok := config.DBs[name]; ok {

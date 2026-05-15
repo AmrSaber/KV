@@ -35,7 +35,11 @@ kv db backup --stdout | zip backup.zip
 kv db restore`,
 	Args: cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
-		backupPath := backupFlags.Path
+		currentDB := common.GetConfig().CurrentDB
+		backupPath := common.GetDefaultBackupPath(currentDB)
+		if cmd.Flag("path").Changed {
+			backupPath = backupFlags.Path
+		}
 
 		backupWriter := os.Stdout
 		if !backupFlags.Stdout {
@@ -54,7 +58,7 @@ kv db restore`,
 		}
 
 		if !backupFlags.Stdout {
-			common.Stdout.Println("Backup created successfully")
+			common.Stdout.Printf("Created backup for %q DB at %q\n", currentDB, backupPath)
 		}
 	},
 }

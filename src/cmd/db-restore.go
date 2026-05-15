@@ -34,7 +34,11 @@ cat backup.db | kv db restore --stdin`,
 
 	Args: cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
-		backupPath := restoreFlags.Path
+		currentDB := common.GetConfig().CurrentDB
+		backupPath := common.GetDefaultBackupPath(currentDB)
+		if cmd.Flag("path").Changed {
+			backupPath = restoreFlags.Path
+		}
 
 		if restoreFlags.Stdin {
 			tempFile, err := os.CreateTemp("", "kv-backup")
@@ -75,7 +79,7 @@ cat backup.db | kv db restore --stdin`,
 			_ = os.Remove(tempBackupFile.Name())
 		}()
 
-		err = common.BackupDB(common.GetConfig().CurrentDB, tempBackupFile)
+		err = common.BackupDB(currentDB, tempBackupFile)
 		if err != nil {
 			common.Fail("Could not backup existing database: %v", err)
 		}
@@ -109,7 +113,7 @@ cat backup.db | kv db restore --stdin`,
 			common.Fail("Failed to restore database: %v", err)
 		}
 
-		common.Stdout.Println("Database restored from backup successfully")
+		common.Stdout.Printf("Database %q restored from backup successfully\n", currentDB)
 	},
 }
 

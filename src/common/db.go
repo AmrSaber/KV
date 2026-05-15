@@ -93,6 +93,8 @@ func ValidateSqliteFile(path string) error {
 	return testDB.Ping()
 }
 
+// GetDefaultBackupPath returns the default backup path for the given DB
+// default backup path is {db-directory}/{db-name}.backup
 func GetDefaultBackupPath(name string) string {
 	return GetConfig().GetDBPath(name) + ".backup"
 }
