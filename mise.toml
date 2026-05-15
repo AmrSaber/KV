@@ -4,6 +4,9 @@ go = "1"
 # Used for demo GIF
 vhs = "latest"
 
+# Used for benchmarking
+hyperfine = "1"
+
 [tasks.test]
 description = "Run tests"
 run = "go test ./... -count=1"
@@ -18,6 +21,15 @@ golangci-lint run ./...
 [tasks.create-demo]
 description = "Create demo GIF"
 run = "vhs ./static/demo.tape"
+
+[tasks.benchmark]
+description = "Run benchmark for set and get commands"
+run = '''
+go build -o ./kv
+hyperfine -N --warmup 3 './kv set bench-key "hello"' './kv get bench-key'
+./kv rm bench-key
+rm ./kv
+'''
 
 [settings]
 quiet = true

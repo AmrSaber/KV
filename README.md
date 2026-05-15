@@ -21,6 +21,25 @@ KV is a lightweight, feature-rich key-value store that lives right in your termi
 - **Transactional guarantees** — all-or-nothing within a single DB
 - **Shell completion** — substring matching across all databases
 
+## Benchmark
+`kv` is super fast. Here are the results from [hyperfine](https://github.com/sharkdp/hyperfine) benchmark for `get` and `set` commands:
+
+```
+Benchmark 1: ./kv set bench-key "hello"
+  Time (mean ± σ):       6.6 ms ±   0.6 ms    [User: 3.6 ms, System: 3.6 ms]
+  Range (min … max):     5.3 ms …   8.4 ms    408 runs
+
+Benchmark 2: ./kv get bench-key
+  Time (mean ± σ):       6.6 ms ±   0.6 ms    [User: 3.4 ms, System: 3.8 ms]
+  Range (min … max):     5.3 ms …   8.1 ms    400 runs
+
+Summary
+  ./kv get bench-key ran
+    1.00 ± 0.13 times faster than ./kv set bench-key "hello"
+```
+
+You can run the benchmark yourself using `mise run benchmark`.
+
 ## Quick Start
 
 ```bash
