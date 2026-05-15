@@ -57,9 +57,7 @@ kv db restore`,
 			common.Fail("Failed to create backup: %v", err)
 		}
 
-		if !backupFlags.Stdout {
-			common.Stderr.Printf("Created backup for %q DB at %q\n", currentDB, backupPath)
-		}
+		common.Stderr.Printf("Created backup for %q DB at %q\n", currentDB, backupPath)
 	},
 }
 
