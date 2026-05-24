@@ -1,6 +1,9 @@
 [tools]
 go = "1"
 
+# Used for linting
+golangci-lint = "2"
+
 # Used for demo GIF
 vhs = "latest"
 
