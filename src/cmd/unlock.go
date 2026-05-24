@@ -39,7 +39,7 @@ Note: This removes the latest record from history and replaces it with a plain-t
 	Args:    cobra.ArbitraryArgs,
 
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]cobra.Completion, cobra.ShellCompDirective) {
-		if unlockFlags.all || unlockFlags.prefix {
+		if unlockFlags.all {
 			return nil, cobra.ShellCompDirectiveNoFileComp
 		}
 

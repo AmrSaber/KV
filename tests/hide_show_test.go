@@ -67,6 +67,32 @@ func TestHideCommand(t *testing.T) {
 		}
 	})
 
+	t.Run("hide all keys", func(t *testing.T) {
+		SetupTestDB(t)
+
+		RunKVSuccess(t, "set", "key1", "value1")
+		RunKVSuccess(t, "set", "key2", "value2")
+
+		RunKVSuccess(t, "hide", "--all")
+
+		output := RunKVSuccess(t, "list", "--values")
+		occurrences := strings.Count(output, "[Hidden]")
+		if occurrences < 2 {
+			t.Errorf("Expected at least 2 hidden keys, found %d", occurrences)
+		}
+	})
+
+	t.Run("hide --all fails with arguments", func(t *testing.T) {
+		SetupTestDB(t)
+
+		RunKVSuccess(t, "set", "key1", "value1")
+
+		output := RunKVFailure(t, "hide", "--all", "key1")
+		if !strings.Contains(output, "Cannot have arguments with --all") {
+			t.Errorf("Expected 'Cannot have arguments with --all' error, got: %s", output)
+		}
+	})
+
 	t.Run("hide with -p shorthand", func(t *testing.T) {
 		SetupTestDB(t)
 		RunKVSuccess(t, "set", "temp.a", "val1")
@@ -146,6 +172,33 @@ func TestShowCommand(t *testing.T) {
 		output := RunKVSuccess(t, "list", "test", "--values")
 		if strings.Contains(output, "[Hidden]") {
 			t.Error("No keys should be hidden after show -p")
+		}
+	})
+
+	t.Run("show all keys", func(t *testing.T) {
+		SetupTestDB(t)
+
+		RunKVSuccess(t, "set", "a", "data1")
+		RunKVSuccess(t, "set", "b", "data2")
+		RunKVSuccess(t, "hide", "--all")
+
+		RunKVSuccess(t, "show", "--all")
+
+		output := RunKVSuccess(t, "list", "--values")
+		if strings.Contains(output, "[Hidden]") {
+			t.Error("No keys should be hidden after show --all")
+		}
+	})
+
+	t.Run("show --all fails with arguments", func(t *testing.T) {
+		SetupTestDB(t)
+
+		RunKVSuccess(t, "set", "key1", "value1")
+		RunKVSuccess(t, "hide", "key1")
+
+		output := RunKVFailure(t, "show", "--all", "key1")
+		if !strings.Contains(output, "Cannot have arguments with --all") {
+			t.Errorf("Expected 'Cannot have arguments with --all' error, got: %s", output)
 		}
 	})
 }

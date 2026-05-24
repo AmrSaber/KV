@@ -10,6 +10,7 @@ import (
 
 var showFlags = struct {
 	prefix bool
+	all    bool
 }{}
 
 // showCmd represents the show command
@@ -28,10 +29,10 @@ var showCmd = &cobra.Command{
   kv show secrets --prefix
   kv show secrets -p`,
 	GroupID: "security",
-	Args:    cobra.MinimumNArgs(1),
+	Args:    cobra.ArbitraryArgs,
 
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]cobra.Completion, cobra.ShellCompDirective) {
-		if showFlags.prefix {
+		if showFlags.all {
 			return nil, cobra.ShellCompDirectiveNoFileComp
 		}
 
@@ -39,6 +40,21 @@ var showCmd = &cobra.Command{
 	},
 
 	Run: func(cmd *cobra.Command, args []string) {
+		if showFlags.all {
+			if len(args) > 0 {
+				common.Fail("Cannot have arguments with --all")
+			}
+
+			services.RunInTransaction(common.GetConfig().CurrentDB, func(tx *sql.Tx) {
+				items := services.ListItems(tx, "", services.MatchExisting)
+				for _, item := range items {
+					services.ShowKey(tx, item.Key)
+				}
+			})
+
+			return
+		}
+
 		if len(args) == 0 {
 			if showFlags.prefix {
 				common.Fail("Prefix must be provided")
@@ -78,4 +94,5 @@ func init() {
 	rootCmd.AddCommand(showCmd)
 
 	showCmd.Flags().BoolVarP(&showFlags.prefix, "prefix", "p", false, "Show all keys with given prefix")
+	showCmd.Flags().BoolVarP(&showFlags.all, "all", "a", false, "Show all keys")
 }

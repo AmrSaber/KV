@@ -10,6 +10,7 @@ import (
 
 var hideFlags = struct {
 	prefix bool
+	all    bool
 }{}
 
 // hideCmd represents the hide command
@@ -31,10 +32,10 @@ Hidden values are still accessible via 'kv get' and can be shown again with 'kv 
   kv hide secrets --prefix
   kv hide secrets -p`,
 	GroupID: "security",
-	Args:    cobra.MinimumNArgs(1),
+	Args:    cobra.ArbitraryArgs,
 
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]cobra.Completion, cobra.ShellCompDirective) {
-		if hideFlags.prefix {
+		if hideFlags.all {
 			return nil, cobra.ShellCompDirectiveNoFileComp
 		}
 
@@ -42,6 +43,21 @@ Hidden values are still accessible via 'kv get' and can be shown again with 'kv 
 	},
 
 	Run: func(cmd *cobra.Command, args []string) {
+		if hideFlags.all {
+			if len(args) > 0 {
+				common.Fail("Cannot have arguments with --all")
+			}
+
+			services.RunInTransaction(common.GetConfig().CurrentDB, func(tx *sql.Tx) {
+				items := services.ListItems(tx, "", services.MatchExisting)
+				for _, item := range items {
+					services.HideKey(tx, item.Key)
+				}
+			})
+
+			return
+		}
+
 		if len(args) == 0 {
 			if hideFlags.prefix {
 				common.Fail("Prefix must be provided")
@@ -81,4 +97,5 @@ func init() {
 	rootCmd.AddCommand(hideCmd)
 
 	hideCmd.Flags().BoolVarP(&hideFlags.prefix, "prefix", "p", false, "Hide all keys with given prefix")
+	hideCmd.Flags().BoolVarP(&hideFlags.all, "all", "a", false, "Hide all keys")
 }

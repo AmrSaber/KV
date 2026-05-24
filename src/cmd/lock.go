@@ -40,7 +40,7 @@ If plain-text values exist in older history records, consider using 'kv history 
 	Args:    cobra.ArbitraryArgs,
 
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]cobra.Completion, cobra.ShellCompDirective) {
-		if lockFlags.all || lockFlags.prefix {
+		if lockFlags.all {
 			return nil, cobra.ShellCompDirectiveNoFileComp
 		}
 
