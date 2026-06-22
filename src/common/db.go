@@ -12,7 +12,7 @@ import (
 var CachedDBs = make(map[string]*sql.DB)
 
 var pragmas = []string{
-	`PRAGMA journal_mode = WAL`,
+	`PRAGMA journal_mode = DELETE`,
 	`PRAGMA busy_timeout = 5000`,
 }
 
@@ -105,7 +105,7 @@ func BackupDB(name string, writer io.Writer) error {
 		return err
 	}
 
-	// Vacuum current database to commit all WAL changes to main file
+	// Vacuum current database, potentially decreases db size
 	_, err = db.Exec("VACUUM")
 	if err != nil {
 		return err
@@ -138,8 +138,4 @@ func BackupDBInPlace(name string) {
 	err = BackupDB(name, backupWriter)
 	_ = backupWriter.Close()
 	FailOn(err)
-
-	dbPath := GetConfig().GetDBPath(name)
-	_ = os.Remove(dbPath + "-wal")
-	_ = os.Remove(dbPath + "-shm")
 }

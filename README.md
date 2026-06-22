@@ -128,7 +128,7 @@ For write operations (`set`, `lock`), the interactive prompt asks twice to confi
 
 ### Storage & Transaction Model
 
-- Each database is a standalone SQLite file using WAL mode for performance.
+- Each database is a standalone SQLite file.
 - All single-DB operations run inside a transaction: **all keys succeed or none do** (atomicity applies to batch and prefix operations).
 - Cross-DB operations (`copy`/`move` across databases) are **not** transactional — each DB is handled independently.
 - History is implemented as rows with an `is_latest` flag. Soft deletes set the value to an empty string. Every change appends a new row; old rows are trimmed based on `history-length` configuration.
@@ -189,7 +189,7 @@ The `dbs` section is managed automatically — databases are registered when fir
 
 ## Data Storage
 
-Each database is a standalone SQLite file. By default all files live under `$XDG_DATA_HOME/kv` (see `kv info`). Custom directories can be set per database. WAL mode is enabled for performance. All data is local — no network calls, no telemetry.
+Each database is a standalone SQLite file. By default all files live under `$XDG_DATA_HOME/kv` (see `kv info`). Custom directories can be set per database. All data is local — no network calls, no telemetry.
 
 ## Contributing
 

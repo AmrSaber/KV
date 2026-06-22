@@ -44,10 +44,7 @@ var dbSetDirectoryCmd = &cobra.Command{
 		}
 
 		config.SetDBDirectory(db, directory)
-
 		_ = os.Remove(oldPath)
-		_ = os.Remove(oldPath + "-wal")
-		_ = os.Remove(oldPath + "-shm")
 
 		common.Stderr.Println("Database directory updated successfully")
 	},

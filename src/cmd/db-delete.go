@@ -44,16 +44,12 @@ Use --prune to delete without backup, also removing any existing backups.`,
 
 		if rmFlags.prune {
 			_ = os.Remove(dbPath)
-			_ = os.Remove(dbPath + "-wal")
-			_ = os.Remove(dbPath + "-shm")
 			_ = os.Remove(backupPath)
 		} else {
 			common.BackupDBInPlace(db)
 			common.Stdout.Printf("Backup created at %s", common.GetDefaultBackupPath(db))
 
 			_ = os.Remove(dbPath)
-			_ = os.Remove(dbPath + "-wal")
-			_ = os.Remove(dbPath + "-shm")
 		}
 
 		config.DeleteDB(db)

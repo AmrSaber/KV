@@ -87,11 +87,8 @@ cat backup.db | kv db restore --stdin`,
 		// Close database connection
 		common.CloseDBs()
 
-		// Remove current database and remove WAL files
 		dbPath := common.GetConfig().GetCurrentDBPath()
 		_ = os.Remove(dbPath)
-		_ = os.Remove(dbPath + "-wal")
-		_ = os.Remove(dbPath + "-shm")
 
 		// Copy backup into DB file
 		err = common.CopyFile(backupPath, dbPath)
