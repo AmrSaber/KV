@@ -6,6 +6,8 @@
 
 KV is a lightweight, feature-rich key-value store that lives right in your terminal. Think of it as a personal database for all those bits of information you need to store and retrieve quickly — configuration snippets, API keys, temporary notes, or any data you want at your fingertips. No servers to manage, no complex setup.
 
+![demo](./static/demo.gif)
+
 ## Features
 
 - **Local SQLite storage** — no server, no setup
